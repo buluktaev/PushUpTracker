@@ -4,14 +4,14 @@ import UserNotifications
 @main
 struct PushUpTrackerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var statsManager = StatsManager()
-    @StateObject private var reminderManager = ReminderManager()
+    @State private var statsManager = StatsManager()
+    @State private var reminderManager = ReminderManager()
     
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(statsManager)
-                .environmentObject(reminderManager)
+                .environment(statsManager)
+                .environment(reminderManager)
                 .frame(minWidth: 800, minHeight: 600)
         }
         .windowStyle(.titleBar)
@@ -20,8 +20,8 @@ struct PushUpTrackerApp: App {
         // Строка меню для быстрого доступа
         MenuBarExtra("💪 PushUp Tracker", systemImage: "figure.strengthtraining.traditional") {
             MenuBarView()
-                .environmentObject(statsManager)
-                .environmentObject(reminderManager)
+                .environment(statsManager)
+                .environment(reminderManager)
         }
     }
 }

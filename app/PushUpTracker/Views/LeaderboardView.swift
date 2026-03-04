@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LeaderboardView: View {
-    @EnvironmentObject var statsManager: StatsManager
+    @Environment(StatsManager.self) var statsManager
     @State private var sortBy: SortOption = .total
     @State private var showAddPlayer = false
     @State private var newPlayerName = ""

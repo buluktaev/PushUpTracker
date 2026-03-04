@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct StatsView: View {
-    @EnvironmentObject var statsManager: StatsManager
+    @Environment(StatsManager.self) var statsManager
     @State private var selectedPeriod = 0  // 0: неделя, 1: месяц, 2: всё время
     
     private let periodLabels = ["7 дней", "30 дней", "Всё время"]

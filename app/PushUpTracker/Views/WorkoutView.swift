@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct WorkoutView: View {
-    @EnvironmentObject var statsManager: StatsManager
+    @Environment(StatsManager.self) var statsManager
     @StateObject private var camera = CameraManager()
     @StateObject private var detector = PoseDetector()
     

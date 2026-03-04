@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var statsManager: StatsManager
-    @EnvironmentObject var reminderManager: ReminderManager
+    @Environment(StatsManager.self) var statsManager
+    @Environment(ReminderManager.self) var reminderManager
     @State private var selectedTab = 0
     
     var body: some View {
