@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct WorkoutView: View {
-    @EnvironmentObject var statsManager: StatsManager
+    @Environment(StatsManager.self) var statsManager
     @StateObject private var camera = CameraManager()
     @StateObject private var detector = PoseDetector()
     
@@ -12,6 +12,7 @@ struct WorkoutView: View {
     @State private var playerName: String = ""
     @State private var showSaveSheet = false
     @State private var lastSessionCount = 0
+    @State private var counterScale: CGFloat = 1.0
     
     var body: some View {
         HStack(spacing: 0) {
@@ -22,7 +23,13 @@ struct WorkoutView: View {
             // Правая панель — управление
             controlPanel
                 .frame(width: 280)
-                .background(Color(NSColor.controlBackgroundColor))
+                .background(
+                    LinearGradient(
+                        colors: [Color(NSColor.controlBackgroundColor), Color(NSColor.windowBackgroundColor)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
         }
         .onAppear {
             // Загружаем имя последнего игрока
@@ -71,6 +78,15 @@ struct WorkoutView: View {
                                 .font(.system(size: 96, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
                                 .shadow(color: .black.opacity(0.5), radius: 4)
+                                .scaleEffect(counterScale)
+                                .onChange(of: detector.count) { _, _ in
+                                    withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+                                        counterScale = 1.15
+                                    }
+                                    withAnimation(.spring(response: 0.2, dampingFraction: 0.5).delay(0.1)) {
+                                        counterScale = 1.0
+                                    }
+                                }
                             
                             Text(formatTime(elapsedTime))
                                 .font(.title2.monospacedDigit())
@@ -324,5 +340,6 @@ struct StatCard: View {
         .padding(.vertical, 8)
         .background(color.opacity(0.08))
         .cornerRadius(8)
+        .shadow(color: color.opacity(0.15), radius: 4, y: 2)
     }
 }

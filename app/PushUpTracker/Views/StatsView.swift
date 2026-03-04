@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct StatsView: View {
-    @EnvironmentObject var statsManager: StatsManager
+    @Environment(StatsManager.self) var statsManager
     @State private var selectedPeriod = 0  // 0: неделя, 1: месяц, 2: всё время
     
     private let periodLabels = ["7 дней", "30 дней", "Всё время"]
@@ -103,9 +103,18 @@ struct StatsView: View {
                                     .foregroundColor(.secondary)
                             }
                             
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(barColor(for: stat.totalPushUps, max: maxValue))
-                                .frame(height: max(CGFloat(stat.totalPushUps) / CGFloat(maxValue) * 120, stat.totalPushUps > 0 ? 4 : 1))
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(
+                                    stat.totalPushUps == 0
+                                        ? AnyShapeStyle(Color.secondary.opacity(0.1))
+                                        : AnyShapeStyle(LinearGradient(
+                                            colors: [barColor(for: stat.totalPushUps, max: maxValue),
+                                                     barColor(for: stat.totalPushUps, max: maxValue).opacity(0.5)],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        ))
+                                )
+                                .frame(height: max(CGFloat(stat.totalPushUps) / CGFloat(maxValue) * 160, stat.totalPushUps > 0 ? 4 : 2))
                             
                             Text(shortDate(stat.dateKey))
                                 .font(.system(size: 7))
@@ -116,7 +125,7 @@ struct StatsView: View {
                         .frame(maxWidth: .infinity)
                     }
                 }
-                .frame(height: 160)
+                .frame(height: 200)
                 .padding(.vertical, 8)
             }
         }
@@ -241,5 +250,10 @@ struct SummaryCard: View {
         .padding(.vertical, 12)
         .background(color.opacity(0.08))
         .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(color.opacity(0.15), lineWidth: 1)
+        )
+        .shadow(color: color.opacity(0.1), radius: 6, y: 3)
     }
 }

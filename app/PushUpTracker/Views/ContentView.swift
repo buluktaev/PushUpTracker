@@ -1,38 +1,32 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var statsManager: StatsManager
-    @EnvironmentObject var reminderManager: ReminderManager
+    @Environment(StatsManager.self) var statsManager
+    @Environment(ReminderManager.self) var reminderManager
     @State private var selectedTab = 0
-    
+
     var body: some View {
         VStack(spacing: 0) {
-            // Верхняя панель навигации
-            HStack(spacing: 0) {
+            // Tab bar
+            HStack(spacing: 2) {
                 TabButton(title: "Тренировка", icon: "figure.strengthtraining.traditional", index: 0, selected: $selectedTab)
-                TabButton(title: "Статистика", icon: "chart.bar.fill", index: 1, selected: $selectedTab)
-                TabButton(title: "Лидерборд", icon: "trophy.fill", index: 2, selected: $selectedTab)
-                TabButton(title: "Настройки", icon: "gearshape.fill", index: 3, selected: $selectedTab)
+                TabButton(title: "Статистика",  icon: "chart.bar.fill",                    index: 1, selected: $selectedTab)
+                TabButton(title: "Лидерборд",   icon: "trophy.fill",                       index: 2, selected: $selectedTab)
+                TabButton(title: "Настройки",   icon: "gearshape.fill",                    index: 3, selected: $selectedTab)
+                Spacer()
             }
-            .padding(.horizontal)
-            .padding(.top, 8)
-            
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+
             Divider()
-                .padding(.top, 8)
-            
-            // Контент
+
             Group {
                 switch selectedTab {
-                case 0:
-                    WorkoutView()
-                case 1:
-                    StatsView()
-                case 2:
-                    LeaderboardView()
-                case 3:
-                    SettingsView()
-                default:
-                    WorkoutView()
+                case 0: WorkoutView()
+                case 1: StatsView()
+                case 2: LeaderboardView()
+                case 3: SettingsView()
+                default: WorkoutView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -41,30 +35,33 @@ struct ContentView: View {
     }
 }
 
-// MARK: - Кнопка таба
+// MARK: - Tab Button
 
 struct TabButton: View {
     let title: String
     let icon: String
     let index: Int
     @Binding var selected: Int
-    
+
     var isSelected: Bool { selected == index }
-    
+
     var body: some View {
         Button(action: { selected = index }) {
-            VStack(spacing: 4) {
+            HStack(spacing: 5) {
                 Image(systemName: icon)
-                    .font(.system(size: 18))
+                    .font(.system(size: 13, weight: .medium))
                 Text(title)
-                    .font(.caption)
+                    .font(.system(size: 13, weight: .medium))
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
-            .foregroundColor(isSelected ? .accentColor : .secondary)
-            .cornerRadius(8)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(isSelected ? Color.primary.opacity(0.08) : Color.clear)
+            )
+            .foregroundColor(isSelected ? .primary : .secondary)
         }
         .buttonStyle(.plain)
+        .animation(.easeInOut(duration: 0.15), value: isSelected)
     }
 }

@@ -54,28 +54,30 @@ struct DailyStats: Codable, Identifiable {
 
 // MARK: - Игрок лидерборда
 
-struct Player: Codable, Identifiable, Hashable {
-    let id: UUID
+struct Player: Codable, Hashable, LeaderboardEntry {
+    let uuid: UUID
     var name: String
     var totalPushUps: Int
     var bestSession: Int
     var sessionsCount: Int
     var streak: Int // дней подряд
     var lastActiveDate: Date
-    
+
+    // LeaderboardEntry conformance
+    var id: String { uuid.uuidString }
+    var averagePerSession: Double {
+        guard sessionsCount > 0 else { return 0 }
+        return Double(totalPushUps) / Double(sessionsCount)
+    }
+
     init(name: String) {
-        self.id = UUID()
+        self.uuid = UUID()
         self.name = name
         self.totalPushUps = 0
         self.bestSession = 0
         self.sessionsCount = 0
         self.streak = 0
         self.lastActiveDate = Date()
-    }
-    
-    var averagePerSession: Double {
-        guard sessionsCount > 0 else { return 0 }
-        return Double(totalPushUps) / Double(sessionsCount)
     }
 }
 
@@ -121,7 +123,7 @@ struct ReminderSettings: Codable {
     var endHour: Int
     var workDaysOnly: Bool
     var targetDaily: Int
-    
+
     static var `default`: ReminderSettings {
         ReminderSettings(
             isEnabled: false,
@@ -132,4 +134,16 @@ struct ReminderSettings: Codable {
             targetDaily: 50
         )
     }
+}
+
+// MARK: - Протокол для лидерборда
+
+protocol LeaderboardEntry: Identifiable {
+    var id: String { get }
+    var name: String { get }
+    var totalPushUps: Int { get }
+    var bestSession: Int { get }
+    var streak: Int { get }
+    var averagePerSession: Double { get }
+    var sessionsCount: Int { get }
 }

@@ -1,19 +1,19 @@
 import Foundation
-import Combine
+import Observation
 
 /// Менеджер статистики — хранит локально + синхронизирует с сервером
-class StatsManager: ObservableObject {
-    
-    @Published var sessions: [PushUpSession] = []
-    @Published var dailyStats: [DailyStats] = []
-    @Published var players: [Player] = []
-    @Published var currentPlayer: Player?
-    
+@Observable @MainActor class StatsManager {
+
+    var sessions: [PushUpSession] = []
+    var dailyStats: [DailyStats] = []
+    var players: [Player] = []
+    var currentPlayer: Player?
+
     // Серверные данные
-    @Published var serverPlayers: [ServerPlayer] = []
-    @Published var serverConnected = false
-    @Published var syncStatus: String = ""
-    @Published var currentPlayerId: String? // ID игрока на сервере
+    var serverPlayers: [ServerPlayer] = []
+    var serverConnected = false
+    var syncStatus: String = ""
+    var currentPlayerId: String? // ID игрока на сервере
     
     private let sessionsKey = "pushup_sessions"
     private let dailyStatsKey = "pushup_daily_stats"
@@ -33,9 +33,7 @@ class StatsManager: ObservableObject {
     
     func checkServerAndSync() async {
         await api.checkConnection()
-        DispatchQueue.main.async {
-            self.serverConnected = self.api.isConnected
-        }
+        serverConnected = api.isConnected
         if api.isConnected {
             await fetchLeaderboard()
         }
@@ -44,42 +42,34 @@ class StatsManager: ObservableObject {
     func registerOnServer(name: String) async {
         do {
             let player = try await api.registerPlayer(name: name)
-            DispatchQueue.main.async {
-                self.currentPlayerId = player.id
-                UserDefaults.standard.set(player.id, forKey: self.serverPlayerIdKey)
-                self.syncStatus = "✅ Зарегистрирован: \(player.name)"
-            }
+            currentPlayerId = player.id
+            UserDefaults.standard.set(player.id, forKey: serverPlayerIdKey)
+            syncStatus = "✅ Зарегистрирован: \(player.name)"
         } catch {
-            DispatchQueue.main.async {
-                self.syncStatus = "❌ Ошибка регистрации: \(error.localizedDescription)"
-            }
+            syncStatus = "❌ Ошибка регистрации: \(error.localizedDescription)"
         }
     }
     
     func submitSessionToServer(count: Int, duration: TimeInterval) async {
         guard let playerId = currentPlayerId else {
-            DispatchQueue.main.async { self.syncStatus = "⚠️ Сначала зарегистрируйтесь" }
+            syncStatus = "⚠️ Сначала зарегистрируйтесь"
             return
         }
         do {
             let _ = try await api.submitSession(playerId: playerId, count: count, duration: duration)
-            DispatchQueue.main.async { self.syncStatus = "✅ Отправлено на сервер" }
+            syncStatus = "✅ Отправлено на сервер"
             await fetchLeaderboard()
         } catch {
-            DispatchQueue.main.async {
-                self.syncStatus = "❌ Ошибка отправки: \(error.localizedDescription)"
-            }
+            syncStatus = "❌ Ошибка отправки: \(error.localizedDescription)"
         }
     }
     
     func fetchLeaderboard() async {
         do {
             let players = try await api.getLeaderboard()
-            DispatchQueue.main.async { self.serverPlayers = players }
+            serverPlayers = players
         } catch {
-            DispatchQueue.main.async {
-                self.syncStatus = "❌ Ошибка загрузки лидерборда"
-            }
+            syncStatus = "❌ Ошибка загрузки лидерборда"
         }
     }
     
@@ -152,7 +142,7 @@ class StatsManager: ObservableObject {
     }
     
     func removePlayer(id: UUID) {
-        players.removeAll { $0.id == id }
+        players.removeAll { $0.uuid == id }
         saveAll()
     }
     

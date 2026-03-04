@@ -1,14 +1,14 @@
 import Foundation
 import UserNotifications
-import Combine
+import Observation
 
 /// Менеджер напоминаний — планирует уведомления об отжиманиях
-class ReminderManager: ObservableObject {
-    
-    @Published var settings: ReminderSettings {
+@Observable @MainActor class ReminderManager {
+
+    var settings: ReminderSettings {
         didSet { saveSettings(); scheduleReminders() }
     }
-    @Published var permissionGranted = false
+    var permissionGranted = false
     
     private let settingsKey = "pushup_reminder_settings"
     private let notificationCategory = "PUSHUP_REMINDER"
@@ -39,15 +39,15 @@ class ReminderManager: ObservableObject {
     
     func checkPermission() {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.permissionGranted = settings.authorizationStatus == .authorized
             }
         }
     }
-    
+
     func requestPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.permissionGranted = granted
                 if granted {
                     self.scheduleReminders()

@@ -1,33 +1,59 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @EnvironmentObject var reminderManager: ReminderManager
-    @EnvironmentObject var statsManager: StatsManager
+    @Environment(ReminderManager.self) var reminderManager
+    @Environment(StatsManager.self) var statsManager
     @State private var showResetConfirm = false
     @State private var serverURL: String = UserDefaults.standard.string(forKey: "api_base_url") ?? ""
-    
+    @AppStorage("app_theme") private var appThemeRaw: String = AppTheme.system.rawValue
+
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
+                // Внешний вид
+                appearanceSection
+
                 // Сервер
                 serverSection
-                
+
                 // Напоминания
-                reminderSection
-                
+                reminderSection(manager: reminderManager)
+
                 // Быстрое напоминание
                 quickReminderSection
-                
+
                 // Текущий игрок
                 playerSection
-                
+
                 Divider()
-                
+
                 // Сброс
                 dangerZone
             }
             .padding()
         }
+    }
+
+    // MARK: - Внешний вид
+
+    var appearanceSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "paintbrush.fill")
+                    .foregroundColor(.indigo)
+                Text("Внешний вид")
+                    .font(.headline)
+            }
+            Picker("Тема", selection: $appThemeRaw) {
+                ForEach(AppTheme.allCases, id: \.rawValue) { theme in
+                    Text(theme.title).tag(theme.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+        .padding()
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(12)
     }
     
     // MARK: - Секция сервера
@@ -93,7 +119,9 @@ struct SettingsView: View {
     
     // MARK: - Секция напоминаний
     
-    var reminderSection: some View {
+    @ViewBuilder
+    func reminderSection(manager: ReminderManager) -> some View {
+        @Bindable var bindable = manager
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "bell.fill")
@@ -101,7 +129,7 @@ struct SettingsView: View {
                 Text("Напоминания")
                     .font(.headline)
             }
-            
+
             if !reminderManager.permissionGranted {
                 HStack {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -118,15 +146,15 @@ struct SettingsView: View {
                 .background(Color.orange.opacity(0.1))
                 .cornerRadius(8)
             }
-            
-            Toggle("Регулярные напоминания", isOn: $reminderManager.settings.isEnabled)
-            
+
+            Toggle("Регулярные напоминания", isOn: $bindable.settings.isEnabled)
+
             if reminderManager.settings.isEnabled {
                 VStack(spacing: 12) {
                     HStack {
                         Text("Интервал")
                         Spacer()
-                        Picker("", selection: $reminderManager.settings.intervalMinutes) {
+                        Picker("", selection: $bindable.settings.intervalMinutes) {
                             Text("30 мин").tag(30)
                             Text("1 час").tag(60)
                             Text("1.5 часа").tag(90)
@@ -134,31 +162,31 @@ struct SettingsView: View {
                         }
                         .frame(width: 150)
                     }
-                    
+
                     HStack {
                         Text("С")
-                        Picker("", selection: $reminderManager.settings.startHour) {
+                        Picker("", selection: $bindable.settings.startHour) {
                             ForEach(6..<22, id: \.self) { hour in
                                 Text("\(hour):00").tag(hour)
                             }
                         }
                         .frame(width: 80)
-                        
+
                         Text("до")
-                        Picker("", selection: $reminderManager.settings.endHour) {
+                        Picker("", selection: $bindable.settings.endHour) {
                             ForEach(6..<23, id: \.self) { hour in
                                 Text("\(hour):00").tag(hour)
                             }
                         }
                         .frame(width: 80)
                     }
-                    
-                    Toggle("Только рабочие дни (Пн-Пт)", isOn: $reminderManager.settings.workDaysOnly)
-                    
+
+                    Toggle("Только рабочие дни (Пн-Пт)", isOn: $bindable.settings.workDaysOnly)
+
                     HStack {
                         Text("Дневная цель")
                         Spacer()
-                        TextField("", value: $reminderManager.settings.targetDaily, format: .number)
+                        TextField("", value: $bindable.settings.targetDaily, format: .number)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 80)
                         Text("отжиманий")
@@ -304,8 +332,8 @@ struct QuickReminderButton: View {
 // MARK: - Вью для Menu Bar
 
 struct MenuBarView: View {
-    @EnvironmentObject var statsManager: StatsManager
-    @EnvironmentObject var reminderManager: ReminderManager
+    @Environment(StatsManager.self) var statsManager
+    @Environment(ReminderManager.self) var reminderManager
     
     var body: some View {
         VStack(spacing: 8) {
