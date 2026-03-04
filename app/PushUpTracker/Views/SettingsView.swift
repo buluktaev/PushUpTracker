@@ -5,10 +5,14 @@ struct SettingsView: View {
     @Environment(StatsManager.self) var statsManager
     @State private var showResetConfirm = false
     @State private var serverURL: String = UserDefaults.standard.string(forKey: "api_base_url") ?? ""
-    
+    @AppStorage("app_theme") private var appThemeRaw: String = AppTheme.system.rawValue
+
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
+                // Внешний вид
+                appearanceSection
+
                 // Сервер
                 serverSection
 
@@ -17,17 +21,39 @@ struct SettingsView: View {
 
                 // Быстрое напоминание
                 quickReminderSection
-                
+
                 // Текущий игрок
                 playerSection
-                
+
                 Divider()
-                
+
                 // Сброс
                 dangerZone
             }
             .padding()
         }
+    }
+
+    // MARK: - Внешний вид
+
+    var appearanceSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "paintbrush.fill")
+                    .foregroundColor(.indigo)
+                Text("Внешний вид")
+                    .font(.headline)
+            }
+            Picker("Тема", selection: $appThemeRaw) {
+                ForEach(AppTheme.allCases, id: \.rawValue) { theme in
+                    Text(theme.title).tag(theme.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+        .padding()
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(12)
     }
     
     // MARK: - Секция сервера
