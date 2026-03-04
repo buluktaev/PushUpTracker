@@ -388,7 +388,8 @@
       video.srcObject = stream;
       await video.play();
 
-      hide('no-camera-msg');
+      document.getElementById('no-camera-msg').style.display = 'none';
+      document.getElementById('workout-video').style.display = 'block';
       cameraOn = true;
       document.getElementById('cam-toggle').textContent = '📷 Выкл.';
       setStatus('yellow', 'Поза не найдена');
@@ -407,10 +408,11 @@
     if (rafId)  { cancelAnimationFrame(rafId); rafId = null; }
     const video = document.getElementById('workout-video');
     video.srcObject = null;
+    video.style.display = 'none';
     cameraOn = false;
     document.getElementById('cam-toggle').textContent = '📷 Вкл. камеру';
     setStatus('none', 'Камера выкл.');
-    show('no-camera-msg');
+    document.getElementById('no-camera-msg').style.display = 'flex';
     clearCanvas();
     hide('elbow-indicator');
   }
