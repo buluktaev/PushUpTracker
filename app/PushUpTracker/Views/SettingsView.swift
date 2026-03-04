@@ -11,10 +11,10 @@ struct SettingsView: View {
             VStack(spacing: 24) {
                 // Сервер
                 serverSection
-                
+
                 // Напоминания
-                reminderSection
-                
+                reminderSection(manager: reminderManager)
+
                 // Быстрое напоминание
                 quickReminderSection
                 
@@ -93,9 +93,10 @@ struct SettingsView: View {
     
     // MARK: - Секция напоминаний
     
-    var reminderSection: some View {
-        @Bindable var reminder = reminderManager
-        return VStack(alignment: .leading, spacing: 12) {
+    @ViewBuilder
+    func reminderSection(manager: ReminderManager) -> some View {
+        @Bindable var bindable = manager
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "bell.fill")
                     .foregroundColor(.blue)
@@ -120,14 +121,14 @@ struct SettingsView: View {
                 .cornerRadius(8)
             }
 
-            Toggle("Регулярные напоминания", isOn: $reminder.settings.isEnabled)
+            Toggle("Регулярные напоминания", isOn: $bindable.settings.isEnabled)
 
             if reminderManager.settings.isEnabled {
                 VStack(spacing: 12) {
                     HStack {
                         Text("Интервал")
                         Spacer()
-                        Picker("", selection: $reminder.settings.intervalMinutes) {
+                        Picker("", selection: $bindable.settings.intervalMinutes) {
                             Text("30 мин").tag(30)
                             Text("1 час").tag(60)
                             Text("1.5 часа").tag(90)
@@ -138,7 +139,7 @@ struct SettingsView: View {
 
                     HStack {
                         Text("С")
-                        Picker("", selection: $reminder.settings.startHour) {
+                        Picker("", selection: $bindable.settings.startHour) {
                             ForEach(6..<22, id: \.self) { hour in
                                 Text("\(hour):00").tag(hour)
                             }
@@ -146,7 +147,7 @@ struct SettingsView: View {
                         .frame(width: 80)
 
                         Text("до")
-                        Picker("", selection: $reminder.settings.endHour) {
+                        Picker("", selection: $bindable.settings.endHour) {
                             ForEach(6..<23, id: \.self) { hour in
                                 Text("\(hour):00").tag(hour)
                             }
@@ -154,12 +155,12 @@ struct SettingsView: View {
                         .frame(width: 80)
                     }
 
-                    Toggle("Только рабочие дни (Пн-Пт)", isOn: $reminder.settings.workDaysOnly)
+                    Toggle("Только рабочие дни (Пн-Пт)", isOn: $bindable.settings.workDaysOnly)
 
                     HStack {
                         Text("Дневная цель")
                         Spacer()
-                        TextField("", value: $reminder.settings.targetDaily, format: .number)
+                        TextField("", value: $bindable.settings.targetDaily, format: .number)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 80)
                         Text("отжиманий")
