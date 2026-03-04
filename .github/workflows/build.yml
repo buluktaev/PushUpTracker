@@ -1,0 +1,98 @@
+name: Build & Release DMG
+
+on:
+  push:
+    tags:
+      - 'v*'  # Запускается при пуше тега v1.0.0, v1.1.0 и т.д.
+  workflow_dispatch:  # Ручной запуск из GitHub UI
+
+jobs:
+  build:
+    runs-on: macos-14  # Apple Silicon runner
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build app
+        run: |
+          xcodebuild \
+            -project app/PushUpTracker.xcodeproj \
+            -scheme PushUpTracker \
+            -configuration Release \
+            -derivedDataPath ./build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            ONLY_ACTIVE_ARCH=NO
+
+      - name: Create DMG
+        run: |
+          APP_PATH="./build/Build/Products/Release/PushUpTracker.app"
+          
+          # Проверяем что .app собрался
+          if [ ! -d "$APP_PATH" ]; then
+            echo "ERROR: .app not found at $APP_PATH"
+            find ./build -name "*.app" -type d
+            exit 1
+          fi
+          
+          # Создаём красивый DMG
+          mkdir -p dmg_content
+          cp -R "$APP_PATH" dmg_content/
+          
+          # Ссылка на /Applications для drag-and-drop
+          ln -s /Applications dmg_content/Applications
+          
+          # Собираем DMG
+          hdiutil create \
+            -volname "PushUp Tracker" \
+            -srcfolder dmg_content \
+            -ov \
+            -format UDZO \
+            PushUpTracker.dmg
+          
+          echo "DMG created successfully"
+          ls -lh PushUpTracker.dmg
+
+      - name: Get version
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "version=build-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload DMG as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PushUpTracker-${{ steps.version.outputs.version }}
+          path: PushUpTracker.dmg
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: PushUpTracker.dmg
+          name: "PushUp Tracker ${{ steps.version.outputs.version }}"
+          body: |
+            ## 💪 PushUp Tracker ${{ steps.version.outputs.version }}
+            
+            ### Установка
+            1. Скачай `PushUpTracker.dmg` ниже
+            2. Открой DMG, перетащи приложение в Applications
+            3. При первом запуске: правый клик → Открыть → подтвердить
+            4. В настройках введи URL сервера
+            
+            ### Что нового
+            - См. коммиты ниже
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
