@@ -75,9 +75,9 @@
     #cam-counter.bump { transform:scale(1.15); }
     #cam-timer   { font-size:20px; color:rgba(255,255,255,.85); font-variant-numeric:tabular-nums; text-shadow:0 1px 6px rgba(0,0,0,.6); }
 
-    #cam-toggle { position:absolute; top:12px; right:12px; background:rgba(0,0,0,.55); backdrop-filter:blur(6px); border:none; border-radius:8px; color:#fff; padding:6px 10px; font-size:12px; cursor:pointer; }
+    #cam-toggle { position:absolute; top:12px; right:12px; background:rgba(0,0,0,.55); backdrop-filter:blur(6px); border:none; border-radius:8px; color:#fff; padding:6px 10px; font-size:12px; cursor:pointer; z-index:5; }
 
-    #no-camera-msg { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:var(--muted); }
+    #no-camera-msg { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; color:var(--muted); pointer-events:none; }
     #no-camera-msg .nc-icon { font-size:48px; }
 
     /* WORKOUT CONTROLS */
@@ -298,7 +298,7 @@
   </div>
 </div>
 
-<script type="module">
+<script>
   // ── MediaPipe (lazy loaded) ──
   let PoseLandmarker, DrawingUtils, poseLandmarker, drawingUtils;
   let mpLoaded = false, mpLoading = false;
@@ -352,7 +352,7 @@
   loadTodayTotal();
 
   // expose switchTab globally for inline onclick
-  window.switchTab = function(tab, btn) {
+  function switchTab(tab, btn) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
     document.getElementById('view-' + tab).classList.add('active');
@@ -372,7 +372,7 @@
   }
 
   // ── CAMERA ──
-  window.toggleCamera = async function() {
+  async function toggleCamera() {
     if (cameraOn) {
       stopCamera();
     } else {
@@ -526,7 +526,7 @@
   }
 
   // ── WORKOUT ──
-  window.startSession = function() {
+  function startSession() {
     const name = document.getElementById('player-name-input').value.trim();
     if (!name) { document.getElementById('player-name-input').focus(); return; }
     playerName = name;
@@ -550,16 +550,16 @@
     setText('hint-text', 'Встань боком к камере так, чтобы были видны руки и торс');
   };
 
-  window.tapPushup = function() {
+  function tapPushup() {
     if (!sessionActive) return;
     sessionCount++;
     updateCounter();
     bumpCamCounter();
   };
 
-  window.resetCount = function() { sessionCount = 0; updateCounter(); };
+  function resetCount() { sessionCount = 0; updateCounter(); };
 
-  window.stopSession = function() {
+  function stopSession() {
     if (!sessionActive) return;
     clearInterval(timerInterval);
     lastCount    = sessionCount;
@@ -578,7 +578,7 @@
     }
   };
 
-  window.saveSession = async function() {
+  async function saveSession() {
     document.getElementById('save-modal').classList.remove('open');
     try {
       const pid = await ensurePlayer(playerName);
@@ -593,7 +593,7 @@
     } catch (e) { alert('Ошибка: ' + e.message); }
   };
 
-  window.discardSession = function() {
+  function discardSession() {
     document.getElementById('save-modal').classList.remove('open');
   };
 
@@ -653,7 +653,7 @@
     return card;
   }
 
-  window.setPeriod = function(days, btn) {
+  function setPeriod(days, btn) {
     currentPeriod = days;
     document.querySelectorAll('.period-tabs button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -737,7 +737,7 @@
   }
 
   // ── SETTINGS ──
-  window.saveName = function() {
+  function saveName() {
     const name = document.getElementById('settings-name').value.trim();
     if (!name) return;
     playerName = name; playerId = '';
@@ -820,7 +820,7 @@
   document.addEventListener('keydown', e => {
     if (e.code === 'Space' && sessionActive && !cameraOn && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
       e.preventDefault();
-      window.tapPushup();
+      tapPushup();
     }
   });
 </script>
