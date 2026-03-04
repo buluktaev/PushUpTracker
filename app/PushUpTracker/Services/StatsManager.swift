@@ -142,7 +142,7 @@ import Observation
     }
     
     func removePlayer(id: UUID) {
-        players.removeAll { $0.id == id }
+        players.removeAll { $0.uuid == id }
         saveAll()
     }
     

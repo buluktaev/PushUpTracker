@@ -140,16 +140,30 @@ enum APIError: LocalizedError {
 
 // MARK: - Серверные модели
 
-struct ServerPlayer: Codable, Identifiable {
+struct ServerPlayer: Codable, LeaderboardEntry {
     let id: String
     let name: String
     var total_pushups: Int?
     var best_session: Int?
     var sessions_count: Int?
     var average_per_session: Double?
-    var streak: Int?
+    var streak_raw: Int?
     var last_active_date: String?
     var created: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name
+        case total_pushups, best_session, sessions_count, average_per_session
+        case streak_raw = "streak"
+        case last_active_date, created
+    }
+
+    // LeaderboardEntry conformance
+    var totalPushUps: Int { total_pushups ?? 0 }
+    var bestSession: Int { best_session ?? 0 }
+    var sessionsCount: Int { sessions_count ?? 0 }
+    var averagePerSession: Double { average_per_session ?? 0 }
+    var streak: Int { streak_raw ?? 0 }
 }
 
 struct ServerSession: Codable, Identifiable {
