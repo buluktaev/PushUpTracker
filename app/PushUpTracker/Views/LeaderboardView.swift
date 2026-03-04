@@ -52,28 +52,22 @@ struct LeaderboardView: View {
             .padding()
 
             // Статус подключения
-            if statsManager.serverConnected {
-                HStack(spacing: 4) {
-                    Circle().fill(.green).frame(width: 8, height: 8)
-                    Text("Сервер подключён")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    if !statsManager.syncStatus.isEmpty {
-                        Text("• \(statsManager.syncStatus)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                .padding(.horizontal)
-            } else {
-                HStack(spacing: 4) {
-                    Circle().fill(.red).frame(width: 8, height: 8)
-                    Text("Сервер недоступен — показаны локальные данные")
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(statsManager.serverConnected ? Color.green : Color.secondary)
+                    .frame(width: 7, height: 7)
+                Text(statsManager.serverConnected ? "Сервер подключён" : "Локальные данные")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                if !statsManager.syncStatus.isEmpty && statsManager.serverConnected {
+                    Text("· \(statsManager.syncStatus)")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                .padding(.horizontal)
+                Spacer()
             }
+            .padding(.horizontal)
+            .padding(.vertical, 6)
 
             Divider().padding(.top, 8)
 
@@ -221,14 +215,20 @@ struct LeaderboardView: View {
     }
 
     func podiumPlace(player: any LeaderboardEntry, rank: Int, height: CGFloat, color: Color) -> some View {
-        VStack(spacing: 6) {
+        let gradient = LinearGradient(
+            colors: [color.opacity(0.6), color.opacity(0.15)],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        return VStack(spacing: 6) {
             Text(medalEmoji(rank)).font(.system(size: 28))
             Text(player.name).font(.callout.bold()).lineLimit(1)
             Text("\(player.totalPushUps)").font(.title3.bold().monospacedDigit())
-            RoundedRectangle(cornerRadius: 8)
-                .fill(color.opacity(0.3))
+            RoundedRectangle(cornerRadius: 10)
+                .fill(gradient)
                 .frame(width: 80, height: height)
                 .overlay(Text("#\(rank)").font(.caption.bold()).foregroundColor(.secondary))
+                .shadow(color: color.opacity(0.2), radius: 4, y: 2)
         }
         .frame(width: 100)
     }
