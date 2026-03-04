@@ -6,19 +6,16 @@ import Observation
 @MainActor
 class APIClient {
 
-    // ⚠️ ЗАМЕНИ НА СВОЙ URL ПОСЛЕ ДЕПЛОЯ НА RAILWAY
     static let shared = APIClient()
 
     var isConnected = false
     var lastError: String?
 
     private nonisolated var baseURL: String {
-        // Сначала проверяем UserDefaults (можно менять в настройках)
         if let saved = UserDefaults.standard.string(forKey: "api_base_url"), !saved.isEmpty {
             return saved
         }
-        // Дефолтный URL — замени на свой после деплоя!
-        return "pushuptracker-server-production.up.railway.app"
+        return "http://localhost:3000"
     }
 
     func setBaseURL(_ url: String) {
