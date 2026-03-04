@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PushUp Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #222;
+      --border: #2a2a2a; --text: #f0f0f0; --muted: #666;
+      --accent: #ff6b35; --green: #22c55e; --blue: #3b82f6;
+      --purple: #a855f7; --yellow: #f59e0b; --red: #ef4444;
+    }
+
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+    nav { display: flex; gap: 4px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 10; }
+    nav button { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border: none; border-radius: 6px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+    nav button.active { background: rgba(255,255,255,0.08); color: var(--text); }
+    nav button svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    .view { display: none; flex: 1; padding: 24px 20px; max-width: 800px; width: 100%; margin: 0 auto; }
+    .view.active { display: block; }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .card-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    @media (max-width: 600px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 12px; text-align: center; }
+    .sc-icon { font-size: 22px; margin-bottom: 6px; }
+    .sc-val { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .sc-label { font-size: 11px; font-weight: 600; color: var(--muted); margin-top: 2px; }
+    .sc-sub { font-size: 10px; color: var(--muted); }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.15s, transform 0.1s; width: 100%; }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-green { background: var(--green); color: #000; }
+    .btn-red { background: var(--red); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-accent { background: var(--accent); color: #fff; }
+
+    input[type=text] { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 14px; outline: none; transition: border-color 0.15s; }
+    input[type=text]:focus { border-color: var(--accent); }
+    input[type=text]::placeholder { color: var(--muted); }
+    label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
+
+    #counter-display { font-size: 96px; font-weight: 800; text-align: center; line-height: 1; padding: 20px 0; color: var(--accent); font-variant-numeric: tabular-nums; transition: transform 0.1s; }
+    #counter-display.bump { transform: scale(1.15); }
+    #timer-display { text-align: center; font-size: 20px; font-variant-numeric: tabular-nums; color: var(--muted); margin-bottom: 20px; }
+
+    #tap-btn { height: 80px; font-size: 20px; border-radius: 16px; margin-bottom: 12px; background: var(--surface2); border: 2px solid var(--border); color: var(--text); font-weight: 700; cursor: pointer; transition: background 0.1s, transform 0.08s; width: 100%; }
+    #tap-btn:active { background: var(--accent); transform: scale(0.97); }
+
+    .session-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+    .stat-row { display: flex; align-items: center; gap: 10px; background: var(--surface2); border-radius: 8px; padding: 10px 14px; }
+    .stat-icon { font-size: 16px; }
+    .stat-label { font-size: 12px; color: var(--muted); }
+    .stat-val { font-size: 15px; font-weight: 700; margin-left: auto; font-variant-numeric: tabular-nums; }
+
+    .lb-table { width: 100%; border-collapse: collapse; }
+    .lb-table th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+    .lb-table td { padding: 13px 12px; border-bottom: 1px solid #161616; font-size: 14px; }
+    .lb-table tr:hover td { background: #161616; }
+
+    .period-tabs { display: flex; gap: 4px; margin-bottom: 14px; }
+    .period-tabs button { flex: 1; padding: 7px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+    .period-tabs button.active { background: var(--surface2); color: var(--text); border-color: var(--muted); }
+
+    .chart-wrap { display: flex; align-items: flex-end; gap: 3px; height: 140px; padding: 8px 0; }
+    .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1; gap: 2px; }
+    .bar-val { font-size: 8px; color: var(--muted); }
+    .bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 3px; background: var(--accent); }
+    .bar.zero { background: var(--surface2); }
+    .bar-date { font-size: 8px; color: var(--muted); margin-top: 4px; text-align: center; }
+
+    .daily-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .daily-table th { text-align: right; padding: 6px 8px; color: var(--muted); font-size: 11px; font-weight: 600; border-bottom: 1px solid var(--border); }
+    .daily-table th:first-child { text-align: left; }
+    .daily-table td { padding: 8px 8px; border-bottom: 1px solid #161616; text-align: right; font-variant-numeric: tabular-nums; }
+    .daily-table td:first-child { text-align: left; }
+    .daily-table td:nth-child(2) { font-weight: 700; color: var(--accent); }
+
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 320px; text-align: center; }
+    .modal .big-icon { font-size: 48px; margin-bottom: 12px; }
+    .modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+    .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .result-row:last-of-type { border-bottom: none; }
+    .result-val { font-weight: 700; }
+    .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+
+    .today-banner { text-align: center; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+    .today-label { font-size: 11px; color: var(--muted); }
+    .today-count { font-size: 36px; font-weight: 800; color: var(--accent); }
+
+    .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+
+    .my-stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .my-stat-row:last-child { border-bottom: none; }
+    .my-stat-val { font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <button class="active" data-tab="workout" onclick="switchTab('workout', this)">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29l-1.43-1.43z"/></svg>
+    Тренировка
+  </button>
+  <button data-tab="stats" onclick="switchTab('stats', this)">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z"/></svg>
+    Статистика
+  </button>
+  <button data-tab="leaderboard" onclick="switchTab('leaderboard', this)">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zm-2 3.5c0 1.93-1.57 3.5-3.5 3.5S10 10.43 10 8.5V7h7v1.5z"/></svg>
+    Лидерборд
+  </button>
+  <button data-tab="settings" onclick="switchTab('settings', this)">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+    Настройки
+  </button>
+</nav>
+
+<!-- WORKOUT -->
+<div class="view active" id="view-workout">
+  <div class="card">
+    <label for="player-name-input">Игрок</label>
+    <input type="text" id="player-name-input" placeholder="Введи своё имя" maxlength="30">
+  </div>
+
+  <div class="card">
+    <div id="idle-state">
+      <div style="text-align:center; padding:20px 0 24px">
+        <div style="font-size:48px;margin-bottom:12px">💪</div>
+        <div style="font-size:17px;font-weight:600;margin-bottom:6px">Готов к тренировке?</div>
+        <div style="font-size:13px;color:var(--muted)">Нажимай кнопку за каждое отжимание</div>
+      </div>
+      <button class="btn btn-green" onclick="startSession()" id="start-btn">▶ Начать тренировку</button>
+    </div>
+
+    <div id="active-state" style="display:none">
+      <div id="counter-display">0</div>
+      <div id="timer-display">0:00.0</div>
+      <button id="tap-btn" onclick="tapPushup()">+ ОТЖИМАНИЕ</button>
+      <div class="session-stats">
+        <div class="stat-row">
+          <span class="stat-icon">🔥</span>
+          <span class="stat-label">Отжиманий</span>
+          <span class="stat-val" id="stat-count">0</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-icon">⏱</span>
+          <span class="stat-label">Время</span>
+          <span class="stat-val" id="stat-time">0:00</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-outline" onclick="resetCount()" style="flex:0 0 auto;width:auto;padding:10px 16px">↺ Сброс</button>
+        <button class="btn btn-red" onclick="stopSession()">⏹ Завершить</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="today-banner">
+    <div class="today-label">Всего сегодня</div>
+    <div class="today-count" id="today-total-workout">—</div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="view" id="view-stats">
+  <div class="summary-grid" id="stats-summary"></div>
+
+  <div class="card">
+    <div class="card-title">Отжимания по дням</div>
+    <div class="period-tabs">
+      <button class="active" onclick="setPeriod(7, this)">7 дней</button>
+      <button onclick="setPeriod(30, this)">30 дней</button>
+      <button onclick="setPeriod(90, this)">Всё время</button>
+    </div>
+    <div class="chart-wrap" id="bar-chart"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Детализация</div>
+    <div id="daily-table-wrap"></div>
+  </div>
+</div>
+
+<!-- LEADERBOARD -->
+<div class="view" id="view-leaderboard">
+  <div class="today-banner">
+    <div class="today-label">Команда сегодня</div>
+    <div class="today-count" id="today-total-lb">—</div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Имя</th><th>Всего</th><th>Рекорд</th><th>Стрик</th><th>Сессий</th>
+        </tr>
+      </thead>
+      <tbody id="lb-tbody">
+        <tr><td colspan="6" class="empty-state">Загрузка...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="view" id="view-settings">
+  <div class="card">
+    <div class="card-title">Профиль</div>
+    <label for="settings-name">Имя игрока</label>
+    <input type="text" id="settings-name" placeholder="Введи своё имя" maxlength="30">
+    <button class="btn btn-accent" onclick="saveName()" style="margin-top:12px">Сохранить</button>
+  </div>
+  <div class="card" id="my-stats-card" style="display:none">
+    <div class="card-title">Мои показатели</div>
+    <div id="my-stats-rows"></div>
+  </div>
+</div>
+
+<!-- SAVE MODAL -->
+<div class="modal-overlay" id="save-modal">
+  <div class="modal">
+    <div class="big-icon">🎉</div>
+    <h3>Отличная работа!</h3>
+    <div class="result-row">
+      <span>Отжиманий:</span><span class="result-val" id="modal-count">0</span>
+    </div>
+    <div class="result-row">
+      <span>Время:</span><span class="result-val" id="modal-time">—</span>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="discardSession()">Не сохранять</button>
+      <button class="btn btn-green" onclick="saveSession()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = '';
+  let playerName = localStorage.getItem('playerName') || '';
+  let playerId   = localStorage.getItem('playerId')   || '';
+  let sessionActive = false, sessionCount = 0, sessionStart = null;
+  let timerInterval = null, lastCount = 0, lastDuration = 0;
+  let currentPeriod = 7;
+
+  // Init
+  document.getElementById('player-name-input').value = playerName;
+  document.getElementById('settings-name').value     = playerName;
+  loadTodayTotal();
+
+  // ── TABS ──
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('view-' + tab).classList.add('active');
+    if (btn) btn.classList.add('active');
+    if (tab === 'stats')       loadStats();
+    if (tab === 'leaderboard') loadLeaderboard();
+    if (tab === 'settings')    loadMyStats();
+  }
+
+  // ── TODAY ──
+  async function loadTodayTotal() {
+    try {
+      const r = await fetch(API + '/api/stats/team').then(r => r.json());
+      setText('today-total-workout', r.today ?? '—');
+      setText('today-total-lb',      r.today ?? '—');
+    } catch {}
+  }
+
+  // ── WORKOUT ──
+  function startSession() {
+    const name = document.getElementById('player-name-input').value.trim();
+    if (!name) { document.getElementById('player-name-input').focus(); return; }
+    playerName = name;
+    localStorage.setItem('playerName', name);
+    sessionCount = 0; sessionStart = Date.now(); sessionActive = true;
+    show('active-state'); hide('idle-state');
+    document.getElementById('player-name-input').disabled = true;
+    updateCounter();
+    timerInterval = setInterval(() => {
+      const s = (Date.now() - sessionStart) / 1000;
+      setText('stat-time',     formatTime(s));
+      setText('timer-display', formatTimeMs(s));
+    }, 100);
+  }
+
+  function tapPushup() {
+    if (!sessionActive) return;
+    sessionCount++;
+    updateCounter();
+    const el = document.getElementById('counter-display');
+    el.classList.add('bump');
+    setTimeout(() => el.classList.remove('bump'), 150);
+  }
+
+  function resetCount() { sessionCount = 0; updateCounter(); }
+
+  function stopSession() {
+    if (!sessionActive) return;
+    clearInterval(timerInterval);
+    lastCount = sessionCount;
+    lastDuration = (Date.now() - sessionStart) / 1000;
+    sessionActive = false;
+    document.getElementById('player-name-input').disabled = false;
+    show('idle-state'); hide('active-state');
+    if (lastCount > 0) {
+      setText('modal-count', lastCount);
+      setText('modal-time',  formatTime(lastDuration));
+      document.getElementById('save-modal').classList.add('open');
+    }
+  }
+
+  async function saveSession() {
+    document.getElementById('save-modal').classList.remove('open');
+    try {
+      const pid = await ensurePlayer(playerName);
+      if (!pid) return;
+      const today = new Date().toISOString().split('T')[0];
+      await fetch(API + '/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player_id: pid, count: lastCount, duration: lastDuration, date: today })
+      });
+      loadTodayTotal();
+    } catch (e) { alert('Ошибка: ' + e.message); }
+  }
+
+  function discardSession() { document.getElementById('save-modal').classList.remove('open'); }
+
+  function updateCounter() {
+    setText('counter-display', sessionCount);
+    setText('stat-count',      sessionCount);
+  }
+
+  // ── STATS ──
+  async function loadStats() {
+    const pid = await resolvePlayerId();
+    if (!pid) { renderStatsEmpty(); return; }
+    try {
+      const [lb, team, daily] = await Promise.all([
+        fetch(API + '/api/leaderboard').then(r => r.json()),
+        fetch(API + '/api/stats/team').then(r => r.json()),
+        fetch(API + '/api/stats/' + pid + '?days=90').then(r => r.json()),
+      ]);
+      const me = lb.find(p => p.id === pid) || {};
+      const weekTotal  = daily.daily.filter(d => isWithinDays(d.date, 7)).reduce((s,d) => s + d.total_pushups, 0);
+      const bestEver   = daily.daily.reduce((m,d) => Math.max(m, d.best_session), 0);
+
+      const grid = document.getElementById('stats-summary');
+      grid.replaceChildren();
+      [
+        ['🔥', team.today,            'Сегодня', 'отжиманий', 'var(--accent)'],
+        ['📅', weekTotal,             'Неделя',  'отжиманий', 'var(--blue)'],
+        ['⭐', me.total_pushups || 0, 'Всего',   'отжиманий', 'var(--purple)'],
+        ['🏆', bestEver,              'Рекорд',  'за сессию',  'var(--yellow)'],
+      ].forEach(([icon, val, label, sub, color]) => {
+        grid.appendChild(makeSummaryCard(icon, val, label, sub, color));
+      });
+
+      renderChart(daily.daily, currentPeriod);
+      renderDailyTable(daily.daily, currentPeriod);
+    } catch {}
+  }
+
+  function makeSummaryCard(icon, val, label, sub, color) {
+    const card = el('div', 'summary-card');
+    card.appendChild(el('div', 'sc-icon', icon));
+    const v = el('div', 'sc-val', (val ?? 0).toLocaleString('ru'));
+    v.style.color = color;
+    card.appendChild(v);
+    card.appendChild(el('div', 'sc-label', label));
+    card.appendChild(el('div', 'sc-sub', sub));
+    return card;
+  }
+
+  function setPeriod(days, btn) {
+    currentPeriod = days;
+    document.querySelectorAll('.period-tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadStats();
+  }
+
+  function renderChart(daily, days) {
+    const wrap = document.getElementById('bar-chart');
+    wrap.replaceChildren();
+    const map = Object.fromEntries(daily.map(d => [d.date, d.total_pushups]));
+    const points = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      points.push({ key, val: map[key] || 0 });
+    }
+    const maxVal = Math.max(...points.map(p => p.val), 1);
+    points.forEach(p => {
+      const col = el('div', 'bar-col');
+      if (p.val > 0) col.appendChild(el('div', 'bar-val', p.val));
+      const bar = el('div', 'bar' + (p.val === 0 ? ' zero' : ''));
+      const ratio = p.val / maxVal;
+      bar.style.height = (ratio * 120 + (p.val > 0 ? 4 : 3)) + 'px';
+      if (p.val > 0) {
+        bar.style.background = ratio > 0.75 ? 'var(--green)' : ratio > 0.5 ? 'var(--blue)' : ratio > 0.25 ? 'var(--accent)' : 'var(--red)';
+      }
+      col.appendChild(bar);
+      const parts = p.key.split('-');
+      col.appendChild(el('div', 'bar-date', parts[2] + '.' + parts[1]));
+      wrap.appendChild(col);
+    });
+  }
+
+  function renderDailyTable(daily, days) {
+    const wrap = document.getElementById('daily-table-wrap');
+    wrap.replaceChildren();
+    const rows = daily.filter(d => isWithinDays(d.date, days) && d.total_pushups > 0)
+                      .sort((a,b) => b.date.localeCompare(a.date));
+    if (!rows.length) {
+      wrap.appendChild(el('div', 'empty-state', 'Нет тренировок за этот период'));
+      return;
+    }
+    const table = document.createElement('table');
+    table.className = 'daily-table';
+    const thead = table.createTHead();
+    const hr = thead.insertRow();
+    ['Дата','Всего','Сессий','Лучшая','Время'].forEach(h => {
+      const th = document.createElement('th');
+      th.textContent = h;
+      hr.appendChild(th);
+    });
+    const tbody = table.createTBody();
+    rows.forEach(d => {
+      const tr = tbody.insertRow();
+      addCell(tr, ruDate(d.date));
+      addCell(tr, d.total_pushups.toLocaleString('ru'));
+      addCell(tr, d.sessions_count);
+      addCell(tr, d.best_session.toLocaleString('ru'));
+      addCell(tr, formatTime(d.total_duration || 0));
+    });
+    wrap.appendChild(table);
+  }
+
+  function renderStatsEmpty() {
+    document.getElementById('stats-summary').replaceChildren();
+    document.getElementById('bar-chart').replaceChildren();
+    const wrap = document.getElementById('daily-table-wrap');
+    wrap.replaceChildren(el('div', 'empty-state', 'Введи имя в Настройках чтобы видеть свою статистику'));
+  }
+
+  // ── LEADERBOARD ──
+  async function loadLeaderboard() {
+    try {
+      const [lb, stats] = await Promise.all([
+        fetch(API + '/api/leaderboard').then(r => r.json()),
+        fetch(API + '/api/stats/team').then(r => r.json()),
+      ]);
+      setText('today-total-lb', stats.today ?? '—');
+      const tbody = document.getElementById('lb-tbody');
+      tbody.replaceChildren();
+      if (!lb.length) {
+        const tr = tbody.insertRow();
+        const td = addCell(tr, 'Пока никого нет 🤷');
+        td.colSpan = 6; td.className = 'empty-state';
+        return;
+      }
+      const medals = ['🥇','🥈','🥉'];
+      lb.forEach((p, i) => {
+        const tr = tbody.insertRow();
+        addCell(tr, medals[i] ?? String(i+1));
+        const nameTd = addCell(tr, p.name);
+        nameTd.style.fontWeight = '600';
+        if (p.id === playerId) nameTd.style.color = 'var(--accent)';
+        const totalTd = addCell(tr, p.total_pushups.toLocaleString('ru'));
+        totalTd.style.color = 'var(--accent)'; totalTd.style.fontWeight = '700';
+        addCell(tr, p.best_session.toLocaleString('ru'));
+        const streakTd = addCell(tr, p.streak > 0 ? '🔥 ' + p.streak + 'д' : '—');
+        if (p.streak > 0) streakTd.style.color = 'var(--yellow)';
+        const sessTd = addCell(tr, p.sessions_count);
+        sessTd.style.color = 'var(--muted)';
+      });
+    } catch {}
+  }
+
+  // ── SETTINGS ──
+  function saveName() {
+    const name = document.getElementById('settings-name').value.trim();
+    if (!name) return;
+    playerName = name; playerId = '';
+    localStorage.setItem('playerName', name);
+    localStorage.removeItem('playerId');
+    document.getElementById('player-name-input').value = name;
+    loadMyStats();
+  }
+
+  async function loadMyStats() {
+    document.getElementById('settings-name').value = playerName;
+    const pid = await resolvePlayerId();
+    if (!pid) return;
+    try {
+      const lb = await fetch(API + '/api/leaderboard').then(r => r.json());
+      const me = lb.find(p => p.id === pid);
+      if (!me) return;
+      document.getElementById('my-stats-card').style.display = 'block';
+      const wrap = document.getElementById('my-stats-rows');
+      wrap.replaceChildren();
+      [
+        ['Всего отжиманий', me.total_pushups.toLocaleString('ru')],
+        ['Лучшая сессия',   me.best_session.toLocaleString('ru')],
+        ['Всего сессий',    me.sessions_count],
+        ['Стрик',           me.streak > 0 ? '🔥 ' + me.streak + ' дней' : '—'],
+      ].forEach(([label, val]) => {
+        const row = el('div', 'my-stat-row');
+        row.appendChild(el('span', '', label));
+        row.appendChild(el('span', 'my-stat-val', String(val)));
+        wrap.appendChild(row);
+      });
+    } catch {}
+  }
+
+  // ── HELPERS ──
+  async function resolvePlayerId() {
+    if (!playerName) return null;
+    if (playerId) return playerId;
+    return await ensurePlayer(playerName);
+  }
+
+  async function ensurePlayer(name) {
+    try {
+      const r = await fetch(API + '/api/players', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      }).then(r => r.json());
+      playerId = r.id;
+      localStorage.setItem('playerId', playerId);
+      return playerId;
+    } catch { return null; }
+  }
+
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls)  e.className   = cls;
+    if (text !== undefined) e.textContent = String(text);
+    return e;
+  }
+
+  function setText(id, val) {
+    const e = document.getElementById(id);
+    if (e) e.textContent = String(val);
+  }
+
+  function addCell(tr, text) {
+    const td = tr.insertCell();
+    td.textContent = String(text);
+    return td;
+  }
+
+  function show(id) { document.getElementById(id).style.display = 'block'; }
+  function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  function formatTimeMs(sec) {
+    const m = Math.floor(sec / 60), s = Math.floor(sec % 60), t = Math.floor((sec % 1) * 10);
+    return m + ':' + String(s).padStart(2, '0') + '.' + t;
+  }
+
+  function isWithinDays(dateStr, days) {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    return new Date(dateStr) >= cutoff;
+  }
+
+  function ruDate(key) {
+    const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+    const p = key.split('-');
+    return p[2] + ' ' + months[+p[1] - 1];
+  }
+
+  // Пробел = +1 отжимание во время тренировки
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space' && sessionActive && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+      e.preventDefault();
+      tapPushup();
+    }
+  });
+</script>
+</body>
+</html>
