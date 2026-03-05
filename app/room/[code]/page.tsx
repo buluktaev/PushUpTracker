@@ -183,7 +183,6 @@ export default function RoomPage() {
           </button>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <ThemeToggle />
           <button
             onClick={leaveRoom}
             className="text-[11px] px-3 py-1.5 text-[var(--muted)] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
@@ -191,6 +190,7 @@ export default function RoomPage() {
           >
             exit()
           </button>
+          <ThemeToggle />
         </div>
       </header>
 

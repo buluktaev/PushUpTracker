@@ -63,7 +63,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-[var(--bg)]">
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-3 right-4 z-50">
         <ThemeToggle />
       </div>
       <div className="w-full max-w-sm">
