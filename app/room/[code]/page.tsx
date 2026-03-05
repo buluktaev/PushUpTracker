@@ -136,14 +136,14 @@ export default function RoomPage() {
             value={creatorNameInput}
             onChange={e => setCreatorNameInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && submitCreatorName()}
-            className="w-full rounded-[2px] px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
+            className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
             style={{ border: '1px solid var(--border)' }}
             autoFocus
           />
           <button
             onClick={submitCreatorName}
             disabled={!creatorNameInput.trim()}
-            className="w-full py-3 rounded-[2px] text-sm font-bold text-white bg-[#ff6b35] disabled:opacity-40"
+            className="w-full py-3 text-sm font-normal text-white bg-[#ff6b35] disabled:opacity-40"
           >
             войти в комнату
           </button>
@@ -169,7 +169,7 @@ export default function RoomPage() {
           <h1 className="font-bold text-sm truncate">{room.name}</h1>
           <button
             onClick={copyCode}
-            className="shrink-0 flex items-center gap-1 text-[10px] tracking-wider px-2 py-0.5 rounded-[2px] text-[var(--muted)] hover:border-[#ff6b35] hover:text-[var(--text)] transition-colors"
+            className="shrink-0 flex items-center gap-1 text-[10px] tracking-wider px-2 py-0.5 text-[var(--muted)] hover:border-[#ff6b35] hover:text-[var(--text)] transition-colors"
             style={{ background: 'var(--surface-dim)', border: '1px solid var(--border)' }}
           >
             {copied ? (
@@ -181,7 +181,7 @@ export default function RoomPage() {
         </div>
         <button
           onClick={leaveRoom}
-          className="shrink-0 text-[11px] px-3 py-1.5 rounded-[2px] text-[var(--muted)] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
+          className="shrink-0 text-[11px] px-3 py-1.5 text-[var(--muted)] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
           style={{ border: '1px solid var(--border)' }}
         >
           exit()
@@ -216,7 +216,7 @@ export default function RoomPage() {
           <>
             {/* Stats bar */}
             <div
-              className="rounded-[2px] px-3 py-2 mb-4 text-[10px] tracking-wide text-[var(--muted)] flex flex-wrap gap-x-3 gap-y-1"
+              className="px-3 py-2 mb-4 text-[10px] tracking-wide text-[var(--muted)] flex flex-wrap gap-x-3 gap-y-1"
               style={{ background: 'var(--surface-dim)', border: '1px solid var(--border)' }}
             >
               <span>total: <strong className="text-[var(--text)]">{room.stats.totalPushups.toLocaleString()}</strong> reps</span>
@@ -229,7 +229,7 @@ export default function RoomPage() {
             </div>
 
             {/* Leaderboard */}
-            <div className="rounded-[2px] overflow-hidden" style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}>
+            <div className="overflow-hidden" style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}>
               {room.leaderboard.length === 0 ? (
                 <div className="p-8 text-center text-[10px] tracking-widest text-[var(--muted)]">
                   // пока никого нет. начните тренировку.
@@ -274,7 +274,7 @@ export default function RoomPage() {
 
             <button
               onClick={loadRoom}
-              className="mt-3 w-full py-2.5 rounded-[2px] text-[11px] text-[var(--muted)] hover:border-[var(--text)] hover:text-[var(--text)] transition-colors"
+              className="mt-3 w-full py-2.5 text-[11px] text-[var(--muted)] hover:border-[var(--text)] hover:text-[var(--text)] transition-colors"
               style={{ border: '1px solid var(--border)' }}
             >
               refresh()

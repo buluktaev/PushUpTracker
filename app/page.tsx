@@ -84,13 +84,13 @@ export default function HomePage() {
           <div className="flex flex-col gap-2">
             <button
               onClick={() => setMode('create')}
-              className="w-full py-3 rounded-[2px] text-sm font-bold text-white bg-[#ff6b35] hover:opacity-85 transition-opacity"
+              className="w-full py-3 text-sm font-normal text-white bg-[#ff6b35] hover:opacity-85 transition-opacity"
             >
               create_room()
             </button>
             <button
               onClick={() => setMode('join')}
-              className="w-full py-3 rounded-[2px] text-sm font-medium border text-[var(--text)] bg-[var(--surface)] hover:border-[#ff6b35] transition-colors"
+              className="w-full py-3 text-sm font-normal border text-[var(--text)] bg-[var(--surface)] hover:border-[#ff6b35] transition-colors"
               style={{ borderColor: 'var(--border)' }}
             >
               join_room()
@@ -111,7 +111,7 @@ export default function HomePage() {
                 value={roomName}
                 onChange={e => setRoomName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleCreate()}
-                className="w-full rounded-[2px] px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
+                className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
                 style={{ border: '1px solid var(--border)' }}
                 autoFocus
               />
@@ -122,7 +122,7 @@ export default function HomePage() {
             <button
               onClick={handleCreate}
               disabled={loading}
-              className="w-full py-3 rounded-[2px] text-sm font-bold text-white bg-[#ff6b35] disabled:opacity-40 hover:opacity-85 transition-opacity"
+              className="w-full py-3 text-sm font-normal text-white bg-[#ff6b35] disabled:opacity-40 hover:opacity-85 transition-opacity"
             >
               {loading ? '// выполняем...' : 'execute()'}
             </button>
@@ -148,7 +148,7 @@ export default function HomePage() {
                 value={joinCode}
                 onChange={e => setJoinCode(e.target.value.toUpperCase())}
                 maxLength={6}
-                className="w-full rounded-[2px] px-3 py-2.5 text-sm tracking-[0.25em] bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
+                className="w-full px-3 py-2.5 text-sm tracking-[0.25em] bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
                 style={{ border: '1px solid var(--border)' }}
                 autoFocus
               />
@@ -164,7 +164,7 @@ export default function HomePage() {
                 value={joinName}
                 onChange={e => setJoinName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleJoin()}
-                className="w-full rounded-[2px] px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
+                className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
                 style={{ border: '1px solid var(--border)' }}
               />
             </div>
@@ -174,7 +174,7 @@ export default function HomePage() {
             <button
               onClick={handleJoin}
               disabled={loading}
-              className="w-full py-3 rounded-[2px] text-sm font-bold text-white bg-[#ff6b35] disabled:opacity-40 hover:opacity-85 transition-opacity"
+              className="w-full py-3 text-sm font-normal text-white bg-[#ff6b35] disabled:opacity-40 hover:opacity-85 transition-opacity"
             >
               {loading ? '// входим...' : 'execute()'}
             </button>
