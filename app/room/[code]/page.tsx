@@ -250,8 +250,18 @@ export default function RoomPage() {
                       background: p.id === identity?.participantId ? 'var(--surface-dim)' : undefined,
                     }}
                   >
-                    <span className="w-6 text-[10px] font-bold text-[var(--muted)] shrink-0 tabular-nums">
-                      {String(i + 1).padStart(2, '0')}
+                    <span className="w-6 shrink-0 flex items-center justify-center">
+                      {i === 0 ? (
+                        <Icon name="crown" size={16} style={{ color: '#F7C948' }} />
+                      ) : i === 1 ? (
+                        <Icon name="crown" size={16} style={{ color: '#B8B8B8' }} />
+                      ) : i === 2 ? (
+                        <Icon name="crown" size={16} style={{ color: '#CD7F32' }} />
+                      ) : (
+                        <span className="text-[10px] font-bold text-[var(--muted)] tabular-nums">
+                          {String(i + 1).padStart(2, '0')}
+                        </span>
+                      )}
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium flex items-center gap-2 flex-wrap">
