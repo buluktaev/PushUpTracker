@@ -7,7 +7,7 @@ import { IconTrophyFilled, IconBarbellFilled, IconCircleCheckFilled } from '@tab
 
 const CameraWorkout = dynamic(() => import('@/components/CameraWorkout'), {
   ssr: false,
-  loading: () => <div className="py-8 text-[10px] tracking-widest text-[#888880]">// загрузка камеры...</div>,
+  loading: () => <div className="py-8 text-[10px] tracking-widest text-[var(--muted)]">// загрузка камеры...</div>,
 })
 
 interface Participant {
@@ -124,11 +124,11 @@ export default function RoomPage() {
 
   if (showCreatorForm) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAF9F5]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
         <div className="w-full max-w-sm p-6 flex flex-col gap-4">
           <div>
-            <p className="text-[10px] tracking-widest uppercase text-[#888880]">// комната создана</p>
-            <h2 className="text-lg font-bold text-[#111111] mt-1">Как вас зовут?</h2>
+            <p className="text-[10px] tracking-widest uppercase text-[var(--muted)]">// комната создана</p>
+            <h2 className="text-lg font-bold text-[var(--text)] mt-1">Как вас зовут?</h2>
           </div>
           <input
             type="text"
@@ -136,7 +136,8 @@ export default function RoomPage() {
             value={creatorNameInput}
             onChange={e => setCreatorNameInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && submitCreatorName()}
-            className="w-full rounded-[2px] px-3 py-2.5 text-sm bg-white border border-[#E5E3DC] text-[#111111] placeholder-[#888880] focus:outline-none focus:border-[#ff6b35] transition-colors"
+            className="w-full rounded-[2px] px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
+            style={{ border: '1px solid var(--border)' }}
             autoFocus
           />
           <button
@@ -153,22 +154,23 @@ export default function RoomPage() {
 
   if (loading || !room) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAF9F5]">
-        <span className="text-[10px] tracking-widest text-[#888880]">// загрузка...</span>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
+        <span className="text-[10px] tracking-widest text-[var(--muted)]">// загрузка...</span>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF9F5] text-[#111111]">
+    <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text)]">
 
       {/* Header */}
-      <header className="sticky top-0 z-10 px-4 py-3 flex items-center justify-between border-b border-[#E5E3DC] bg-[#FAF9F5]">
+      <header className="sticky top-0 z-10 px-4 py-3 flex items-center justify-between bg-[var(--bg)]" style={{ borderBottom: '1px solid var(--border)' }}>
         <div className="flex items-center gap-2.5 min-w-0">
           <h1 className="font-bold text-sm truncate">{room.name}</h1>
           <button
             onClick={copyCode}
-            className="shrink-0 flex items-center gap-1 text-[10px] tracking-wider px-2 py-0.5 bg-[#F0EFE9] border border-[#E5E3DC] rounded-[2px] text-[#888880] hover:border-[#ff6b35] hover:text-[#111111] transition-colors"
+            className="shrink-0 flex items-center gap-1 text-[10px] tracking-wider px-2 py-0.5 rounded-[2px] text-[var(--muted)] hover:border-[#ff6b35] hover:text-[var(--text)] transition-colors"
+            style={{ background: 'var(--surface-dim)', border: '1px solid var(--border)' }}
           >
             {copied ? (
               <><IconCircleCheckFilled size={11} className="text-[#22c55e]" /> copied</>
@@ -179,14 +181,15 @@ export default function RoomPage() {
         </div>
         <button
           onClick={leaveRoom}
-          className="shrink-0 text-[11px] px-3 py-1.5 rounded-[2px] border border-[#E5E3DC] text-[#888880] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
+          className="shrink-0 text-[11px] px-3 py-1.5 rounded-[2px] text-[var(--muted)] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
+          style={{ border: '1px solid var(--border)' }}
         >
           exit()
         </button>
       </header>
 
       {/* Tabs */}
-      <nav className="flex border-b border-[#E5E3DC] bg-[#FAF9F5]" role="tablist">
+      <nav className="flex" role="tablist" style={{ borderBottom: '1px solid var(--border)' }}>
         {(['leaderboard', 'workout'] as const).map(t => (
           <button
             key={t}
@@ -195,8 +198,8 @@ export default function RoomPage() {
             aria-selected={tab === t}
             className={`px-5 py-2.5 text-[11px] tracking-wide transition-colors border-b-2 -mb-px flex items-center gap-1.5 ${
               tab === t
-                ? 'border-[#ff6b35] text-[#111111] font-bold'
-                : 'border-transparent text-[#888880] hover:text-[#111111]'
+                ? 'border-[#ff6b35] text-[var(--text)] font-bold'
+                : 'border-transparent text-[var(--muted)] hover:text-[var(--text)]'
             }`}
           >
             {t === 'leaderboard' ? (
@@ -212,31 +215,36 @@ export default function RoomPage() {
         {tab === 'leaderboard' && (
           <>
             {/* Stats bar */}
-            <div className="rounded-[2px] px-3 py-2 mb-4 bg-[#F0EFE9] border border-[#E5E3DC] text-[10px] tracking-wide text-[#888880] flex flex-wrap gap-x-3 gap-y-1">
-              <span>total: <strong className="text-[#111111]">{room.stats.totalPushups.toLocaleString()}</strong> reps</span>
+            <div
+              className="rounded-[2px] px-3 py-2 mb-4 text-[10px] tracking-wide text-[var(--muted)] flex flex-wrap gap-x-3 gap-y-1"
+              style={{ background: 'var(--surface-dim)', border: '1px solid var(--border)' }}
+            >
+              <span>total: <strong className="text-[var(--text)]">{room.stats.totalPushups.toLocaleString()}</strong> reps</span>
               <span>·</span>
-              <span>members: <span className="text-[#111111]">{room.stats.participantsCount}</span></span>
+              <span>members: <span className="text-[var(--text)]">{room.stats.participantsCount}</span></span>
               <span>·</span>
-              <span>sessions: <span className="text-[#111111]">{room.stats.sessionsCount}</span></span>
+              <span>sessions: <span className="text-[var(--text)]">{room.stats.sessionsCount}</span></span>
               <span>·</span>
               <span>active today: <span className="text-[#22c55e] font-bold">{room.stats.activeToday}</span></span>
             </div>
 
             {/* Leaderboard */}
-            <div className="rounded-[2px] overflow-hidden border border-[#E5E3DC] bg-white">
+            <div className="rounded-[2px] overflow-hidden" style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}>
               {room.leaderboard.length === 0 ? (
-                <div className="p-8 text-center text-[10px] tracking-widest text-[#888880]">
+                <div className="p-8 text-center text-[10px] tracking-widest text-[var(--muted)]">
                   // пока никого нет. начните тренировку.
                 </div>
               ) : (
                 room.leaderboard.map((p, i) => (
                   <div
                     key={p.id}
-                    className={`flex items-center gap-3 px-4 py-3 border-b border-[#E5E3DC] last:border-0 ${
-                      p.id === identity?.participantId ? 'bg-[#FAF9F5]' : ''
-                    }`}
+                    className="flex items-center gap-3 px-4 py-3"
+                    style={{
+                      borderBottom: '1px solid var(--border)',
+                      background: p.id === identity?.participantId ? 'var(--surface-dim)' : undefined,
+                    }}
                   >
-                    <span className="w-6 text-[10px] font-bold text-[#888880] shrink-0 tabular-nums">
+                    <span className="w-6 text-[10px] font-bold text-[var(--muted)] shrink-0 tabular-nums">
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     <div className="flex-1 min-w-0">
@@ -254,7 +262,7 @@ export default function RoomPage() {
                           </span>
                         )}
                       </div>
-                      <div className="text-[10px] text-[#888880] mt-0.5">
+                      <div className="text-[10px] text-[var(--muted)] mt-0.5">
                         {p.sessionsCount} sessions · best: {p.bestSession}
                       </div>
                     </div>
@@ -266,7 +274,8 @@ export default function RoomPage() {
 
             <button
               onClick={loadRoom}
-              className="mt-3 w-full py-2.5 rounded-[2px] text-[11px] border border-[#E5E3DC] text-[#888880] hover:border-[#111111] hover:text-[#111111] transition-colors"
+              className="mt-3 w-full py-2.5 rounded-[2px] text-[11px] text-[var(--muted)] hover:border-[var(--text)] hover:text-[var(--text)] transition-colors"
+              style={{ border: '1px solid var(--border)' }}
             >
               refresh()
             </button>

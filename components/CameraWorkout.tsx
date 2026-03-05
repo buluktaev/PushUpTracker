@@ -303,13 +303,13 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
   return (
     <div className="flex flex-col gap-3">
 
-      {/* Camera container */}
+      {/* Camera container — always dark bg regardless of theme */}
       <div
         className="relative overflow-hidden"
         style={{
           background: '#0a0a0a',
           aspectRatio: '4/3',
-          border: `1px solid ${cameraOn ? status.color : '#E5E3DC'}`,
+          border: `1px solid ${cameraOn ? status.color : 'var(--border)'}`,
           borderRadius: '2px',
           transition: 'border-color 0.2s',
         }}
@@ -333,10 +333,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
           className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 text-[10px] tracking-wider"
           style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', borderRadius: '2px' }}
         >
-          <span
-            className="w-1.5 h-1.5 rounded-full shrink-0"
-            style={{ background: status.color }}
-          />
+          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: status.color }} />
           <span style={{ color: status.color }}>[{status.text}]</span>
         </div>
 
@@ -364,7 +361,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
           </div>
         )}
 
-        {/* Disable camera button — top right */}
+        {/* Disable camera — top right */}
         {cameraOn && (
           <button
             onClick={stopCamera}
@@ -382,11 +379,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
             <button
               onClick={startCamera}
               className="flex flex-col items-center gap-2.5 px-8 py-5 text-white transition-opacity hover:opacity-80"
-              style={{
-                background: 'rgba(255,107,53,0.9)',
-                backdropFilter: 'blur(6px)',
-                borderRadius: '2px',
-              }}
+              style={{ background: 'rgba(255,107,53,0.9)', backdropFilter: 'blur(6px)', borderRadius: '2px' }}
             >
               <IconCameraFilled size={28} />
               <span className="text-[11px] tracking-widest">enable_camera()</span>

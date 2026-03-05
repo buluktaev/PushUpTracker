@@ -2,9 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light theme (sent.dm light) */
+:root {
+  --bg: #FAF9F5;
+  --surface: #FFFFFF;
+  --surface-dim: #F0EFE9;
+  --border: #E5E3DC;
+  --text: #111111;
+  --muted: #888880;
+}
+
+/* Dark theme (sent.dm dark — #161616) */
+.dark {
+  --bg: #161616;
+  --surface: #1c1c1c;
+  --surface-dim: #141414;
+  --border: #2a2a2a;
+  --text: #e8e6e1;
+  --muted: #666660;
+}
+
 body {
-  background: #FAF9F5;
-  color: #111111;
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-geist-mono), 'Courier New', monospace;
   -webkit-font-smoothing: antialiased;
 }
