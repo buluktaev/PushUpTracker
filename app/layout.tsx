@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { GeistMono } from 'geist/font/mono';
 import Script from "next/script";
 import "./globals.css";
-import ThemeToggle from "@/components/ThemeToggle";
 
 export const metadata: Metadata = {
   title: "PushUp Tracker",
@@ -20,7 +19,6 @@ export default function RootLayout({
         {/* Prevent FOUC: set dark class before first paint */}
         <Script id="theme-init" strategy="beforeInteractive" src="/theme-init.js" />
         {children}
-        <ThemeToggle />
       </body>
     </html>
   );

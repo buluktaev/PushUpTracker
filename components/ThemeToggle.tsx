@@ -29,7 +29,7 @@ export default function ThemeToggle() {
     <button
       onClick={toggle}
       aria-label={dark ? 'Переключить на светлую тему' : 'Переключить на тёмную тему'}
-      className="fixed top-4 right-4 z-50 text-[10px] tracking-widest px-3 py-2 border transition-colors hover:border-[#ff6b35] hover:text-[#ff6b35]"
+      className="text-[10px] tracking-widest px-3 py-2 border transition-colors hover:border-[#ff6b35] hover:text-[#ff6b35]"
       style={{
         background: 'var(--surface)',
         borderColor: 'var(--border)',

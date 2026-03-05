@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { IconBarbellFilled } from '@tabler/icons-react'
+import ThemeToggle from '@/components/ThemeToggle'
 
 export default function HomePage() {
   const router = useRouter()
@@ -62,6 +63,9 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-[var(--bg)]">
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-sm">
 
         {/* Header */}
