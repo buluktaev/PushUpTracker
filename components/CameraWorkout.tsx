@@ -285,7 +285,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
 
         {/* Placeholder */}
         {!cameraOn && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-[#666]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-[#666] pointer-events-none">
             <span className="text-4xl">📷</span>
             <span className="text-sm">Включите камеру для трекинга</span>
           </div>
