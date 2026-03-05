@@ -1,0 +1,34 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Room {
+  id           String        @id @default(cuid())
+  name         String
+  code         String        @unique
+  createdAt    DateTime      @default(now())
+  participants Participant[]
+}
+
+model Participant {
+  id        String    @id @default(cuid())
+  roomId    String
+  name      String
+  createdAt DateTime  @default(now())
+  room      Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sessions  Session[]
+}
+
+model Session {
+  id            String      @id @default(cuid())
+  participantId String
+  count         Int
+  duration      Float
+  date          String
+  createdAt     DateTime    @default(now())
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+}
