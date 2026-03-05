@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { IconCameraFilled } from '@tabler/icons-react'
+import Icon from '@/components/Icon'
 
 interface Props {
   participantId: string
@@ -368,7 +368,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
             className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 text-[10px] tracking-wider text-white"
             style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', borderRadius: 0 }}
           >
-            <IconCameraFilled size={13} />
+            <Icon name="photo_camera" size={13} />
             off
           </button>
         )}
@@ -381,7 +381,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
               className="flex flex-col items-center gap-2.5 px-8 py-5 text-white transition-opacity hover:opacity-80"
               style={{ background: 'rgba(255,107,53,0.9)', backdropFilter: 'blur(6px)', borderRadius: 0 }}
             >
-              <IconCameraFilled size={28} />
+              <Icon name="photo_camera" size={28} />
               <span className="text-[11px] tracking-widest">enable_camera()</span>
             </button>
           </div>

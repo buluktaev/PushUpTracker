@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { IconTrophyFilled, IconBarbellFilled, IconCircleCheckFilled } from '@tabler/icons-react'
+import Icon from '@/components/Icon'
 import ThemeToggle from '@/components/ThemeToggle'
 
 const CameraWorkout = dynamic(() => import('@/components/CameraWorkout'), {
@@ -176,7 +176,7 @@ export default function RoomPage() {
             style={{ background: 'var(--surface-dim)', border: '1px solid var(--border)' }}
           >
             {copied ? (
-              <><IconCircleCheckFilled size={11} className="text-[#22c55e]" /> copied</>
+              <><Icon name="check_circle" size={11} className="text-[#22c55e]" /> copied</>
             ) : (
               code
             )}
@@ -209,9 +209,9 @@ export default function RoomPage() {
             }`}
           >
             {t === 'leaderboard' ? (
-              <><IconTrophyFilled size={13} /> leaderboard</>
+              <><Icon name="emoji_events" size={13} /> leaderboard</>
             ) : (
-              <><IconBarbellFilled size={13} /> workout</>
+              <><Icon name="fitness_center" size={13} /> workout</>
             )}
           </button>
         ))}

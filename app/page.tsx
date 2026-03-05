@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { IconBarbellFilled } from '@tabler/icons-react'
+import Icon from '@/components/Icon'
 import ThemeToggle from '@/components/ThemeToggle'
 
 export default function HomePage() {
@@ -71,7 +71,7 @@ export default function HomePage() {
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-5">
-            <IconBarbellFilled size={16} style={{ color: '#ff6b35' }} />
+            <Icon name="fitness_center" size={16} style={{ color: '#ff6b35' }} />
             <span className="text-[10px] tracking-widest uppercase text-[var(--muted)]">
               // pushup tracker
             </span>
