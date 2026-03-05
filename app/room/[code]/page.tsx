@@ -126,7 +126,7 @@ export default function RoomPage() {
   if (showCreatorForm) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] relative">
-        <div className="absolute top-4 right-4"><ThemeToggle /></div>
+        <div className="absolute top-3 right-4"><ThemeToggle /></div>
         <div className="w-full max-w-sm p-6 flex flex-col gap-4">
           <div>
             <p className="text-[10px] tracking-widest uppercase text-[var(--muted)]">// комната создана</p>
@@ -157,7 +157,7 @@ export default function RoomPage() {
   if (loading || !room) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] relative">
-        <div className="absolute top-4 right-4"><ThemeToggle /></div>
+        <div className="absolute top-3 right-4"><ThemeToggle /></div>
         <span className="text-[10px] tracking-widest text-[var(--muted)]">// загрузка...</span>
       </div>
     )
