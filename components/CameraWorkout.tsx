@@ -279,20 +279,28 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
           </div>
         )}
 
-        {/* Camera toggle */}
-        <button
-          onClick={cameraOn ? stopCamera : startCamera}
-          className="absolute top-3 right-3 text-xs px-3 py-1.5 rounded-lg text-white"
-          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', border: 'none' }}
-        >
-          {cameraOn ? '📷 Выкл.' : '📷 Вкл.'}
-        </button>
+        {/* Выкл. — только когда камера включена */}
+        {cameraOn && (
+          <button
+            onClick={stopCamera}
+            className="absolute top-3 right-3 text-xs px-3 py-1.5 rounded-lg text-white"
+            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', border: 'none' }}
+          >
+            📷 Выкл.
+          </button>
+        )}
 
-        {/* Placeholder */}
+        {/* Кнопка включения по центру */}
         {!cameraOn && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-[#666] pointer-events-none">
-            <span className="text-4xl">📷</span>
-            <span className="text-sm">Включите камеру для трекинга</span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+            <button
+              onClick={startCamera}
+              className="flex flex-col items-center gap-2 px-8 py-5 rounded-2xl font-semibold text-white transition-opacity hover:opacity-80"
+              style={{ background: 'rgba(255,107,53,0.85)', backdropFilter: 'blur(6px)' }}
+            >
+              <span className="text-3xl">📷</span>
+              <span className="text-sm">Включить камеру</span>
+            </button>
           </div>
         )}
       </div>
