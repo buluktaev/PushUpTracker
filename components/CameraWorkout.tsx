@@ -31,6 +31,10 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
   const [elapsed, setElapsed] = useState(0)
   const [status, setStatus] = useState({ text: 'Камера выкл.', color: '#666' })
   const [saving, setSaving] = useState(false)
+  const [holding, setHolding] = useState(false)
+  const [holdProgress, setHoldProgress] = useState(0)
+  const holdRafRef = useRef<number | null>(null)
+  const holdStartRef = useRef<number | null>(null)
 
   const loadMP = useCallback(async () => {
     if (landmarkerRef.current) return
@@ -200,6 +204,31 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     }, 1000)
   }
 
+  function startHold() {
+    holdStartRef.current = Date.now()
+    setHolding(true)
+    setHoldProgress(0)
+
+    function tick() {
+      const elapsed = Date.now() - (holdStartRef.current ?? Date.now())
+      const progress = Math.min(elapsed / 2000, 1)
+      setHoldProgress(progress)
+      if (progress < 1) {
+        holdRafRef.current = requestAnimationFrame(tick)
+      } else {
+        finishSession()
+      }
+    }
+    holdRafRef.current = requestAnimationFrame(tick)
+  }
+
+  function cancelHold() {
+    if (holdRafRef.current) cancelAnimationFrame(holdRafRef.current)
+    setHolding(false)
+    setHoldProgress(0)
+    holdStartRef.current = null
+  }
+
   async function finishSession() {
     if (timerRef.current) clearInterval(timerRef.current)
     sessionActiveRef.current = false
@@ -315,11 +344,21 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
           </button>
         ) : (
           <button
-            onClick={finishSession}
+            onPointerDown={startHold}
+            onPointerUp={cancelHold}
+            onPointerLeave={cancelHold}
             disabled={saving}
-            className="w-full py-3 rounded-xl font-semibold text-white bg-[#ef4444] disabled:opacity-40"
+            className="relative w-full py-3 rounded-xl font-semibold text-white bg-[#ef4444] disabled:opacity-40 overflow-hidden select-none"
+            style={{ touchAction: 'none' }}
           >
-            {saving ? 'Сохраняем...' : `Завершить (${count} отжиманий)`}
+            {/* Progress fill */}
+            <span
+              className="absolute inset-0 bg-white/20 origin-left transition-none"
+              style={{ transform: `scaleX(${holdProgress})` }}
+            />
+            <span className="relative">
+              {saving ? 'Сохраняем...' : holding ? 'Удерживайте...' : `Завершить (${count} отжиманий)`}
+            </span>
           </button>
         )
       )}
