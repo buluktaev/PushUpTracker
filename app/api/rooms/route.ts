@@ -14,6 +14,9 @@ export async function POST(request: Request) {
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Название комнаты обязательно' }, { status: 400 })
     }
+    if (name.trim().length > 64) {
+      return NextResponse.json({ error: 'Название комнаты не более 64 символов' }, { status: 400 })
+    }
 
     let code: string
     let attempts = 0

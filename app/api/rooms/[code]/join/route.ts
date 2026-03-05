@@ -11,6 +11,9 @@ export async function POST(
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Имя обязательно' }, { status: 400 })
     }
+    if (name.trim().length > 64) {
+      return NextResponse.json({ error: 'Имя не более 64 символов' }, { status: 400 })
+    }
 
     const room = await prisma.room.findUnique({
       where: { code: code.toUpperCase() }

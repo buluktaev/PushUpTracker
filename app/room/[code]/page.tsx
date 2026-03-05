@@ -49,6 +49,8 @@ export default function RoomPage() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'leaderboard' | 'workout'>('leaderboard')
   const [copied, setCopied] = useState(false)
+  const [creatorNameInput, setCreatorNameInput] = useState('')
+  const [showCreatorForm, setShowCreatorForm] = useState(false)
 
   useEffect(() => {
     async function init() {
@@ -65,26 +67,34 @@ export default function RoomPage() {
       const nameParam = searchParams.get('name') || ''
 
       if (isCreator) {
-        const joinName = prompt('Ваше имя в комнате:') || nameParam || 'Участник'
-        const res = await fetch(`/api/rooms/${code}/join`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: joinName }),
-        })
-        if (res.ok) {
-          const data = await res.json()
-          const id: Identity = { roomCode: code, participantId: data.id, name: data.name }
-          localStorage.setItem('pushup_identity', JSON.stringify(id))
-          setIdentity(id)
-        } else {
-          router.push('/')
-        }
+        setShowCreatorForm(true)
+        setLoading(false)
+        return
       } else {
         router.push('/')
       }
     }
     init()
   }, [code, searchParams, router])
+
+  async function submitCreatorName() {
+    if (!creatorNameInput.trim()) return
+    const res = await fetch(`/api/rooms/${code}/join`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: creatorNameInput }),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      const id: Identity = { roomCode: code, participantId: data.id, name: data.name }
+      localStorage.setItem('pushup_identity', JSON.stringify(id))
+      setIdentity(id)
+      setShowCreatorForm(false)
+      setLoading(true)
+    } else {
+      router.push('/')
+    }
+  }
 
   const loadRoom = useCallback(async () => {
     try {
@@ -112,6 +122,33 @@ export default function RoomPage() {
   function leaveRoom() {
     localStorage.removeItem('pushup_identity')
     router.push('/')
+  }
+
+  if (showCreatorForm) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0f0f0f]">
+        <div className="w-full max-w-sm p-6 flex flex-col gap-4">
+          <h2 className="text-lg font-bold text-[#f0f0f0]">Комната создана!</h2>
+          <p className="text-sm text-[#666]">Введите ваше имя для лидерборда</p>
+          <input
+            type="text"
+            placeholder="Ваше имя"
+            value={creatorNameInput}
+            onChange={e => setCreatorNameInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && submitCreatorName()}
+            className="w-full rounded-xl px-4 py-3 text-sm outline-none bg-[#222] border border-[#2a2a2a] text-[#f0f0f0] focus:border-[#ff6b35] placeholder-[#666] transition-colors"
+            autoFocus
+          />
+          <button
+            onClick={submitCreatorName}
+            disabled={!creatorNameInput.trim()}
+            className="w-full py-3 rounded-xl font-semibold text-black bg-[#ff6b35] disabled:opacity-40"
+          >
+            Войти в комнату
+          </button>
+        </div>
+      </div>
+    )
   }
 
   if (loading || !room) {

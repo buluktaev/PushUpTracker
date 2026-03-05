@@ -204,12 +204,16 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     if (finalCount === 0) return
     setSaving(true)
     try {
-      await fetch('/api/sessions', {
+      const res = await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ participantId, count: finalCount, duration }),
       })
-      onSessionSaved()
+      if (res.ok) {
+        onSessionSaved()
+      } else {
+        console.error('Failed to save session:', res.status)
+      }
     } catch (e) {
       console.error(e)
     } finally {
