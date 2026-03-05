@@ -49,6 +49,7 @@ export async function GET(
       stats,
     })
   } catch (err) {
+    console.error(err)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }

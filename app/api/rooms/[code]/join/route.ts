@@ -25,6 +25,7 @@ export async function POST(
 
     return NextResponse.json({ ...participant, roomName: room.name }, { status: 201 })
   } catch (err) {
+    console.error(err)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }

@@ -11,6 +11,9 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
+    if (duration !== undefined && (typeof duration !== 'number' || duration < 0)) {
+      return NextResponse.json({ error: 'duration должен быть неотрицательным числом' }, { status: 400 })
+    }
 
     const participant = await prisma.participant.findUnique({
       where: { id: participantId }
@@ -26,6 +29,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(session, { status: 201 })
   } catch (err) {
+    console.error(err)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
