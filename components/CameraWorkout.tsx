@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { IconCameraFilled } from '@tabler/icons-react'
+import Icon from '@/components/Icon'
 
 interface Props {
   participantId: string
@@ -303,14 +303,14 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
   return (
     <div className="flex flex-col gap-3">
 
-      {/* Camera container */}
+      {/* Camera container — always dark bg regardless of theme */}
       <div
         className="relative overflow-hidden"
         style={{
           background: '#0a0a0a',
           aspectRatio: '4/3',
-          border: `1px solid ${cameraOn ? status.color : '#E5E3DC'}`,
-          borderRadius: '2px',
+          border: `1px solid ${cameraOn ? status.color : 'var(--border)'}`,
+          borderRadius: 0,
           transition: 'border-color 0.2s',
         }}
       >
@@ -331,12 +331,9 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
         {/* Status badge — top left */}
         <div
           className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 text-[10px] tracking-wider"
-          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', borderRadius: '2px' }}
+          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', borderRadius: 0 }}
         >
-          <span
-            className="w-1.5 h-1.5 rounded-full shrink-0"
-            style={{ background: status.color }}
-          />
+          <span className="w-1.5 h-1.5 shrink-0" style={{ background: status.color }} />
           <span style={{ color: status.color }}>[{status.text}]</span>
         </div>
 
@@ -364,14 +361,14 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
           </div>
         )}
 
-        {/* Disable camera button — top right */}
+        {/* Disable camera — top right */}
         {cameraOn && (
           <button
             onClick={stopCamera}
             className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 text-[10px] tracking-wider text-white"
-            style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', borderRadius: '2px' }}
+            style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', borderRadius: 0 }}
           >
-            <IconCameraFilled size={13} />
+            <Icon name="photo_camera" size={13} />
             off
           </button>
         )}
@@ -382,13 +379,9 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
             <button
               onClick={startCamera}
               className="flex flex-col items-center gap-2.5 px-8 py-5 text-white transition-opacity hover:opacity-80"
-              style={{
-                background: 'rgba(255,107,53,0.9)',
-                backdropFilter: 'blur(6px)',
-                borderRadius: '2px',
-              }}
+              style={{ background: 'rgba(255,107,53,0.9)', backdropFilter: 'blur(6px)', borderRadius: 0 }}
             >
-              <IconCameraFilled size={28} />
+              <Icon name="photo_camera" size={28} />
               <span className="text-[11px] tracking-widest">enable_camera()</span>
             </button>
           </div>
@@ -400,7 +393,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
         !sessionActive ? (
           <button
             onClick={startSession}
-            className="w-full py-3 rounded-[2px] text-sm font-bold text-white bg-[#22c55e] hover:opacity-85 transition-opacity"
+            className="w-full py-3 text-sm font-normal text-white bg-[#22c55e] hover:opacity-85 transition-opacity"
           >
             start_session()
           </button>
@@ -410,7 +403,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
             onPointerUp={cancelHold}
             onPointerLeave={cancelHold}
             disabled={saving}
-            className="relative w-full py-3 rounded-[2px] text-sm font-bold text-white bg-[#ef4444] disabled:opacity-40 overflow-hidden select-none"
+            className="relative w-full py-3 text-sm font-normal text-white bg-[#ef4444] disabled:opacity-40 overflow-hidden select-none"
             style={{ touchAction: 'none' }}
           >
             <span
