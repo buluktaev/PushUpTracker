@@ -22,6 +22,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
   const sessionStartRef = useRef<number | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const countRef = useRef(0)
+  const sessionActiveRef = useRef(false)
 
   const [mpLoaded, setMpLoaded] = useState(false)
   const [cameraOn, setCameraOn] = useState(false)
@@ -119,8 +120,10 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
       posePhaseRef.current = 'down'
     } else if (angle > 150 && posePhaseRef.current === 'down') {
       posePhaseRef.current = 'up'
-      countRef.current += 1
-      setCount(countRef.current)
+      if (sessionActiveRef.current) {
+        countRef.current += 1
+        setCount(countRef.current)
+      }
     }
   }, [])
 
@@ -190,6 +193,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     setCount(0)
     setElapsed(0)
     sessionStartRef.current = Date.now()
+    sessionActiveRef.current = true
     setSessionActive(true)
     timerRef.current = setInterval(() => {
       setElapsed(Math.floor((Date.now() - (sessionStartRef.current ?? Date.now())) / 1000))
@@ -198,6 +202,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
 
   async function finishSession() {
     if (timerRef.current) clearInterval(timerRef.current)
+    sessionActiveRef.current = false
     setSessionActive(false)
     const finalCount = countRef.current
     const duration = Math.floor((Date.now() - (sessionStartRef.current ?? Date.now())) / 1000)
