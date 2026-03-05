@@ -9,3 +9,9 @@ node_modules/
 *.log
 
 /app/generated/prisma
+
+# Claude Code / tooling
+.claude/
+.agents/
+.specstory/
+skills-lock.json

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { IconBarbellFilled } from '@tabler/icons-react'
 
 export default function HomePage() {
   const router = useRouter()
@@ -13,7 +14,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false)
 
   async function handleCreate() {
-    if (!roomName.trim()) return setError('Введите название комнаты')
+    if (!roomName.trim()) return setError('введите название комнаты')
     setLoading(true)
     setError('')
     try {
@@ -26,15 +27,15 @@ export default function HomePage() {
       if (!res.ok) throw new Error(data.error)
       router.push(`/room/${data.code}?created=1&name=${encodeURIComponent(roomName)}`)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Ошибка')
+      setError(e instanceof Error ? e.message : 'ошибка')
     } finally {
       setLoading(false)
     }
   }
 
   async function handleJoin() {
-    if (!joinCode.trim()) return setError('Введите код комнаты')
-    if (!joinName.trim()) return setError('Введите ваше имя')
+    if (!joinCode.trim()) return setError('введите код комнаты')
+    if (!joinName.trim()) return setError('введите ваше имя')
     setLoading(true)
     setError('')
     try {
@@ -53,110 +54,135 @@ export default function HomePage() {
       }))
       router.push(`/room/${code}`)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Ошибка')
+      setError(e instanceof Error ? e.message : 'ошибка')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#0f0f0f]">
+    <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#FAF9F5]">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-10">
-          <div className="text-5xl mb-3">💪</div>
-          <h1 className="text-2xl font-bold text-[#f0f0f0]">PushUp Tracker</h1>
-          <p className="text-sm mt-1 text-[#666]">Соревнуйся с командой</p>
+
+        {/* Header */}
+        <div className="mb-10">
+          <div className="flex items-center gap-2 mb-5">
+            <IconBarbellFilled size={16} style={{ color: '#ff6b35' }} />
+            <span className="text-[10px] tracking-widest uppercase text-[#888880]">
+              // pushup tracker
+            </span>
+          </div>
+          <h1 className="text-[28px] font-bold text-[#111111] leading-[1.15] tracking-tight">
+            Командный<br />трекер отжиманий
+          </h1>
+          <p className="text-xs text-[#888880] mt-2.5">
+            создай комнату или войди по коду
+          </p>
         </div>
 
         {mode === 'menu' && (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             <button
               onClick={() => setMode('create')}
-              className="w-full py-3 rounded-xl font-semibold text-black bg-[#ff6b35] hover:opacity-90 transition-opacity"
+              className="w-full py-3 rounded-[2px] text-sm font-bold text-white bg-[#ff6b35] hover:opacity-85 transition-opacity"
             >
-              Создать комнату
+              create_room()
             </button>
             <button
               onClick={() => setMode('join')}
-              className="w-full py-3 rounded-xl font-semibold border border-[#2a2a2a] text-[#f0f0f0] hover:bg-white/5 transition-colors"
+              className="w-full py-3 rounded-[2px] text-sm font-medium border border-[#E5E3DC] bg-white text-[#111111] hover:border-[#ff6b35] transition-colors"
             >
-              Войти в комнату
+              join_room()
             </button>
           </div>
         )}
 
         {mode === 'create' && (
           <div className="flex flex-col gap-3">
-            <label className="text-xs font-semibold uppercase tracking-wide text-[#666]">
-              Название комнаты
-            </label>
-            <input
-              type="text"
-              placeholder="Команда Альфа"
-              value={roomName}
-              onChange={e => setRoomName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleCreate()}
-              className="w-full rounded-xl px-4 py-3 text-sm outline-none bg-[#222] border border-[#2a2a2a] text-[#f0f0f0] focus:border-[#ff6b35] placeholder-[#666] transition-colors"
-              autoFocus
-            />
-            {error && <p className="text-sm text-red-400">{error}</p>}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="room-name" className="text-[10px] tracking-widest uppercase text-[#888880]">
+                room_name =
+              </label>
+              <input
+                id="room-name"
+                type="text"
+                placeholder="команда_альфа"
+                value={roomName}
+                onChange={e => setRoomName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleCreate()}
+                className="w-full rounded-[2px] px-3 py-2.5 text-sm bg-white border border-[#E5E3DC] text-[#111111] placeholder-[#888880] focus:outline-none focus:border-[#ff6b35] transition-colors"
+                autoFocus
+              />
+            </div>
+            {error && (
+              <p className="text-[11px] text-[#ef4444]">! {error}</p>
+            )}
             <button
               onClick={handleCreate}
               disabled={loading}
-              className="w-full py-3 rounded-xl font-semibold text-black bg-[#ff6b35] disabled:opacity-40 hover:opacity-90 transition-opacity"
+              className="w-full py-3 rounded-[2px] text-sm font-bold text-white bg-[#ff6b35] disabled:opacity-40 hover:opacity-85 transition-opacity"
             >
-              {loading ? 'Создаём...' : 'Создать'}
+              {loading ? '// выполняем...' : 'execute()'}
             </button>
             <button
               onClick={() => { setMode('menu'); setError('') }}
-              className="text-sm text-center text-[#666] hover:text-[#f0f0f0] transition-colors"
+              className="text-xs text-[#888880] hover:text-[#ff6b35] transition-colors text-left"
             >
-              ← Назад
+              ← back
             </button>
           </div>
         )}
 
         {mode === 'join' && (
           <div className="flex flex-col gap-3">
-            <label className="text-xs font-semibold uppercase tracking-wide text-[#666]">
-              Код комнаты
-            </label>
-            <input
-              type="text"
-              placeholder="ABC123"
-              value={joinCode}
-              onChange={e => setJoinCode(e.target.value.toUpperCase())}
-              maxLength={6}
-              className="w-full rounded-xl px-4 py-3 text-sm outline-none tracking-widest font-mono bg-[#222] border border-[#2a2a2a] text-[#f0f0f0] focus:border-[#ff6b35] placeholder-[#666] transition-colors"
-              autoFocus
-            />
-            <label className="text-xs font-semibold uppercase tracking-wide text-[#666]">
-              Ваше имя
-            </label>
-            <input
-              type="text"
-              placeholder="Санан"
-              value={joinName}
-              onChange={e => setJoinName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleJoin()}
-              className="w-full rounded-xl px-4 py-3 text-sm outline-none bg-[#222] border border-[#2a2a2a] text-[#f0f0f0] focus:border-[#ff6b35] placeholder-[#666] transition-colors"
-            />
-            {error && <p className="text-sm text-red-400">{error}</p>}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="join-code" className="text-[10px] tracking-widest uppercase text-[#888880]">
+                room_code =
+              </label>
+              <input
+                id="join-code"
+                type="text"
+                placeholder="ABC123"
+                value={joinCode}
+                onChange={e => setJoinCode(e.target.value.toUpperCase())}
+                maxLength={6}
+                className="w-full rounded-[2px] px-3 py-2.5 text-sm tracking-[0.25em] bg-white border border-[#E5E3DC] text-[#111111] placeholder-[#888880] focus:outline-none focus:border-[#ff6b35] transition-colors"
+                autoFocus
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="join-name" className="text-[10px] tracking-widest uppercase text-[#888880]">
+                your_name =
+              </label>
+              <input
+                id="join-name"
+                type="text"
+                placeholder="санан"
+                value={joinName}
+                onChange={e => setJoinName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleJoin()}
+                className="w-full rounded-[2px] px-3 py-2.5 text-sm bg-white border border-[#E5E3DC] text-[#111111] placeholder-[#888880] focus:outline-none focus:border-[#ff6b35] transition-colors"
+              />
+            </div>
+            {error && (
+              <p className="text-[11px] text-[#ef4444]">! {error}</p>
+            )}
             <button
               onClick={handleJoin}
               disabled={loading}
-              className="w-full py-3 rounded-xl font-semibold text-black bg-[#ff6b35] disabled:opacity-40 hover:opacity-90 transition-opacity"
+              className="w-full py-3 rounded-[2px] text-sm font-bold text-white bg-[#ff6b35] disabled:opacity-40 hover:opacity-85 transition-opacity"
             >
-              {loading ? 'Входим...' : 'Войти'}
+              {loading ? '// входим...' : 'execute()'}
             </button>
             <button
               onClick={() => { setMode('menu'); setError('') }}
-              className="text-sm text-center text-[#666] hover:text-[#f0f0f0] transition-colors"
+              className="text-xs text-[#888880] hover:text-[#ff6b35] transition-colors text-left"
             >
-              ← Назад
+              ← back
             </button>
           </div>
         )}
+
       </div>
     </main>
   )

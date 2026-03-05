@@ -3,10 +3,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
+import { IconTrophyFilled, IconBarbellFilled, IconCircleCheckFilled } from '@tabler/icons-react'
 
 const CameraWorkout = dynamic(() => import('@/components/CameraWorkout'), {
   ssr: false,
-  loading: () => <div className="text-center py-8 text-[#666]">Загрузка камеры...</div>,
+  loading: () => <div className="py-8 text-[10px] tracking-widest text-[#888880]">// загрузка камеры...</div>,
 })
 
 interface Participant {
@@ -62,10 +63,7 @@ export default function RoomPage() {
           return
         }
       }
-
       const isCreator = searchParams.get('created') === '1'
-      const nameParam = searchParams.get('name') || ''
-
       if (isCreator) {
         setShowCreatorForm(true)
         setLoading(false)
@@ -126,25 +124,27 @@ export default function RoomPage() {
 
   if (showCreatorForm) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0f0f0f]">
+      <div className="min-h-screen flex items-center justify-center bg-[#FAF9F5]">
         <div className="w-full max-w-sm p-6 flex flex-col gap-4">
-          <h2 className="text-lg font-bold text-[#f0f0f0]">Комната создана!</h2>
-          <p className="text-sm text-[#666]">Введите ваше имя для лидерборда</p>
+          <div>
+            <p className="text-[10px] tracking-widest uppercase text-[#888880]">// комната создана</p>
+            <h2 className="text-lg font-bold text-[#111111] mt-1">Как вас зовут?</h2>
+          </div>
           <input
             type="text"
-            placeholder="Ваше имя"
+            placeholder="ваше_имя"
             value={creatorNameInput}
             onChange={e => setCreatorNameInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && submitCreatorName()}
-            className="w-full rounded-xl px-4 py-3 text-sm outline-none bg-[#222] border border-[#2a2a2a] text-[#f0f0f0] focus:border-[#ff6b35] placeholder-[#666] transition-colors"
+            className="w-full rounded-[2px] px-3 py-2.5 text-sm bg-white border border-[#E5E3DC] text-[#111111] placeholder-[#888880] focus:outline-none focus:border-[#ff6b35] transition-colors"
             autoFocus
           />
           <button
             onClick={submitCreatorName}
             disabled={!creatorNameInput.trim()}
-            className="w-full py-3 rounded-xl font-semibold text-black bg-[#ff6b35] disabled:opacity-40"
+            className="w-full py-3 rounded-[2px] text-sm font-bold text-white bg-[#ff6b35] disabled:opacity-40"
           >
-            Войти в комнату
+            войти в комнату
           </button>
         </div>
       </div>
@@ -153,46 +153,57 @@ export default function RoomPage() {
 
   if (loading || !room) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0f0f0f]">
-        <div className="text-[#666]">Загрузка...</div>
+      <div className="min-h-screen flex items-center justify-center bg-[#FAF9F5]">
+        <span className="text-[10px] tracking-widest text-[#888880]">// загрузка...</span>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0f0f0f] text-[#f0f0f0]">
+    <div className="min-h-screen flex flex-col bg-[#FAF9F5] text-[#111111]">
+
       {/* Header */}
-      <header className="sticky top-0 z-10 px-4 py-3 flex items-center justify-between border-b border-[#2a2a2a] bg-[#1a1a1a]">
-        <div>
-          <h1 className="font-bold text-base">{room.name}</h1>
+      <header className="sticky top-0 z-10 px-4 py-3 flex items-center justify-between border-b border-[#E5E3DC] bg-[#FAF9F5]">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <h1 className="font-bold text-sm truncate">{room.name}</h1>
           <button
             onClick={copyCode}
-            className="text-xs font-mono text-[#666] hover:text-[#f0f0f0] transition-colors"
+            className="shrink-0 flex items-center gap-1 text-[10px] tracking-wider px-2 py-0.5 bg-[#F0EFE9] border border-[#E5E3DC] rounded-[2px] text-[#888880] hover:border-[#ff6b35] hover:text-[#111111] transition-colors"
           >
-            {copied ? '✓ Скопировано' : `Код: ${code}`}
+            {copied ? (
+              <><IconCircleCheckFilled size={11} className="text-[#22c55e]" /> copied</>
+            ) : (
+              code
+            )}
           </button>
         </div>
         <button
           onClick={leaveRoom}
-          className="text-xs px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-[#666] hover:text-[#f0f0f0] transition-colors"
+          className="shrink-0 text-[11px] px-3 py-1.5 rounded-[2px] border border-[#E5E3DC] text-[#888880] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
         >
-          Выйти
+          exit()
         </button>
       </header>
 
       {/* Tabs */}
-      <nav className="flex gap-1 px-4 py-2 border-b border-[#2a2a2a]">
+      <nav className="flex border-b border-[#E5E3DC] bg-[#FAF9F5]" role="tablist">
         {(['leaderboard', 'workout'] as const).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            role="tab"
+            aria-selected={tab === t}
+            className={`px-5 py-2.5 text-[11px] tracking-wide transition-colors border-b-2 -mb-px flex items-center gap-1.5 ${
               tab === t
-                ? 'bg-white/8 text-[#f0f0f0]'
-                : 'text-[#666] hover:text-[#f0f0f0]'
+                ? 'border-[#ff6b35] text-[#111111] font-bold'
+                : 'border-transparent text-[#888880] hover:text-[#111111]'
             }`}
           >
-            {t === 'leaderboard' ? '🏆 Лидерборд' : '💪 Тренировка'}
+            {t === 'leaderboard' ? (
+              <><IconTrophyFilled size={13} /> leaderboard</>
+            ) : (
+              <><IconBarbellFilled size={13} /> workout</>
+            )}
           </button>
         ))}
       </nav>
@@ -200,56 +211,54 @@ export default function RoomPage() {
       <main className="flex-1 p-4 max-w-2xl w-full mx-auto">
         {tab === 'leaderboard' && (
           <>
-            {/* Room stats */}
-            <div className="rounded-xl p-4 mb-4 flex flex-wrap gap-x-4 gap-y-1 text-sm bg-[#1a1a1a] border border-[#2a2a2a]">
-              <span>
-                Всего: <strong>{room.stats.totalPushups.toLocaleString()}</strong> отжиманий
-              </span>
-              <span className="text-[#666]">·</span>
-              <span className="text-[#666]">Участников: {room.stats.participantsCount}</span>
-              <span className="text-[#666]">·</span>
-              <span className="text-[#666]">Сессий: {room.stats.sessionsCount}</span>
-              <span className="text-[#666]">·</span>
-              <span className="text-[#666]">Активны сегодня: {room.stats.activeToday}</span>
+            {/* Stats bar */}
+            <div className="rounded-[2px] px-3 py-2 mb-4 bg-[#F0EFE9] border border-[#E5E3DC] text-[10px] tracking-wide text-[#888880] flex flex-wrap gap-x-3 gap-y-1">
+              <span>total: <strong className="text-[#111111]">{room.stats.totalPushups.toLocaleString()}</strong> reps</span>
+              <span>·</span>
+              <span>members: <span className="text-[#111111]">{room.stats.participantsCount}</span></span>
+              <span>·</span>
+              <span>sessions: <span className="text-[#111111]">{room.stats.sessionsCount}</span></span>
+              <span>·</span>
+              <span>active today: <span className="text-[#22c55e] font-bold">{room.stats.activeToday}</span></span>
             </div>
 
             {/* Leaderboard */}
-            <div className="rounded-xl overflow-hidden bg-[#1a1a1a] border border-[#2a2a2a]">
+            <div className="rounded-[2px] overflow-hidden border border-[#E5E3DC] bg-white">
               {room.leaderboard.length === 0 ? (
-                <div className="p-8 text-center text-[#666]">
-                  Пока никого нет. Начните тренировку!
+                <div className="p-8 text-center text-[10px] tracking-widest text-[#888880]">
+                  // пока никого нет. начните тренировку.
                 </div>
               ) : (
                 room.leaderboard.map((p, i) => (
                   <div
                     key={p.id}
-                    className={`flex items-center gap-4 px-4 py-3 border-b border-[#2a2a2a] last:border-0 ${
-                      p.id === identity?.participantId ? 'bg-[#ff6b35]/8' : ''
+                    className={`flex items-center gap-3 px-4 py-3 border-b border-[#E5E3DC] last:border-0 ${
+                      p.id === identity?.participantId ? 'bg-[#FAF9F5]' : ''
                     }`}
                   >
-                    <span
-                      className="w-6 text-center font-bold text-sm"
-                      style={{
-                        color: i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : i === 2 ? '#b45309' : '#666',
-                      }}
-                    >
-                      {i + 1}
+                    <span className="w-6 text-[10px] font-bold text-[#888880] shrink-0 tabular-nums">
+                      {String(i + 1).padStart(2, '0')}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm flex items-center gap-1.5">
+                      <div className="text-sm font-medium flex items-center gap-2 flex-wrap">
                         <span className="truncate">{p.name}</span>
                         {p.id === identity?.participantId && (
-                          <span className="text-xs text-[#ff6b35] shrink-0">вы</span>
+                          <span className="text-[10px] tracking-wider text-[#ff6b35] shrink-0">[you]</span>
                         )}
                         {p.activeToday && (
-                          <span className="text-xs text-[#22c55e] shrink-0">●</span>
+                          <span
+                            className="text-[10px] tracking-wider text-[#22c55e] shrink-0"
+                            aria-label="активен сегодня"
+                          >
+                            [active]
+                          </span>
                         )}
                       </div>
-                      <div className="text-xs text-[#666]">
-                        {p.sessionsCount} сессий · лучшая: {p.bestSession}
+                      <div className="text-[10px] text-[#888880] mt-0.5">
+                        {p.sessionsCount} sessions · best: {p.bestSession}
                       </div>
                     </div>
-                    <span className="font-bold tabular-nums">{p.totalPushups}</span>
+                    <span className="text-sm font-bold tabular-nums shrink-0">{p.totalPushups}</span>
                   </div>
                 ))
               )}
@@ -257,9 +266,9 @@ export default function RoomPage() {
 
             <button
               onClick={loadRoom}
-              className="mt-4 w-full py-2.5 rounded-xl text-sm font-medium border border-[#2a2a2a] text-[#666] hover:text-[#f0f0f0] transition-colors"
+              className="mt-3 w-full py-2.5 rounded-[2px] text-[11px] border border-[#E5E3DC] text-[#888880] hover:border-[#111111] hover:text-[#111111] transition-colors"
             >
-              Обновить
+              refresh()
             </button>
           </>
         )}

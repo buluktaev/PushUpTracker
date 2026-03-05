@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { IconCameraFilled } from '@tabler/icons-react'
 
 interface Props {
   participantId: string
@@ -29,7 +30,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
   const [count, setCount] = useState(0)
   const [sessionActive, setSessionActive] = useState(false)
   const [elapsed, setElapsed] = useState(0)
-  const [status, setStatus] = useState({ text: 'Камера выкл.', color: '#666' })
+  const [status, setStatus] = useState({ text: 'camera off', color: '#888880' })
   const [saving, setSaving] = useState(false)
   const [holding, setHolding] = useState(false)
   const [holdProgress, setHoldProgress] = useState(0)
@@ -60,10 +61,10 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
         drawingRef.current = new DrawingUtils(canvasRef.current.getContext('2d'))
       }
       setMpLoaded(true)
-      setStatus({ text: 'Поза не найдена', color: '#f59e0b' })
+      setStatus({ text: 'searching...', color: '#f59e0b' })
     } catch (e) {
       console.error('MediaPipe load failed:', e)
-      setStatus({ text: 'Ошибка загрузки MediaPipe', color: '#ef4444' })
+      setStatus({ text: 'err: mediapipe failed', color: '#ef4444' })
     }
   }, [])
 
@@ -82,7 +83,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     if (!result.landmarks?.length) {
-      setStatus({ text: 'Поза не найдена', color: '#f59e0b' })
+      setStatus({ text: 'searching...', color: '#f59e0b' })
       return
     }
 
@@ -90,14 +91,13 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
 
     if (drawingRef.current) {
       try {
-        // Draw skeleton connectors
         const connections = [
           [11,13],[13,15],[12,14],[14,16],[11,12],[23,24],
           [11,23],[12,24],[23,25],[24,26],[25,27],[26,28]
         ]
         const ctx2 = canvas.getContext('2d')!
-        ctx2.strokeStyle = 'rgba(255,255,255,0.5)'
-        ctx2.lineWidth = 2
+        ctx2.strokeStyle = 'rgba(255,255,255,0.4)'
+        ctx2.lineWidth = 1.5
         for (const [a, b] of connections) {
           if (lm[a] && lm[b]) {
             ctx2.beginPath()
@@ -106,23 +106,58 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
             ctx2.stroke()
           }
         }
-        // Draw landmarks
         ctx2.fillStyle = '#ff6b35'
         for (const point of lm) {
           ctx2.beginPath()
-          ctx2.arc(point.x * canvas.width, point.y * canvas.height, 4, 0, 2 * Math.PI)
+          ctx2.arc(point.x * canvas.width, point.y * canvas.height, 3, 0, 2 * Math.PI)
           ctx2.fill()
         }
       } catch {}
     }
 
-    // Use left side: shoulder(11) - elbow(13) - wrist(15)
-    const angle = angleBetween(lm[11], lm[13], lm[15])
-    setStatus({ text: `Угол локтя: ${Math.round(angle)}°`, color: '#22c55e' })
+    const keyPoints = [11, 12, 13, 14, 15, 16]
+    if (keyPoints.some(i => (lm[i]?.visibility ?? 0) < 0.5)) {
+      setStatus({ text: 'searching...', color: '#f59e0b' })
+      return
+    }
 
-    if (angle < 90 && posePhaseRef.current === 'up') {
+    const shoulderXSpread = Math.abs(lm[11].x - lm[12].x)
+    const isFrontFacing = shoulderXSpread > 0.15
+
+    let isDown: boolean
+    let isUp: boolean
+    let statusText: string
+
+    if (isFrontFacing) {
+      const wristMidY = (lm[15].y + lm[16].y) / 2
+      const shoulderMidY = (lm[11].y + lm[12].y) / 2
+      const gap = wristMidY - shoulderMidY
+
+      isDown = gap < 0.08
+      isUp   = gap > 0.18
+      statusText = `front · ${posePhaseRef.current === 'down' ? '↓ down' : '↑ up'}`
+    } else {
+      const shoulderMidY = (lm[11].y + lm[12].y) / 2
+      const hipMidY      = (lm[23].y + lm[24].y) / 2
+      if (Math.abs(shoulderMidY - hipMidY) > 0.15) {
+        setStatus({ text: 'get in position', color: '#f59e0b' })
+        return
+      }
+
+      const angleL = angleBetween(lm[11], lm[13], lm[15])
+      const angleR = angleBetween(lm[12], lm[14], lm[16])
+      const angle  = (angleL + angleR) / 2
+
+      isDown = angle < 90
+      isUp   = angle > 150
+      statusText = `side · ${Math.round(angle)}°`
+    }
+
+    setStatus({ text: statusText, color: '#ff6b35' })
+
+    if (isDown && posePhaseRef.current === 'up') {
       posePhaseRef.current = 'down'
-    } else if (angle > 150 && posePhaseRef.current === 'down') {
+    } else if (isUp && posePhaseRef.current === 'down') {
       posePhaseRef.current = 'up'
       if (sessionActiveRef.current) {
         countRef.current += 1
@@ -163,7 +198,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
 
   async function startCamera() {
     try {
-      setStatus({ text: 'Инициализация...', color: '#f59e0b' })
+      setStatus({ text: 'init...', color: '#f59e0b' })
       const s = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: 640, height: 480 },
         audio: false,
@@ -177,7 +212,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
       await loadMP()
     } catch (e) {
       console.error(e)
-      setStatus({ text: 'Нет доступа к камере', color: '#ef4444' })
+      setStatus({ text: 'err: no camera access', color: '#ef4444' })
     }
   }
 
@@ -187,7 +222,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
     if (videoRef.current) videoRef.current.srcObject = null
     setCameraOn(false)
-    setStatus({ text: 'Камера выкл.', color: '#666' })
+    setStatus({ text: 'camera off', color: '#888880' })
     const canvas = canvasRef.current
     if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
   }
@@ -263,13 +298,21 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+  const fmt = (s: number) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
+
+      {/* Camera container */}
       <div
-        className="relative rounded-xl overflow-hidden border-2"
-        style={{ background: '#000', aspectRatio: '4/3', borderColor: cameraOn ? status.color : '#2a2a2a' }}
+        className="relative overflow-hidden"
+        style={{
+          background: '#0a0a0a',
+          aspectRatio: '4/3',
+          border: `1px solid ${cameraOn ? status.color : '#E5E3DC'}`,
+          borderRadius: '2px',
+          transition: 'border-color 0.2s',
+        }}
       >
         <video
           ref={videoRef}
@@ -277,6 +320,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
           style={{ transform: 'scaleX(-1)', display: cameraOn ? 'block' : 'none' }}
           playsInline
           muted
+          aria-label="камера для отжиманий"
         />
         <canvas
           ref={canvasRef}
@@ -284,63 +328,81 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
           style={{ transform: 'scaleX(-1)', display: cameraOn ? 'block' : 'none' }}
         />
 
-        {/* Status badge */}
+        {/* Status badge — top left */}
         <div
-          className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold text-white"
-          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)' }}
+          className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 text-[10px] tracking-wider"
+          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', borderRadius: '2px' }}
         >
-          <span className="w-2 h-2 rounded-full" style={{ background: status.color }} />
-          {status.text}
+          <span
+            className="w-1.5 h-1.5 rounded-full shrink-0"
+            style={{ background: status.color }}
+          />
+          <span style={{ color: status.color }}>[{status.text}]</span>
         </div>
 
-        {/* Counter */}
+        {/* Counter overlay — bottom center */}
         {cameraOn && (
-          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 text-center pointer-events-none">
+          <div
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center pointer-events-none"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             <div
-              className="font-black text-white"
-              style={{ fontSize: 80, lineHeight: 1, textShadow: '0 2px 12px rgba(0,0,0,0.7)' }}
+              className="font-bold text-white tabular-nums"
+              style={{ fontSize: 88, lineHeight: 1, textShadow: '0 2px 16px rgba(0,0,0,0.8)' }}
             >
-              {count}
+              {String(count).padStart(2, '0')}
             </div>
             {sessionActive && (
-              <div className="text-white/80 text-lg">{fmt(elapsed)}</div>
+              <div
+                className="text-base tabular-nums"
+                style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: '0.05em' }}
+              >
+                {fmt(elapsed)}
+              </div>
             )}
           </div>
         )}
 
-        {/* Выкл. — только когда камера включена */}
+        {/* Disable camera button — top right */}
         {cameraOn && (
           <button
             onClick={stopCamera}
-            className="absolute top-3 right-3 text-xs px-3 py-1.5 rounded-lg text-white"
-            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', border: 'none' }}
+            className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 text-[10px] tracking-wider text-white"
+            style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', borderRadius: '2px' }}
           >
-            📷 Выкл.
+            <IconCameraFilled size={13} />
+            off
           </button>
         )}
 
-        {/* Кнопка включения по центру */}
+        {/* Enable camera — center */}
         {!cameraOn && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
             <button
               onClick={startCamera}
-              className="flex flex-col items-center gap-2 px-8 py-5 rounded-2xl font-semibold text-white transition-opacity hover:opacity-80"
-              style={{ background: 'rgba(255,107,53,0.85)', backdropFilter: 'blur(6px)' }}
+              className="flex flex-col items-center gap-2.5 px-8 py-5 text-white transition-opacity hover:opacity-80"
+              style={{
+                background: 'rgba(255,107,53,0.9)',
+                backdropFilter: 'blur(6px)',
+                borderRadius: '2px',
+              }}
             >
-              <span className="text-3xl">📷</span>
-              <span className="text-sm">Включить камеру</span>
+              <IconCameraFilled size={28} />
+              <span className="text-[11px] tracking-widest">enable_camera()</span>
             </button>
           </div>
         )}
       </div>
 
+      {/* Session controls */}
       {cameraOn && (
         !sessionActive ? (
           <button
             onClick={startSession}
-            className="w-full py-3 rounded-xl font-semibold text-black bg-[#22c55e]"
+            className="w-full py-3 rounded-[2px] text-sm font-bold text-white bg-[#22c55e] hover:opacity-85 transition-opacity"
           >
-            Начать сессию
+            start_session()
           </button>
         ) : (
           <button
@@ -348,16 +410,19 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
             onPointerUp={cancelHold}
             onPointerLeave={cancelHold}
             disabled={saving}
-            className="relative w-full py-3 rounded-xl font-semibold text-white bg-[#ef4444] disabled:opacity-40 overflow-hidden select-none"
+            className="relative w-full py-3 rounded-[2px] text-sm font-bold text-white bg-[#ef4444] disabled:opacity-40 overflow-hidden select-none"
             style={{ touchAction: 'none' }}
           >
-            {/* Progress fill */}
             <span
-              className="absolute inset-0 bg-white/20 origin-left transition-none"
-              style={{ transform: `scaleX(${holdProgress})` }}
+              className="absolute inset-0 bg-white/20 origin-left"
+              style={{ transform: `scaleX(${holdProgress})`, transition: 'none' }}
             />
             <span className="relative">
-              {saving ? 'Сохраняем...' : holding ? 'Удерживайте...' : `Завершить (${count} отжиманий)`}
+              {saving
+                ? '// сохраняем...'
+                : holding
+                ? '// удерживайте...'
+                : `finish() · ${count} reps`}
             </span>
           </button>
         )
