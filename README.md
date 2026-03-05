@@ -1,108 +1,73 @@
-# 💪 PushUp Tracker — Server
+# PushUp Tracker
 
-Бэкенд для общего лидерборда. Node.js + Express + SQLite.
+Командный трекер отжиманий с комнатами, лидербордом и автосчётом через камеру.
 
-## Быстрый старт (локально)
+![Next.js](https://img.shields.io/badge/Next.js-14-black) ![Prisma](https://img.shields.io/badge/Prisma-7-2D3748) ![Railway](https://img.shields.io/badge/deploy-Railway-7B2FBE)
+
+## Что это
+
+Создай комнату → поделись кодом с командой → каждый заходит через браузер и отжимается. MediaPipe Pose считает отжимания автоматически через камеру. Общий лидерборд обновляется после каждой сессии.
+
+## Стек
+
+- **Next.js 14** (App Router) + TypeScript
+- **Prisma 7** + SQLite (`better-sqlite3`)
+- **MediaPipe Tasks Vision** — автосчёт через камеру
+- **Geist Mono** — шрифт интерфейса
+- **Railway** — деплой
+
+## Локальный запуск
 
 ```bash
-cd PushUpTracker-Server
 npm install
-npm start
+npm run dev
 ```
 
-Сервер запустится на `http://localhost:3000`.
+Открой `http://localhost:3000`.
+
+> `npm run dev` автоматически запускает `prisma migrate deploy` перед стартом.
+
+## Структура
+
+```
+app/
+  page.tsx               # Лендинг: создать / войти в комнату
+  room/[code]/page.tsx   # Комната: лидерборд + тренировка
+  api/
+    rooms/               # CRUD комнат и участников
+    sessions/            # Запись тренировочных сессий
+components/
+  CameraWorkout.tsx      # MediaPipe Pose + автосчёт
+  ThemeToggle.tsx        # Переключатель светлой/тёмной темы
+  Icon.tsx               # Обёртка Material Symbols
+prisma/
+  schema.prisma          # Схема: Room, Participant, Session
+```
+
+## API
+
+| Метод | Путь | Описание |
+|-------|------|----------|
+| `POST` | `/api/rooms` | Создать комнату |
+| `GET` | `/api/rooms/:code` | Данные комнаты + лидерборд |
+| `POST` | `/api/rooms/:code/join` | Войти в комнату |
+| `POST` | `/api/sessions` | Сохранить тренировочную сессию |
 
 ## Деплой на Railway
 
-### 1. Подготовка
+1. Подключи репозиторий в Railway
+2. Добавь **Volume** с Mount Path `/data`
+3. Установи переменную окружения:
+   ```
+   DATABASE_URL=file:/data/pushups.db
+   ```
+4. Railway соберёт образ через `Dockerfile` в корне репо
 
-1. Зайди на [railway.app](https://railway.app) и залогинься через GitHub
-2. Создай новый проект → **Deploy from GitHub Repo**
-3. Подключи репозиторий с этой папкой
+## Детекция отжиманий
 
-### 2. Добавь Volume (чтобы база не терялась)
+MediaPipe Pose Lite определяет ориентацию автоматически:
 
-1. В проекте нажми **+ New** → **Volume**
-2. Mount Path: `/data`
-3. Это сохранит SQLite-базу между деплоями
+- **Лицом к камере** — gap между запястьями и плечами (down < 0.08, up > 0.18)
+- **Боком к камере** — средний угол локтей (down < 90°, up > 150°)
 
-### 3. Переменные окружения
-
-Railway подставит `PORT` автоматически. Но убедись, что есть:
-
-```
-DATABASE_PATH=/data/pushups.db
-```
-
-### 4. Получи URL
-
-После деплоя Railway даст URL вроде:
-```
-https://pushup-tracker-server-production-xxxx.up.railway.app
-```
-
-Этот URL нужно вставить в Swift-приложение (в `APIClient.swift`).
-
-## API Endpoints
-
-### Players
-
-| Метод | Путь | Описание |
-|-------|------|----------|
-| GET | `/api/players` | Все игроки со статистикой |
-| POST | `/api/players` | Создать игрока `{ "name": "Иван" }` |
-| DELETE | `/api/players/:id` | Удалить игрока |
-
-### Sessions
-
-| Метод | Путь | Описание |
-|-------|------|----------|
-| POST | `/api/sessions` | Записать сессию `{ "player_id": "...", "count": 25, "duration": 60 }` |
-| GET | `/api/sessions/:playerId` | История сессий игрока |
-
-### Leaderboard & Stats
-
-| Метод | Путь | Описание |
-|-------|------|----------|
-| GET | `/api/leaderboard` | Лидерборд всей команды |
-| GET | `/api/stats/team?days=7` | Командная статистика |
-| GET | `/api/stats/:playerId?days=30` | Статистика игрока |
-
-## Примеры запросов
-
-```bash
-# Создать игрока
-curl -X POST http://localhost:3000/api/players \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Санан"}'
-
-# Записать 25 отжиманий
-curl -X POST http://localhost:3000/api/sessions \
-  -H "Content-Type: application/json" \
-  -d '{"player_id": "abc123", "count": 25, "duration": 45.5}'
-
-# Лидерборд
-curl http://localhost:3000/api/leaderboard
-
-# Статистика команды за неделю
-curl http://localhost:3000/api/stats/team?days=7
-```
-
-## Подключение к Swift-приложению
-
-1. Открой `APIClient.swift`
-2. Замени URL в `baseURL`:
-
-```swift
-return "https://your-app-name.up.railway.app"
-```
-
-3. В Xcode: **Signing & Capabilities** → App Sandbox → включи **Outgoing Connections (Client)**
-4. Или обнови `PushUpTracker.entitlements` — ключ `com.apple.security.network.client` уже добавлен
-
-## Как коллеги подключатся
-
-1. Каждый скачивает и собирает приложение в Xcode (или ты раздаёшь .app файл)
-2. При первом запуске вводят своё имя
-3. Приложение регистрирует их на сервере
-4. Все видят общий лидерборд!
+Требуется видимость ключевых точек `> 0.5`.
