@@ -126,6 +126,7 @@ export default function RoomPage() {
   }
 
   const loadRoom = useCallback(async () => {
+    await new Promise(r => setTimeout(r, 1000))
     try {
       const res = await fetch(`/api/rooms/${code}`)
       if (!res.ok) throw new Error('Комната не найдена')
