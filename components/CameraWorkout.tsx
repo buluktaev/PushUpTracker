@@ -115,49 +115,12 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
       } catch {}
     }
 
-    const keyPoints = [11, 12]
-    if (keyPoints.some(i => (lm[i]?.visibility ?? 0) < 0.3)) {
-      setStatus({ text: 'searching...', color: '#f59e0b' })
-      return
-    }
+    const angle = angleBetween(lm[11], lm[13], lm[15])
+    setStatus({ text: `elbow: ${Math.round(angle)}°`, color: '#ff6b35' })
 
-    const shoulderXSpread = Math.abs(lm[11].x - lm[12].x)
-    const isFrontFacing = shoulderXSpread > 0.15
-
-    let isDown: boolean
-    let isUp: boolean
-    let statusText: string
-
-    if (isFrontFacing) {
-      const wristMidY = (lm[15].y + lm[16].y) / 2
-      const shoulderMidY = (lm[11].y + lm[12].y) / 2
-      const gap = wristMidY - shoulderMidY
-
-      isDown = gap < 0.08
-      isUp   = gap > 0.18
-      statusText = `front · ${posePhaseRef.current === 'down' ? '↓ down' : '↑ up'}`
-    } else {
-      const shoulderMidY = (lm[11].y + lm[12].y) / 2
-      const hipMidY      = (lm[23].y + lm[24].y) / 2
-      if (Math.abs(shoulderMidY - hipMidY) > 0.15) {
-        setStatus({ text: 'get in position', color: '#f59e0b' })
-        return
-      }
-
-      const angleL = angleBetween(lm[11], lm[13], lm[15])
-      const angleR = angleBetween(lm[12], lm[14], lm[16])
-      const angle  = (angleL + angleR) / 2
-
-      isDown = angle < 90
-      isUp   = angle > 150
-      statusText = `side · ${Math.round(angle)}°`
-    }
-
-    setStatus({ text: statusText, color: '#ff6b35' })
-
-    if (isDown && posePhaseRef.current === 'up') {
+    if (angle < 90 && posePhaseRef.current === 'up') {
       posePhaseRef.current = 'down'
-    } else if (isUp && posePhaseRef.current === 'down') {
+    } else if (angle > 150 && posePhaseRef.current === 'down') {
       posePhaseRef.current = 'up'
       if (sessionActiveRef.current) {
         countRef.current += 1
