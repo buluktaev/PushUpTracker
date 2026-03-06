@@ -8,7 +8,7 @@ import { useRooms } from '@/hooks/useRooms'
 
 export default function HomePage() {
   const router = useRouter()
-  const { rooms, addRoom } = useRooms()
+  const { rooms, loaded, addRoom } = useRooms()
   const [mounted, setMounted] = useState(false)
   const [mode, setMode] = useState<'menu' | 'create' | 'join'>('menu')
   const [showNew, setShowNew] = useState(false)
@@ -23,11 +23,11 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
-    if (!mounted) return
+    if (!mounted || !loaded) return
     if (rooms.length === 1) {
       router.push(`/room/${rooms[0].roomCode}`)
     }
-  }, [mounted, rooms, router])
+  }, [mounted, loaded, rooms, router])
 
   async function handleCreate() {
     if (!roomName.trim()) return setError('введите название комнаты')
@@ -89,7 +89,7 @@ export default function HomePage() {
     }
   }
 
-  if (!mounted) return null
+  if (!mounted || !loaded) return null
   if (rooms.length === 1) return null
 
   const showForms = rooms.length === 0 || showNew

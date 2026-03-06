@@ -53,9 +53,11 @@ function save(rooms: SavedRoom[]) {
 
 export function useRooms() {
   const [rooms, setRooms] = useState<SavedRoom[]>([])
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     setRooms(load())
+    setLoaded(true)
   }, [])
 
   const addRoom = useCallback((room: SavedRoom) => {
@@ -84,5 +86,5 @@ export function useRooms() {
     return rooms.find(r => r.roomCode !== currentCode) ?? null
   }, [rooms])
 
-  return { rooms, addRoom, removeRoom, getRoom, nextRoom }
+  return { rooms, loaded, addRoom, removeRoom, getRoom, nextRoom }
 }

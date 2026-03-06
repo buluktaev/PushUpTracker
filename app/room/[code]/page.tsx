@@ -41,7 +41,7 @@ export default function RoomPage() {
   const router = useRouter()
   const code = (params.code as string).toUpperCase()
 
-  const { rooms, addRoom, removeRoom, getRoom, nextRoom } = useRooms()
+  const { rooms, loaded, addRoom, removeRoom, getRoom, nextRoom } = useRooms()
   const leavingRef = useRef(false)
   const [showSwitcher, setShowSwitcher] = useState(false)
   const [identity, setIdentity] = useState<SavedRoom | null>(null)
@@ -53,6 +53,7 @@ export default function RoomPage() {
   const [showCreatorForm, setShowCreatorForm] = useState(false)
 
   useEffect(() => {
+    if (!loaded) return  // ждём загрузки localStorage
     async function init() {
       if (leavingRef.current) return  // навигация уже инициирована в leaveRoom
       const saved = getRoom(code)
@@ -71,7 +72,7 @@ export default function RoomPage() {
     }
     init()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [code, rooms])
+  }, [code, rooms, loaded])
 
   async function submitCreatorName() {
     if (!creatorNameInput.trim()) return
