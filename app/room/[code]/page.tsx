@@ -43,7 +43,19 @@ export default function RoomPage() {
 
   const { rooms, loaded, addRoom, removeRoom, getRoom, nextRoom } = useRooms()
   const leavingRef = useRef(false)
+  const switcherRef = useRef<HTMLDivElement>(null)
   const [showSwitcher, setShowSwitcher] = useState(false)
+
+  useEffect(() => {
+    if (!showSwitcher) return
+    function handleClickOutside(e: MouseEvent) {
+      if (switcherRef.current && !switcherRef.current.contains(e.target as Node)) {
+        setShowSwitcher(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showSwitcher])
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [copiedSwitcher, setCopiedSwitcher] = useState<string | null>(null)
 
@@ -187,7 +199,7 @@ export default function RoomPage() {
           {/* Left: room name + switcher + code */}
           <div className="flex items-center gap-2 min-w-0 px-4 py-3 relative">
             <h1 className="font-bold text-sm truncate">{room.name}</h1>
-            <div className="relative shrink-0">
+            <div className="relative shrink-0" ref={switcherRef}>
               <button
                 onClick={() => setShowSwitcher(v => !v)}
                 className="flex items-center justify-center w-6 h-6 text-[var(--muted)] hover:text-[var(--text)] transition-colors"
@@ -198,21 +210,22 @@ export default function RoomPage() {
               </button>
               {showSwitcher && (
                 <div
-                  className="absolute top-full left-0 mt-1 z-50 min-w-[180px] py-1"
+                  className="absolute top-full left-0 mt-1 z-50 min-w-[200px] py-1"
                   style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
                 >
-                  {rooms
-                    .filter(r => r.roomCode !== code)
-                    .map(r => (
+                  {rooms.map(r => {
+                    const isCurrent = r.roomCode === code
+                    return (
                       <div
                         key={r.roomCode}
-                        className="flex items-center hover:bg-[var(--surface-dim)] transition-colors"
+                        className={`flex items-center transition-colors ${isCurrent ? 'bg-[var(--surface-dim)]' : 'hover:bg-[var(--surface-dim)]'}`}
                       >
                         <button
-                          onClick={() => { setShowSwitcher(false); router.push(`/room/${r.roomCode}`) }}
-                          className="flex-1 flex items-center justify-between px-3 py-2 text-xs text-[var(--text)] text-left min-w-0"
+                          onClick={() => { if (!isCurrent) { setShowSwitcher(false); router.push(`/room/${r.roomCode}`) } }}
+                          className={`flex-1 flex items-center gap-2 px-3 py-2 text-xs text-left min-w-0 ${isCurrent ? 'cursor-default' : ''}`}
                         >
-                          <span className="truncate">{r.roomName}</span>
+                          <span className={`truncate ${isCurrent ? 'text-[var(--text)] font-medium' : 'text-[var(--text)]'}`}>{r.roomName}</span>
+                          {isCurrent && <span className="text-[10px] tracking-wider text-[#ff6b35] shrink-0">[active]</span>}
                         </button>
                         <div className="flex items-center gap-1 pr-2 shrink-0">
                           <span className="text-[10px] text-[var(--muted)]">{r.roomCode}</span>
@@ -229,10 +242,9 @@ export default function RoomPage() {
                           </button>
                         </div>
                       </div>
-                    ))}
-                  {rooms.length > 1 && (
-                    <div style={{ borderTop: '1px solid var(--border)' }} className="mt-1 pt-1" />
-                  )}
+                    )
+                  })}
+                  <div style={{ borderTop: '1px solid var(--border)' }} className="mt-1 pt-1" />
                   <button
                     onClick={() => { setShowSwitcher(false); router.push('/?add=1') }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#ff6b35] hover:bg-[var(--surface-dim)] transition-colors text-left"
@@ -243,17 +255,6 @@ export default function RoomPage() {
                 </div>
               )}
             </div>
-            <button
-              onClick={copyCode}
-              className="shrink-0 flex items-center gap-1 text-[10px] tracking-wider px-2 py-0.5 text-[var(--muted)] hover:border-[#ff6b35] hover:text-[var(--text)] transition-colors"
-              style={{ background: 'var(--surface-dim)', border: '1px solid var(--border)' }}
-            >
-              {copied ? (
-                <><Icon name="check_circle" size={11} className="text-[#22c55e]" /> copied</>
-              ) : (
-                code
-              )}
-            </button>
           </div>
 
           {/* Center: tabs */}
