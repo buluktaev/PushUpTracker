@@ -12,6 +12,7 @@ export interface SavedRoom {
 const KEY = 'pushup_rooms'
 
 function migrate(): SavedRoom[] {
+  if (typeof window === 'undefined') return []
   // Migrate old single-room format
   const old = localStorage.getItem('pushup_identity')
   if (old) {
@@ -38,7 +39,10 @@ function load(): SavedRoom[] {
   if (typeof window === 'undefined') return []
   const raw = localStorage.getItem(KEY)
   if (raw) {
-    try { return JSON.parse(raw) } catch {}
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) return parsed as SavedRoom[]
+    } catch {}
   }
   return migrate()
 }
