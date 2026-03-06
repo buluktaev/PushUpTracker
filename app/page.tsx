@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Icon from '@/components/Icon'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useRooms } from '@/hooks/useRooms'
 
 export default function HomePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { rooms, loaded, addRoom } = useRooms()
   const [mounted, setMounted] = useState(false)
   const [mode, setMode] = useState<'menu' | 'create' | 'join'>('menu')
@@ -22,12 +23,17 @@ export default function HomePage() {
     setMounted(true)
   }, [])
 
+  const addMode = searchParams.get('add') === '1'
+
   useEffect(() => {
     if (!mounted || !loaded) return
-    if (rooms.length === 1) {
+    if (rooms.length === 1 && !addMode) {
       router.push(`/room/${rooms[0].roomCode}`)
     }
-  }, [mounted, loaded, rooms, router])
+    if (addMode) {
+      setShowNew(true)
+    }
+  }, [mounted, loaded, rooms, router, addMode])
 
   async function handleCreate() {
     if (!roomName.trim()) return setError('введите название комнаты')
@@ -90,7 +96,7 @@ export default function HomePage() {
   }
 
   if (!mounted || !loaded) return null
-  if (rooms.length === 1) return null
+  if (rooms.length === 1 && !addMode) return null
 
   const showForms = rooms.length === 0 || showNew
 

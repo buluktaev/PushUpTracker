@@ -178,37 +178,45 @@ export default function RoomPage() {
           {/* Left: room name + switcher + code */}
           <div className="flex items-center gap-2 min-w-0 px-4 py-3 relative">
             <h1 className="font-bold text-sm truncate">{room.name}</h1>
-            {rooms.length > 1 && (
-              <div className="relative shrink-0">
-                <button
-                  onClick={() => setShowSwitcher(v => !v)}
-                  className="flex items-center justify-center w-6 h-6 text-[var(--muted)] hover:text-[var(--text)] transition-colors"
-                  style={{ border: '1px solid var(--border)' }}
-                  aria-label="переключить комнату"
+            <div className="relative shrink-0">
+              <button
+                onClick={() => setShowSwitcher(v => !v)}
+                className="flex items-center justify-center w-6 h-6 text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                style={{ border: '1px solid var(--border)' }}
+                aria-label="переключить комнату"
+              >
+                <Icon name={showSwitcher ? 'expand_less' : 'expand_more'} size={14} />
+              </button>
+              {showSwitcher && (
+                <div
+                  className="absolute top-full left-0 mt-1 z-50 min-w-[180px] py-1"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
                 >
-                  <Icon name={showSwitcher ? 'expand_less' : 'expand_more'} size={14} />
-                </button>
-                {showSwitcher && (
-                  <div
-                    className="absolute top-full left-0 mt-1 z-50 min-w-[180px] py-1"
-                    style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+                  {rooms
+                    .filter(r => r.roomCode !== code)
+                    .map(r => (
+                      <button
+                        key={r.roomCode}
+                        onClick={() => { setShowSwitcher(false); router.push(`/room/${r.roomCode}`) }}
+                        className="w-full flex items-center justify-between px-3 py-2 text-xs text-[var(--text)] hover:bg-[var(--surface-dim)] transition-colors text-left"
+                      >
+                        <span className="truncate mr-2">{r.roomName}</span>
+                        <span className="text-[10px] text-[var(--muted)] shrink-0">{r.roomCode}</span>
+                      </button>
+                    ))}
+                  {rooms.length > 1 && (
+                    <div style={{ borderTop: '1px solid var(--border)' }} className="mt-1 pt-1" />
+                  )}
+                  <button
+                    onClick={() => { setShowSwitcher(false); router.push('/?add=1') }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#ff6b35] hover:bg-[var(--surface-dim)] transition-colors text-left"
                   >
-                    {rooms
-                      .filter(r => r.roomCode !== code)
-                      .map(r => (
-                        <button
-                          key={r.roomCode}
-                          onClick={() => { setShowSwitcher(false); router.push(`/room/${r.roomCode}`) }}
-                          className="w-full flex items-center justify-between px-3 py-2 text-xs text-[var(--text)] hover:bg-[var(--surface-dim)] transition-colors text-left"
-                        >
-                          <span className="truncate mr-2">{r.roomName}</span>
-                          <span className="text-[10px] text-[var(--muted)] shrink-0">{r.roomCode}</span>
-                        </button>
-                      ))}
-                  </div>
-                )}
-              </div>
-            )}
+                    <Icon name="add" size={12} />
+                    <span>add_room()</span>
+                  </button>
+                </div>
+              )}
+            </div>
             <button
               onClick={copyCode}
               className="shrink-0 flex items-center gap-1 text-[10px] tracking-wider px-2 py-0.5 text-[var(--muted)] hover:border-[#ff6b35] hover:text-[var(--text)] transition-colors"
