@@ -223,6 +223,14 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     }, 1000)
   }
 
+  function cancelCountdown() {
+    if (countdownRef.current) clearInterval(countdownRef.current)
+    countdownRef.current = null
+    setCountdown(null)
+    setCount(0)
+    setElapsed(0)
+  }
+
   function startHold() {
     holdStartRef.current = Date.now()
     setHolding(true)
@@ -381,7 +389,14 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
 
       {/* Session controls */}
       {cameraOn && (
-        !sessionActive ? (
+        countdown !== null ? (
+          <button
+            onClick={cancelCountdown}
+            className="w-full py-3 text-sm font-normal text-[#888880] border border-[#888880] hover:opacity-60 transition-opacity"
+          >
+            cancel()
+          </button>
+        ) : !sessionActive ? (
           <button
             onClick={startSession}
             className="w-full py-3 text-sm font-normal text-white bg-[#22c55e] hover:opacity-85 transition-opacity"
