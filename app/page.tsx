@@ -18,6 +18,13 @@ export default function HomePage() {
   const [joinName, setJoinName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [copiedCode, setCopiedCode] = useState<string | null>(null)
+
+  function copyRoomCode(code: string) {
+    navigator.clipboard.writeText(code)
+    setCopiedCode(code)
+    setTimeout(() => setCopiedCode(null), 2000)
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -127,10 +134,10 @@ export default function HomePage() {
         {rooms.length >= 2 && (
           <div className="flex flex-col gap-1.5 mb-2">
             {rooms.map(room => (
-              <button
+              <div
                 key={room.roomCode}
                 onClick={() => router.push(`/room/${room.roomCode}`)}
-                className="w-full flex items-center justify-between px-4 py-3 text-sm text-[var(--text)] bg-[var(--surface)] hover:border-[#ff6b35] transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 text-sm text-[var(--text)] bg-[var(--surface)] hover:border-[#ff6b35] transition-colors cursor-pointer"
                 style={{ border: '1px solid var(--border)' }}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -141,9 +148,20 @@ export default function HomePage() {
                   >
                     {room.roomCode}
                   </span>
+                  <button
+                    onClick={e => { e.stopPropagation(); copyRoomCode(room.roomCode) }}
+                    className="shrink-0 flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                    aria-label="скопировать код"
+                  >
+                    <Icon
+                      name={copiedCode === room.roomCode ? 'check' : 'content_copy'}
+                      size={13}
+                      style={{ color: copiedCode === room.roomCode ? '#22c55e' : undefined }}
+                    />
+                  </button>
                 </div>
                 <Icon name="arrow_forward" size={14} style={{ color: 'var(--muted)', flexShrink: 0 }} />
-              </button>
+              </div>
             ))}
 
             {/* new_room() toggle button */}
