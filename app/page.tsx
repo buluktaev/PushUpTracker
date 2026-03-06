@@ -18,13 +18,6 @@ export default function HomePage() {
   const [joinName, setJoinName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [copiedCode, setCopiedCode] = useState<string | null>(null)
-
-  function copyRoomCode(code: string) {
-    navigator.clipboard.writeText(code)
-    setCopiedCode(code)
-    setTimeout(() => setCopiedCode(null), 2000)
-  }
 
   useEffect(() => {
     setMounted(true)
@@ -140,26 +133,7 @@ export default function HomePage() {
                 className="w-full flex items-center justify-between px-4 py-3 text-sm text-[var(--text)] bg-[var(--surface)] hover:border-[#ff6b35] transition-colors cursor-pointer"
                 style={{ border: '1px solid var(--border)' }}
               >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="font-medium truncate">{room.roomName}</span>
-                  <span
-                    className="text-[10px] tracking-wider px-1.5 py-0.5 shrink-0"
-                    style={{ background: 'var(--surface-dim)', border: '1px solid var(--border)', color: 'var(--muted)' }}
-                  >
-                    {room.roomCode}
-                  </span>
-                  <button
-                    onClick={e => { e.stopPropagation(); copyRoomCode(room.roomCode) }}
-                    className="shrink-0 flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] transition-colors"
-                    aria-label="скопировать код"
-                  >
-                    <Icon
-                      name={copiedCode === room.roomCode ? 'check' : 'content_copy'}
-                      size={13}
-                      style={{ color: copiedCode === room.roomCode ? '#22c55e' : undefined }}
-                    />
-                  </button>
-                </div>
+                <span className="font-medium truncate">{room.roomName}</span>
                 <Icon name="arrow_forward" size={14} style={{ color: 'var(--muted)', flexShrink: 0 }} />
               </div>
             ))}

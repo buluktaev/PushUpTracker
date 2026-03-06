@@ -45,6 +45,14 @@ export default function RoomPage() {
   const leavingRef = useRef(false)
   const [showSwitcher, setShowSwitcher] = useState(false)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const [copiedSwitcher, setCopiedSwitcher] = useState<string | null>(null)
+
+  function copySwitcherCode(e: React.MouseEvent, roomCode: string) {
+    e.stopPropagation()
+    navigator.clipboard.writeText(roomCode)
+    setCopiedSwitcher(roomCode)
+    setTimeout(() => setCopiedSwitcher(null), 2000)
+  }
   const [identity, setIdentity] = useState<SavedRoom | null>(null)
   const [room, setRoom] = useState<RoomData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -196,14 +204,31 @@ export default function RoomPage() {
                   {rooms
                     .filter(r => r.roomCode !== code)
                     .map(r => (
-                      <button
+                      <div
                         key={r.roomCode}
-                        onClick={() => { setShowSwitcher(false); router.push(`/room/${r.roomCode}`) }}
-                        className="w-full flex items-center justify-between px-3 py-2 text-xs text-[var(--text)] hover:bg-[var(--surface-dim)] transition-colors text-left"
+                        className="flex items-center hover:bg-[var(--surface-dim)] transition-colors"
                       >
-                        <span className="truncate mr-2">{r.roomName}</span>
-                        <span className="text-[10px] text-[var(--muted)] shrink-0">{r.roomCode}</span>
-                      </button>
+                        <button
+                          onClick={() => { setShowSwitcher(false); router.push(`/room/${r.roomCode}`) }}
+                          className="flex-1 flex items-center justify-between px-3 py-2 text-xs text-[var(--text)] text-left min-w-0"
+                        >
+                          <span className="truncate">{r.roomName}</span>
+                        </button>
+                        <div className="flex items-center gap-1 pr-2 shrink-0">
+                          <span className="text-[10px] text-[var(--muted)]">{r.roomCode}</span>
+                          <button
+                            onClick={e => copySwitcherCode(e, r.roomCode)}
+                            className="flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                            aria-label="скопировать код"
+                          >
+                            <Icon
+                              name={copiedSwitcher === r.roomCode ? 'check' : 'content_copy'}
+                              size={12}
+                              style={{ color: copiedSwitcher === r.roomCode ? '#22c55e' : undefined }}
+                            />
+                          </button>
+                        </div>
+                      </div>
                     ))}
                   {rooms.length > 1 && (
                     <div style={{ borderTop: '1px solid var(--border)' }} className="mt-1 pt-1" />
