@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Icon from '@/components/Icon'
@@ -42,6 +42,7 @@ export default function RoomPage() {
   const code = (params.code as string).toUpperCase()
 
   const { rooms, addRoom, removeRoom, getRoom, nextRoom } = useRooms()
+  const leavingRef = useRef(false)
   const [showSwitcher, setShowSwitcher] = useState(false)
   const [identity, setIdentity] = useState<SavedRoom | null>(null)
   const [room, setRoom] = useState<RoomData | null>(null)
@@ -53,6 +54,7 @@ export default function RoomPage() {
 
   useEffect(() => {
     async function init() {
+      if (leavingRef.current) return  // навигация уже инициирована в leaveRoom
       const saved = getRoom(code)
       if (saved) {
         setIdentity(saved)
@@ -115,6 +117,7 @@ export default function RoomPage() {
   }
 
   function leaveRoom() {
+    leavingRef.current = true
     removeRoom(code)
     const next = nextRoom(code)
     if (next) {
