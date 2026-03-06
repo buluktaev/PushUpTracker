@@ -40,10 +40,10 @@ button:not(:disabled) {
   transition-duration: 150ms;
 }
 button:not(:disabled):active {
-  transform: scale(0.97);
+  transform: scale(0.99);
 }
 button[data-hold]:not(:disabled):active {
-  transform: scale(0.98);
+  transform: scale(0.99);
 }
 
 /* Tips 2 + 7: enter animation — scale from 0.95 + blur */
