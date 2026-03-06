@@ -221,7 +221,7 @@ export default function RoomPage() {
               </button>
               {showSwitcher && (
                 <div
-                  className="absolute top-full left-0 mt-1 z-50 min-w-[200px] py-1"
+                  className="absolute top-full left-0 mt-1 z-50 min-w-[200px] py-1 animate-pop-in"
                   style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
                 >
                   {rooms.map(r => {
@@ -307,7 +307,7 @@ export default function RoomPage() {
               </button>
               {showExitConfirm && (
                 <div
-                  className="absolute top-full right-0 mt-1 z-50 p-3 flex flex-col gap-2 min-w-[160px]"
+                  className="absolute top-full right-0 mt-1 z-50 p-3 flex flex-col gap-2 min-w-[160px] animate-pop-in-right"
                   style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
                 >
                   <p className="text-[10px] tracking-widest text-[var(--muted)]">// покинуть комнату?</p>

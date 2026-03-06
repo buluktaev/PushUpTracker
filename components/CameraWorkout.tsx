@@ -390,6 +390,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
           </button>
         ) : (
           <button
+            data-hold
             onPointerDown={startHold}
             onPointerUp={cancelHold}
             onPointerLeave={cancelHold}
