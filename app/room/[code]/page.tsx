@@ -73,6 +73,16 @@ export default function RoomPage() {
   const [creatorNameInput, setCreatorNameInput] = useState('')
   const [showCreatorForm, setShowCreatorForm] = useState(false)
 
+  // Сброс при переходе между комнатами
+  useEffect(() => {
+    setLoading(true)
+    setRoom(null)
+    setIdentity(null)
+    setShowSwitcher(false)
+    setShowExitConfirm(false)
+    leavingRef.current = false
+  }, [code])
+
   useEffect(() => {
     if (!loaded) return  // ждём загрузки localStorage
     async function init() {
