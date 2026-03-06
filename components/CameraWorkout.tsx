@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect, useCallback } from 'react'
+import NumberFlow from '@number-flow/react'
 import Icon from '@/components/Icon'
 
 interface Props {
@@ -322,7 +323,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
         </div>
 
         {/* Counter overlay — bottom center */}
-        {cameraOn && (
+        {cameraOn && (countdown !== null || sessionActive) && (
           <div
             className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center pointer-events-none"
             aria-live="polite"
@@ -332,7 +333,13 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
               className="font-bold text-white tabular-nums"
               style={{ fontSize: 88, lineHeight: 1, textShadow: '0 2px 16px rgba(0,0,0,0.8)' }}
             >
-              {String(count).padStart(2, '0')}
+              <NumberFlow
+                value={countdown !== null ? countdown : count}
+                format={countdown !== null
+                  ? undefined
+                  : { minimumIntegerDigits: 2 }
+                }
+              />
             </div>
             {sessionActive && (
               <div
