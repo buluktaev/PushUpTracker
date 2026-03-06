@@ -5,6 +5,7 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Icon from '@/components/Icon'
 import ThemeToggle from '@/components/ThemeToggle'
+import { useRooms, type SavedRoom } from '@/hooks/useRooms'
 
 const CameraWorkout = dynamic(() => import('@/components/CameraWorkout'), {
   ssr: false,
@@ -34,19 +35,15 @@ interface RoomData {
   stats: RoomStats
 }
 
-interface Identity {
-  roomCode: string
-  participantId: string
-  name: string
-}
-
 export default function RoomPage() {
   const params = useParams()
   const searchParams = useSearchParams()
   const router = useRouter()
   const code = (params.code as string).toUpperCase()
 
-  const [identity, setIdentity] = useState<Identity | null>(null)
+  const { rooms, addRoom, removeRoom, getRoom, nextRoom } = useRooms()
+  const [showSwitcher, setShowSwitcher] = useState(false)
+  const [identity, setIdentity] = useState<SavedRoom | null>(null)
   const [room, setRoom] = useState<RoomData | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'leaderboard' | 'workout'>('workout')
@@ -56,13 +53,10 @@ export default function RoomPage() {
 
   useEffect(() => {
     async function init() {
-      const saved = localStorage.getItem('pushup_identity')
+      const saved = getRoom(code)
       if (saved) {
-        const parsed: Identity = JSON.parse(saved)
-        if (parsed.roomCode === code) {
-          setIdentity(parsed)
-          return
-        }
+        setIdentity(saved)
+        return
       }
       const isCreator = searchParams.get('created') === '1'
       if (isCreator) {
@@ -74,7 +68,8 @@ export default function RoomPage() {
       }
     }
     init()
-  }, [code, searchParams, router])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, rooms])
 
   async function submitCreatorName() {
     if (!creatorNameInput.trim()) return
@@ -85,9 +80,10 @@ export default function RoomPage() {
     })
     if (res.ok) {
       const data = await res.json()
-      const id: Identity = { roomCode: code, participantId: data.id, name: data.name }
-      localStorage.setItem('pushup_identity', JSON.stringify(id))
-      setIdentity(id)
+      const roomNameFromUrl = searchParams.get('name') ?? code
+      const saved: SavedRoom = { roomCode: code, participantId: data.id, name: data.name, roomName: roomNameFromUrl }
+      addRoom(saved)
+      setIdentity(saved)
       setShowCreatorForm(false)
       setLoading(true)
     } else {
@@ -119,8 +115,13 @@ export default function RoomPage() {
   }
 
   function leaveRoom() {
-    localStorage.removeItem('pushup_identity')
-    router.push('/')
+    removeRoom(code)
+    const next = nextRoom(code)
+    if (next) {
+      router.push(`/room/${next.roomCode}`)
+    } else {
+      router.push('/')
+    }
   }
 
   if (showCreatorForm) {
@@ -169,9 +170,40 @@ export default function RoomPage() {
       {/* Header with tabs in center */}
       <header className="sticky top-0 z-10 bg-[var(--bg)]" style={{ borderBottom: '1px solid var(--border)' }}>
         <div className="grid grid-cols-[1fr_auto_1fr] items-stretch">
-          {/* Left: room name + code */}
-          <div className="flex items-center gap-2.5 min-w-0 px-4 py-3">
+          {/* Left: room name + switcher + code */}
+          <div className="flex items-center gap-2 min-w-0 px-4 py-3 relative">
             <h1 className="font-bold text-sm truncate">{room.name}</h1>
+            {rooms.length > 1 && (
+              <div className="relative shrink-0">
+                <button
+                  onClick={() => setShowSwitcher(v => !v)}
+                  className="flex items-center justify-center w-6 h-6 text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                  style={{ border: '1px solid var(--border)' }}
+                  aria-label="переключить комнату"
+                >
+                  <Icon name={showSwitcher ? 'expand_less' : 'expand_more'} size={14} />
+                </button>
+                {showSwitcher && (
+                  <div
+                    className="absolute top-full left-0 mt-1 z-50 min-w-[180px] py-1"
+                    style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+                  >
+                    {rooms
+                      .filter(r => r.roomCode !== code)
+                      .map(r => (
+                        <button
+                          key={r.roomCode}
+                          onClick={() => { setShowSwitcher(false); router.push(`/room/${r.roomCode}`) }}
+                          className="w-full flex items-center justify-between px-3 py-2 text-xs text-[var(--text)] hover:bg-[var(--surface-dim)] transition-colors text-left"
+                        >
+                          <span className="truncate mr-2">{r.roomName}</span>
+                          <span className="text-[10px] text-[var(--muted)] shrink-0">{r.roomCode}</span>
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
             <button
               onClick={copyCode}
               className="shrink-0 flex items-center gap-1 text-[10px] tracking-wider px-2 py-0.5 text-[var(--muted)] hover:border-[#ff6b35] hover:text-[var(--text)] transition-colors"
