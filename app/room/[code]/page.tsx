@@ -100,11 +100,12 @@ export default function RoomPage() {
       const data = await res.json()
       setRoom(data)
     } catch {
+      removeRoom(code)
       router.push('/')
     } finally {
       setLoading(false)
     }
-  }, [code, router])
+  }, [code, router, removeRoom])
 
   useEffect(() => {
     if (identity) loadRoom()
