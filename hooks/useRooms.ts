@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 export interface SavedRoom {
   roomCode: string
@@ -58,7 +58,7 @@ export function useRooms() {
     setRooms(load())
   }, [])
 
-  function addRoom(room: SavedRoom) {
+  const addRoom = useCallback((room: SavedRoom) => {
     setRooms(prev => {
       // Replace if same roomCode already exists
       const filtered = prev.filter(r => r.roomCode !== room.roomCode)
@@ -66,23 +66,23 @@ export function useRooms() {
       save(next)
       return next
     })
-  }
+  }, [])
 
-  function removeRoom(code: string) {
+  const removeRoom = useCallback((code: string) => {
     setRooms(prev => {
       const next = prev.filter(r => r.roomCode !== code)
       save(next)
       return next
     })
-  }
+  }, [])
 
-  function getRoom(code: string): SavedRoom | null {
+  const getRoom = useCallback((code: string): SavedRoom | null => {
     return rooms.find(r => r.roomCode === code) ?? null
-  }
+  }, [rooms])
 
-  function nextRoom(currentCode: string): SavedRoom | null {
+  const nextRoom = useCallback((currentCode: string): SavedRoom | null => {
     return rooms.find(r => r.roomCode !== currentCode) ?? null
-  }
+  }, [rooms])
 
   return { rooms, addRoom, removeRoom, getRoom, nextRoom }
 }
