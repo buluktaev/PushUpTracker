@@ -334,7 +334,7 @@ export default function RoomPage() {
         </div>
       </header>
 
-      <main className="flex-1 p-4 max-w-2xl w-full mx-auto">
+      <main className={`flex-1 w-full mx-auto ${tab === 'workout' ? 'max-w-[1024px] p-0' : 'max-w-2xl p-4'}`}>
         {tab === 'leaderboard' && (
           <>
             {/* Stats bar */}

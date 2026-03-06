@@ -96,6 +96,27 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     const lm = result.landmarks[0]          // image coords — for drawing
     const wlm = result.worldLandmarks?.[0]  // 3D world coords — for angle
 
+    // Anti-cheat: determine body tilt (horizontal = valid push-up position)
+    const hipVisible = lm[23]?.x != null && lm[24]?.x != null
+    let isHorizontal = false
+    if (hipVisible) {
+      if (wlm) {
+        const sY = (wlm[11].y + wlm[12].y) / 2
+        const hY = (wlm[23].y + wlm[24].y) / 2
+        const sX = (wlm[11].x + wlm[12].x) / 2
+        const hX = (wlm[23].x + wlm[24].x) / 2
+        const sZ = (wlm[11].z + wlm[12].z) / 2
+        const hZ = (wlm[23].z + wlm[24].z) / 2
+        const dy = sY - hY
+        const torsoLen = Math.sqrt((sX - hX) ** 2 + dy ** 2 + (sZ - hZ) ** 2)
+        isHorizontal = torsoLen > 0 ? Math.abs(dy / torsoLen) < 0.5 : false
+      } else {
+        const shoulderY = (lm[11].y + lm[12].y) / 2
+        const hipY = (lm[23].y + lm[24].y) / 2
+        isHorizontal = (hipY - shoulderY) < 0.25
+      }
+    }
+
     if (drawingRef.current) {
       try {
         const connections = [
@@ -103,7 +124,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
           [11,23],[12,24],[23,25],[24,26],[25,27],[26,28]
         ]
         const ctx2 = canvas.getContext('2d')!
-        ctx2.strokeStyle = 'rgba(255,255,255,0.4)'
+        ctx2.strokeStyle = isHorizontal ? 'rgba(74,222,128,0.85)' : 'rgba(255,255,255,0.4)'
         ctx2.lineWidth = 1.5
         for (const [a, b] of connections) {
           if (lm[a] && lm[b]) {
@@ -113,7 +134,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
             ctx2.stroke()
           }
         }
-        ctx2.fillStyle = '#ff6b35'
+        ctx2.fillStyle = isHorizontal ? '#4ade80' : '#ff6b35'
         for (const point of lm) {
           ctx2.beginPath()
           ctx2.arc(point.x * canvas.width, point.y * canvas.height, 3, 0, 2 * Math.PI)
@@ -122,15 +143,22 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
       } catch {}
     }
 
-    const src = wlm ?? lm  // prefer world landmarks for accurate angle
+    const src = wlm ?? lm
     const angle = angleBetween(src[11], src[13], src[15])
-    setStatus({ text: `elbow: ${Math.round(angle)}°`, color: '#ff6b35' })
+
+    if (!hipVisible) {
+      setStatus({ text: 'show full body', color: '#f59e0b' })
+    } else if (!isHorizontal) {
+      setStatus({ text: 'get horizontal!', color: '#ef4444' })
+    } else {
+      setStatus({ text: `elbow: ${Math.round(angle)}°`, color: '#ff6b35' })
+    }
 
     if (angle < 90 && posePhaseRef.current === 'up') {
       posePhaseRef.current = 'down'
     } else if (angle > 150 && posePhaseRef.current === 'down') {
       posePhaseRef.current = 'up'
-      if (sessionActiveRef.current) {
+      if (sessionActiveRef.current && isHorizontal) {
         countRef.current += 1
         setCount(countRef.current)
       }
@@ -223,6 +251,14 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     }, 1000)
   }
 
+  function cancelCountdown() {
+    if (countdownRef.current) clearInterval(countdownRef.current)
+    countdownRef.current = null
+    setCountdown(null)
+    setCount(0)
+    setElapsed(0)
+  }
+
   function startHold() {
     holdStartRef.current = Date.now()
     setHolding(true)
@@ -230,7 +266,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
 
     function tick() {
       const elapsed = Date.now() - (holdStartRef.current ?? Date.now())
-      const progress = Math.min(elapsed / 2000, 1)
+      const progress = Math.min(elapsed / 1000, 1)
       setHoldProgress(progress)
       if (progress < 1) {
         holdRafRef.current = requestAnimationFrame(tick)
@@ -381,7 +417,14 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
 
       {/* Session controls */}
       {cameraOn && (
-        !sessionActive ? (
+        countdown !== null ? (
+          <button
+            onClick={cancelCountdown}
+            className="w-full py-3 text-sm font-normal text-[#888880] border border-[#888880] hover:opacity-60 transition-opacity"
+          >
+            cancel()
+          </button>
+        ) : !sessionActive ? (
           <button
             onClick={startSession}
             className="w-full py-3 text-sm font-normal text-white bg-[#22c55e] hover:opacity-85 transition-opacity"
