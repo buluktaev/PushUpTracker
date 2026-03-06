@@ -59,9 +59,9 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
         },
         runningMode: 'VIDEO',
         numPoses: 1,
-        minPoseDetectionConfidence: 0.3,
-        minPosePresenceConfidence: 0.3,
-        minTrackingConfidence: 0.3,
+        minPoseDetectionConfidence: 0.5,
+        minPosePresenceConfidence: 0.5,
+        minTrackingConfidence: 0.5,
       })
       if (canvasRef.current) {
         drawingRef.current = new DrawingUtils(canvasRef.current.getContext('2d'))
@@ -109,7 +109,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
         const hZ = (wlm[23].z + wlm[24].z) / 2
         const dy = sY - hY
         const torsoLen = Math.sqrt((sX - hX) ** 2 + dy ** 2 + (sZ - hZ) ** 2)
-        isHorizontal = torsoLen > 0 ? Math.abs(dy / torsoLen) < 0.5 : false
+        isHorizontal = torsoLen > 0 ? Math.abs(dy / torsoLen) < 0.35 : false
       } else {
         const shoulderY = (lm[11].y + lm[12].y) / 2
         const hipY = (lm[23].y + lm[24].y) / 2
