@@ -120,8 +120,8 @@ function HomePageContent() {
           </p>
         </div>
 
-        {/* Room list (2+ rooms) */}
-        {rooms.length >= 2 && (
+        {/* Room list (2+ rooms, or 1 room in addMode) */}
+        {(rooms.length >= 2 || (addMode && rooms.length >= 1)) && (
           <div className="flex flex-col gap-1.5 mb-2">
             {rooms.map(room => (
               <div
