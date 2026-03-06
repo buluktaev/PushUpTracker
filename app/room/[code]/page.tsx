@@ -44,6 +44,7 @@ export default function RoomPage() {
   const { rooms, loaded, addRoom, removeRoom, getRoom, nextRoom } = useRooms()
   const leavingRef = useRef(false)
   const [showSwitcher, setShowSwitcher] = useState(false)
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [identity, setIdentity] = useState<SavedRoom | null>(null)
   const [room, setRoom] = useState<RoomData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -255,13 +256,42 @@ export default function RoomPage() {
 
           {/* Right: exit + theme */}
           <div className="flex items-center justify-end gap-2 px-4 py-3">
-            <button
-              onClick={leaveRoom}
-              className="text-[11px] px-3 py-1.5 text-[var(--muted)] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
-              style={{ border: '1px solid var(--border)' }}
-            >
-              exit()
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowExitConfirm(v => !v)}
+                className={`text-[11px] px-3 py-1.5 transition-colors ${
+                  showExitConfirm
+                    ? 'border-[#ef4444] text-[#ef4444]'
+                    : 'text-[var(--muted)] hover:border-[#ef4444] hover:text-[#ef4444]'
+                }`}
+                style={{ border: '1px solid var(--border)' }}
+              >
+                exit()
+              </button>
+              {showExitConfirm && (
+                <div
+                  className="absolute top-full right-0 mt-1 z-50 p-3 flex flex-col gap-2 min-w-[160px]"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+                >
+                  <p className="text-[10px] tracking-widest text-[var(--muted)]">// покинуть комнату?</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowExitConfirm(false)}
+                      className="flex-1 py-1.5 text-[11px] text-[var(--muted)] hover:border-[var(--text)] hover:text-[var(--text)] transition-colors"
+                      style={{ border: '1px solid var(--border)' }}
+                    >
+                      cancel
+                    </button>
+                    <button
+                      onClick={leaveRoom}
+                      className="flex-1 py-1.5 text-[11px] text-white bg-[#ef4444] hover:opacity-85 transition-opacity"
+                    >
+                      exit()
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             <ThemeToggle />
           </div>
         </div>
