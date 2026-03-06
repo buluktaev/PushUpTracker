@@ -115,7 +115,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
       } catch {}
     }
 
-    const keyPoints = [11, 12, 13, 14, 15, 16]
+    const keyPoints = [11, 12, 13, 14]
     if (keyPoints.some(i => (lm[i]?.visibility ?? 0) < 0.5)) {
       setStatus({ text: 'searching...', color: '#f59e0b' })
       return
