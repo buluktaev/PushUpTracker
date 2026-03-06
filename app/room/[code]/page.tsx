@@ -49,7 +49,7 @@ export default function RoomPage() {
   const [identity, setIdentity] = useState<Identity | null>(null)
   const [room, setRoom] = useState<RoomData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'leaderboard' | 'workout'>('leaderboard')
+  const [tab, setTab] = useState<'leaderboard' | 'workout'>('workout')
   const [copied, setCopied] = useState(false)
   const [creatorNameInput, setCreatorNameInput] = useState('')
   const [showCreatorForm, setShowCreatorForm] = useState(false)
@@ -166,56 +166,61 @@ export default function RoomPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text)]">
 
-      {/* Header */}
-      <header className="sticky top-0 z-10 px-4 py-3 flex items-center justify-between bg-[var(--bg)]" style={{ borderBottom: '1px solid var(--border)' }}>
-        <div className="flex items-center gap-2.5 min-w-0">
-          <h1 className="font-bold text-sm truncate">{room.name}</h1>
-          <button
-            onClick={copyCode}
-            className="shrink-0 flex items-center gap-1 text-[10px] tracking-wider px-2 py-0.5 text-[var(--muted)] hover:border-[#ff6b35] hover:text-[var(--text)] transition-colors"
-            style={{ background: 'var(--surface-dim)', border: '1px solid var(--border)' }}
-          >
-            {copied ? (
-              <><Icon name="check_circle" size={11} className="text-[#22c55e]" /> copied</>
-            ) : (
-              code
-            )}
-          </button>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={leaveRoom}
-            className="text-[11px] px-3 py-1.5 text-[var(--muted)] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
-            style={{ border: '1px solid var(--border)' }}
-          >
-            exit()
-          </button>
-          <ThemeToggle />
+      {/* Header with tabs in center */}
+      <header className="sticky top-0 z-10 bg-[var(--bg)]" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div className="grid grid-cols-[1fr_auto_1fr] items-stretch">
+          {/* Left: room name + code */}
+          <div className="flex items-center gap-2.5 min-w-0 px-4 py-3">
+            <h1 className="font-bold text-sm truncate">{room.name}</h1>
+            <button
+              onClick={copyCode}
+              className="shrink-0 flex items-center gap-1 text-[10px] tracking-wider px-2 py-0.5 text-[var(--muted)] hover:border-[#ff6b35] hover:text-[var(--text)] transition-colors"
+              style={{ background: 'var(--surface-dim)', border: '1px solid var(--border)' }}
+            >
+              {copied ? (
+                <><Icon name="check_circle" size={11} className="text-[#22c55e]" /> copied</>
+              ) : (
+                code
+              )}
+            </button>
+          </div>
+
+          {/* Center: tabs */}
+          <nav className="flex items-stretch" role="tablist">
+            {(['workout', 'leaderboard'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                role="tab"
+                aria-selected={tab === t}
+                className={`px-5 text-[11px] tracking-wide transition-colors border-b-2 -mb-px flex items-center gap-1.5 ${
+                  tab === t
+                    ? 'border-[#ff6b35] text-[var(--text)] font-bold'
+                    : 'border-transparent text-[var(--muted)] hover:text-[var(--text)]'
+                }`}
+              >
+                {t === 'leaderboard' ? (
+                  <><Icon name="emoji_events" size={13} /> leaderboard</>
+                ) : (
+                  <><Icon name="fitness_center" size={13} /> workout</>
+                )}
+              </button>
+            ))}
+          </nav>
+
+          {/* Right: exit + theme */}
+          <div className="flex items-center justify-end gap-2 px-4 py-3">
+            <button
+              onClick={leaveRoom}
+              className="text-[11px] px-3 py-1.5 text-[var(--muted)] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
+              style={{ border: '1px solid var(--border)' }}
+            >
+              exit()
+            </button>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
-
-      {/* Tabs */}
-      <nav className="flex" role="tablist" style={{ borderBottom: '1px solid var(--border)' }}>
-        {(['leaderboard', 'workout'] as const).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            role="tab"
-            aria-selected={tab === t}
-            className={`px-5 py-2.5 text-[11px] tracking-wide transition-colors border-b-2 -mb-px flex items-center gap-1.5 ${
-              tab === t
-                ? 'border-[#ff6b35] text-[var(--text)] font-bold'
-                : 'border-transparent text-[var(--muted)] hover:text-[var(--text)]'
-            }`}
-          >
-            {t === 'leaderboard' ? (
-              <><Icon name="emoji_events" size={13} /> leaderboard</>
-            ) : (
-              <><Icon name="fitness_center" size={13} /> workout</>
-            )}
-          </button>
-        ))}
-      </nav>
 
       <main className="flex-1 p-4 max-w-2xl w-full mx-auto">
         {tab === 'leaderboard' && (
