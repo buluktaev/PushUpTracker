@@ -6,10 +6,9 @@ WORKDIR /app
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
-RUN npm ci --ignore-scripts
-
 COPY prisma ./prisma
-RUN npx prisma generate
+COPY prisma.config.ts ./
+RUN npm ci
 
 COPY . .
 RUN npm run build
