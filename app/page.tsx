@@ -30,9 +30,6 @@ export default function HomePage() {
     if (rooms.length === 1 && !addMode) {
       router.push(`/room/${rooms[0].roomCode}`)
     }
-    if (addMode) {
-      setShowNew(true)
-    }
   }, [mounted, loaded, rooms, router, addMode])
 
   async function handleCreate() {
