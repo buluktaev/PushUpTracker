@@ -33,6 +33,8 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
   const [status, setStatus] = useState({ text: 'camera off', color: '#888880' })
   const [saving, setSaving] = useState(false)
   const [holding, setHolding] = useState(false)
+  const [countdown, setCountdown] = useState<number | null>(null)
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [holdProgress, setHoldProgress] = useState(0)
   const holdRafRef = useRef<number | null>(null)
   const holdStartRef = useRef<number | null>(null)
@@ -199,11 +201,24 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     countRef.current = 0
     setCount(0)
     setElapsed(0)
-    sessionStartRef.current = Date.now()
-    sessionActiveRef.current = true
-    setSessionActive(true)
-    timerRef.current = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - (sessionStartRef.current ?? Date.now())) / 1000))
+    setCountdown(5)
+
+    let remaining = 5
+    countdownRef.current = setInterval(() => {
+      remaining -= 1
+      if (remaining <= 0) {
+        clearInterval(countdownRef.current!)
+        countdownRef.current = null
+        setCountdown(null)
+        sessionStartRef.current = Date.now()
+        sessionActiveRef.current = true
+        setSessionActive(true)
+        timerRef.current = setInterval(() => {
+          setElapsed(Math.floor((Date.now() - (sessionStartRef.current ?? Date.now())) / 1000))
+        }, 1000)
+      } else {
+        setCountdown(remaining)
+      }
     }, 1000)
   }
 
@@ -262,6 +277,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     return () => {
       stopCamera()
       if (timerRef.current) clearInterval(timerRef.current)
+      if (countdownRef.current) clearInterval(countdownRef.current)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
