@@ -19,4 +19,4 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma migrate resolve --rolled-back 20260305183243_init 2>/dev/null; npx prisma migrate deploy && node_modules/.bin/next start"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node_modules/.bin/next start"]
