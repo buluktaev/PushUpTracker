@@ -51,11 +51,14 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
       landmarkerRef.current = await PoseLandmarker.createFromOptions(resolver, {
         baseOptions: {
           modelAssetPath:
-            'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
+            'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task',
           delegate: 'GPU',
         },
         runningMode: 'VIDEO',
         numPoses: 1,
+        minPoseDetectionConfidence: 0.3,
+        minPosePresenceConfidence: 0.3,
+        minTrackingConfidence: 0.3,
       })
       if (canvasRef.current) {
         drawingRef.current = new DrawingUtils(canvasRef.current.getContext('2d'))
@@ -87,7 +90,8 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
       return
     }
 
-    const lm = result.landmarks[0]
+    const lm = result.landmarks[0]          // image coords — for drawing
+    const wlm = result.worldLandmarks?.[0]  // 3D world coords — for angle
 
     if (drawingRef.current) {
       try {
@@ -115,7 +119,8 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
       } catch {}
     }
 
-    const angle = angleBetween(lm[11], lm[13], lm[15])
+    const src = wlm ?? lm  // prefer world landmarks for accurate angle
+    const angle = angleBetween(src[11], src[13], src[15])
     setStatus({ text: `elbow: ${Math.round(angle)}°`, color: '#ff6b35' })
 
     if (angle < 90 && posePhaseRef.current === 'up') {
