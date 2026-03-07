@@ -329,7 +329,10 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
   const fmt = (s: number) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 
   return (
-    <div className="flex flex-col gap-3">
+    <div
+      className="flex flex-col gap-3 mx-auto w-full"
+      style={{ maxWidth: 'calc((100dvh - 7rem) * 4 / 3)' }}
+    >
 
       {/* Camera container — always dark bg regardless of theme */}
       <div
@@ -337,6 +340,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
         style={{
           background: '#0a0a0a',
           aspectRatio: '4/3',
+          maxHeight: 'calc(100dvh - 7rem)',
           border: `1px solid ${cameraOn ? status.color : 'var(--border)'}`,
           borderRadius: 0,
           transition: 'border-color 0.2s',
@@ -422,12 +426,12 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
         )}
       </div>
 
-      {/* Session controls */}
-      {cameraOn && (
+      {/* Session controls — placeholder сохраняет высоту когда камера выключена */}
+      {cameraOn ? (
         countdown !== null ? (
           <button
             onClick={cancelCountdown}
-            className="w-full py-3 text-sm font-normal text-[#888880] border border-[#888880] hover:opacity-60 transition-opacity"
+            className="w-full py-3 text-sm font-normal text-[#888880] ring-1 ring-inset ring-[#888880] hover:opacity-60 transition-opacity"
           >
             cancel()
           </button>
@@ -462,6 +466,8 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
             </span>
           </button>
         )
+      ) : (
+        <div className="w-full py-3 text-sm" aria-hidden="true" style={{ visibility: 'hidden' }}>&nbsp;</div>
       )}
     </div>
   )
