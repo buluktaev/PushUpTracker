@@ -107,7 +107,7 @@ function HomePageContent() {
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-5">
-            <img src="/icon.svg" width={20} height={20} alt="" style={{ borderRadius: 6 }} />
+            <img src="/icon.svg" width={20} height={20} alt=""  />
             <span className="text-[10px] tracking-widest uppercase text-[var(--muted)]">
               // pushup tracker
             </span>
