@@ -39,6 +39,8 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
   const [holdProgress, setHoldProgress] = useState(0)
   const holdRafRef = useRef<number | null>(null)
   const holdStartRef = useRef<number | null>(null)
+  const [startDisabled, setStartDisabled] = useState(false)
+  const startDisabledTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const loadMP = useCallback(async () => {
     if (landmarkerRef.current) return
@@ -288,6 +290,11 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     if (timerRef.current) clearInterval(timerRef.current)
     sessionActiveRef.current = false
     setSessionActive(false)
+    setHolding(false)
+    setHoldProgress(0)
+    setStartDisabled(true)
+    if (startDisabledTimerRef.current) clearTimeout(startDisabledTimerRef.current)
+    startDisabledTimerRef.current = setTimeout(() => setStartDisabled(false), 800)
     const finalCount = countRef.current
     const duration = Math.floor((Date.now() - (sessionStartRef.current ?? Date.now())) / 1000)
     if (finalCount === 0) return
@@ -427,7 +434,8 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
         ) : !sessionActive ? (
           <button
             onClick={startSession}
-            className="w-full py-3 text-sm font-normal text-white bg-[#22c55e] hover:opacity-85 transition-opacity"
+            disabled={startDisabled}
+            className="w-full py-3 text-sm font-normal text-white bg-[#22c55e] disabled:opacity-40 hover:opacity-85 transition-opacity"
           >
             start_session()
           </button>
