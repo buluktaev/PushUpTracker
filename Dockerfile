@@ -13,10 +13,9 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-ENV DATABASE_URL=file:/data/pushups.db
 ENV NODE_ENV=production
 ENV PORT=3000
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node_modules/.bin/next start"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node_modules/.bin/next start"]
