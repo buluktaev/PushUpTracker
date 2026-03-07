@@ -11,7 +11,7 @@ COPY prisma.config.ts ./
 RUN npm ci
 
 COPY . .
-RUN npm run build
+RUN DATABASE_URL="postgresql://dummy@localhost/dummy" npm run build
 
 ENV NODE_ENV=production
 ENV PORT=3000
