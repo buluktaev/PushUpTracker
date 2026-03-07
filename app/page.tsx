@@ -230,7 +230,7 @@ function HomePageContent() {
                   <input
                     id="join-name"
                     type="text"
-                    placeholder="санан"
+                    placeholder="name"
                     value={joinName}
                     onChange={e => setJoinName(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleJoin()}
