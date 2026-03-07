@@ -22,6 +22,13 @@ export async function POST(
       return NextResponse.json({ error: 'Комната не найдена' }, { status: 404 })
     }
 
+    const existing = await prisma.participant.findFirst({
+      where: { roomId: room.id, name: { equals: name.trim(), mode: 'insensitive' } }
+    })
+    if (existing) {
+      return NextResponse.json({ ...existing, roomName: room.name })
+    }
+
     const participant = await prisma.participant.create({
       data: { name: name.trim(), roomId: room.id }
     })
