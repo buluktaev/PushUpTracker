@@ -69,3 +69,13 @@ button[data-hold]:not(:disabled):active {
   animation: popIn 150ms ease-out forwards;
   transform-origin: top right;
 }
+
+/* Fix iOS Safari auto-zoom on input focus (requires font-size >= 16px) */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input:not([type]) {
+    font-size: 16px !important;
+  }
+}

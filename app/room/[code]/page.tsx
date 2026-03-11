@@ -163,7 +163,7 @@ export default function RoomPage() {
 
   if (showCreatorForm) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] relative">
+      <div className="min-h-dvh flex items-center justify-center bg-[var(--bg)] relative">
         <div className="absolute top-3 right-4"><ThemeToggle /></div>
         <div className="w-full max-w-sm p-6 flex flex-col gap-4">
           <div>
@@ -194,7 +194,7 @@ export default function RoomPage() {
 
   if (loading || !room) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] relative">
+      <div className="min-h-dvh flex items-center justify-center bg-[var(--bg)] relative">
         <div className="absolute top-3 right-4"><ThemeToggle /></div>
         <span className="text-[10px] tracking-widest text-[var(--muted)]">// загрузка...</span>
       </div>
@@ -202,15 +202,15 @@ export default function RoomPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text)]">
+    <div className="min-h-dvh flex flex-col bg-[var(--bg)] text-[var(--text)]">
 
-      {/* Header with tabs in center */}
+      {/* Header */}
       <header className="sticky top-0 z-10 bg-[var(--bg)]" style={{ borderBottom: '1px solid var(--border)' }}>
-        <div className="grid grid-cols-[1fr_auto_1fr] items-stretch">
-          {/* Left: room name + switcher + code */}
-          <div className="flex items-center gap-2 min-w-0 px-4 py-3 relative">
+        <div className="flex items-center justify-between px-4 py-3">
+          {/* Left: room name + switcher */}
+          <div className="flex items-center gap-2 min-w-0" ref={switcherRef}>
             <h1 className="font-bold text-sm truncate">{room.name}</h1>
-            <div className="relative shrink-0" ref={switcherRef}>
+            <div className="relative shrink-0">
               <button
                 onClick={() => setShowSwitcher(v => !v)}
                 className="flex items-center justify-center w-6 h-6 text-[var(--muted)] hover:text-[var(--text)] transition-colors"
@@ -221,7 +221,7 @@ export default function RoomPage() {
               </button>
               {showSwitcher && (
                 <div
-                  className="absolute top-full left-0 mt-1 z-50 min-w-[200px] py-1 animate-pop-in"
+                  className="fixed left-0 right-0 top-[49px] z-50 py-1 animate-pop-in sm:absolute sm:top-full sm:left-0 sm:right-auto sm:min-w-[200px] sm:mt-1"
                   style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
                 >
                   {rooms.map(r => {
@@ -233,21 +233,21 @@ export default function RoomPage() {
                       >
                         <button
                           onClick={() => { if (!isCurrent) { setShowSwitcher(false); router.push(`/room/${r.roomCode}`) } }}
-                          className={`flex-1 flex items-center gap-2 px-3 py-2 text-xs text-left min-w-0 ${isCurrent ? 'cursor-default' : ''}`}
+                          className={`flex-1 flex items-center gap-2 px-3 py-3 text-xs text-left min-w-0 ${isCurrent ? 'cursor-default' : ''}`}
                         >
                           <span className={`truncate ${isCurrent ? 'text-[var(--text)] font-medium' : 'text-[var(--text)]'}`}>{r.roomName}</span>
                           {isCurrent && <span className="text-[10px] tracking-wider text-[#ff6b35] shrink-0">[active]</span>}
                         </button>
-                        <div className="flex items-center gap-1 pr-2 shrink-0">
+                        <div className="flex items-center gap-2 pr-3 shrink-0">
                           <span className="text-[10px] text-[var(--muted)]">{r.roomCode}</span>
                           <button
                             onClick={e => copySwitcherCode(e, r.roomCode)}
-                            className="flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                            className="flex items-center justify-center w-8 h-8 sm:w-6 sm:h-6 text-[var(--muted)] hover:text-[var(--text)] transition-colors"
                             aria-label="скопировать код"
                           >
                             <Icon
                               name={copiedSwitcher === r.roomCode ? 'check' : 'content_copy'}
-                              size={12}
+                              size={16}
                               style={{ color: copiedSwitcher === r.roomCode ? '#22c55e' : undefined }}
                             />
                           </button>
@@ -258,9 +258,9 @@ export default function RoomPage() {
                   <div style={{ borderTop: '1px solid var(--border)' }} className="mt-1 pt-1" />
                   <button
                     onClick={() => { setShowSwitcher(false); router.push('/?add=1') }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[#ff6b35] hover:bg-[var(--surface-dim)] transition-colors text-left"
+                    className="w-full flex items-center gap-2 px-3 py-3 sm:py-2 text-xs text-[#ff6b35] hover:bg-[var(--surface-dim)] transition-colors text-left"
                   >
-                    <Icon name="add" size={12} />
+                    <Icon name="add" size={14} />
                     <span>add_room()</span>
                   </button>
                 </div>
@@ -268,42 +268,17 @@ export default function RoomPage() {
             </div>
           </div>
 
-          {/* Center: tabs */}
-          <nav className="flex items-stretch" role="tablist">
-            {(['workout', 'leaderboard'] as const).map(t => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                role="tab"
-                aria-selected={tab === t}
-                className={`px-5 text-[11px] tracking-wide transition-colors border-b-2 -mb-px flex items-center gap-1.5 ${
-                  tab === t
-                    ? 'border-[#ff6b35] text-[var(--text)] font-bold'
-                    : 'border-transparent text-[var(--muted)] hover:text-[var(--text)]'
-                }`}
-              >
-                {t === 'leaderboard' ? (
-                  <><Icon name="emoji_events" size={13} /> leaderboard</>
-                ) : (
-                  <><Icon name="fitness_center" size={13} /> workout</>
-                )}
-              </button>
-            ))}
-          </nav>
-
-          {/* Right: exit + theme */}
-          <div className="flex items-center justify-end gap-2 px-4 py-3">
+          {/* Right: exit icon + theme */}
+          <div className="flex items-center gap-1 shrink-0">
             <div className="relative">
               <button
                 onClick={() => setShowExitConfirm(v => !v)}
-                className={`text-[11px] px-3 py-1.5 transition-colors ${
-                  showExitConfirm
-                    ? 'border-[#ef4444] text-[#ef4444]'
-                    : 'text-[var(--muted)] hover:border-[#ef4444] hover:text-[#ef4444]'
+                className={`flex items-center justify-center w-8 h-8 transition-colors ${
+                  showExitConfirm ? 'text-[#ef4444]' : 'text-[var(--muted)] hover:text-[#ef4444]'
                 }`}
-                style={{ border: '1px solid var(--border)' }}
+                aria-label="выйти из комнаты"
               >
-                exit()
+                <Icon name="logout" size={18} />
               </button>
               {showExitConfirm && (
                 <div
@@ -422,6 +397,25 @@ export default function RoomPage() {
           />
         )}
       </main>
+
+      {/* Bottom Tab Bar */}
+      <nav className="sticky bottom-0 z-10 bg-[var(--bg)]" style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="flex">
+          {(['workout', 'leaderboard'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              aria-selected={tab === t}
+              className={`flex-1 flex flex-col items-center gap-1 py-3 transition-colors ${
+                tab === t ? 'text-[#ff6b35]' : 'text-[var(--muted)] hover:text-[var(--text)]'
+              }`}
+            >
+              <Icon name={t === 'workout' ? 'fitness_center' : 'emoji_events'} size={20} />
+              <span className="text-[10px] tracking-wide">{t}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   )
 }

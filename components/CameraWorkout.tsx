@@ -340,7 +340,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
         style={{
           background: '#0a0a0a',
           aspectRatio: '4/3',
-          maxHeight: 'calc(100dvh - 7rem)',
+          maxHeight: 'calc(100dvh - 11rem)',
           border: `1px solid ${cameraOn ? status.color : 'var(--border)'}`,
           borderRadius: 0,
           transition: 'border-color 0.2s',

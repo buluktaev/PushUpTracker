@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Icon from '@/components/Icon'
 
 export default function ThemeToggle() {
   const [dark, setDark] = useState(false)
@@ -29,14 +30,9 @@ export default function ThemeToggle() {
     <button
       onClick={toggle}
       aria-label={dark ? 'Переключить на светлую тему' : 'Переключить на тёмную тему'}
-      className="text-[11px] tracking-wider px-3 py-1.5 border transition-colors hover:border-[#ff6b35] hover:text-[#ff6b35]"
-      style={{
-        background: 'var(--surface)',
-        borderColor: 'var(--border)',
-        color: 'var(--muted)',
-      }}
+      className="flex items-center justify-center w-8 h-8 text-[var(--muted)] hover:text-[#ff6b35] transition-colors"
     >
-      {dark ? '[ light ]' : '[ dark ]'}
+      <Icon name={dark ? 'light_mode' : 'dark_mode'} size={18} />
     </button>
   )
 }
