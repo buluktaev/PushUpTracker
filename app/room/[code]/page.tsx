@@ -206,9 +206,9 @@ export default function RoomPage() {
 
       {/* Header */}
       <header className="sticky top-0 z-10 bg-[var(--bg)]" style={{ borderBottom: '1px solid var(--border)' }}>
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-4 py-3 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-stretch sm:px-0 sm:py-0">
           {/* Left: room name + switcher */}
-          <div className="flex items-center gap-2 min-w-0" ref={switcherRef}>
+          <div className="flex items-center gap-2 min-w-0 sm:px-4 sm:py-3" ref={switcherRef}>
             <h1 className="font-bold text-sm truncate">{room.name}</h1>
             <div className="relative shrink-0">
               <button
@@ -268,17 +268,53 @@ export default function RoomPage() {
             </div>
           </div>
 
-          {/* Right: exit icon + theme */}
-          <div className="flex items-center gap-1 shrink-0">
+          {/* Center: tabs (desktop only) */}
+          <nav className="hidden sm:flex items-stretch" role="tablist">
+            {(['workout', 'leaderboard'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                role="tab"
+                aria-selected={tab === t}
+                className={`px-5 text-[11px] tracking-wide transition-colors border-b-2 -mb-px flex items-center gap-1.5 ${
+                  tab === t
+                    ? 'border-[#ff6b35] text-[var(--text)] font-bold'
+                    : 'border-transparent text-[var(--muted)] hover:text-[var(--text)]'
+                }`}
+              >
+                {t === 'leaderboard' ? (
+                  <><Icon name="emoji_events" size={13} /> leaderboard</>
+                ) : (
+                  <><Icon name="fitness_center" size={13} /> workout</>
+                )}
+              </button>
+            ))}
+          </nav>
+
+          {/* Right: exit + theme */}
+          <div className="flex items-center gap-1 shrink-0 sm:justify-end sm:px-4 sm:py-3">
             <div className="relative">
+              {/* Mobile: icon button */}
               <button
                 onClick={() => setShowExitConfirm(v => !v)}
-                className={`flex items-center justify-center w-8 h-8 transition-colors ${
+                className={`sm:hidden flex items-center justify-center w-8 h-8 transition-colors ${
                   showExitConfirm ? 'text-[#ef4444]' : 'text-[var(--muted)] hover:text-[#ef4444]'
                 }`}
                 aria-label="выйти из комнаты"
               >
                 <Icon name="logout" size={18} />
+              </button>
+              {/* Desktop: text button */}
+              <button
+                onClick={() => setShowExitConfirm(v => !v)}
+                className={`hidden sm:flex text-[11px] px-3 py-1.5 transition-colors ${
+                  showExitConfirm
+                    ? 'border-[#ef4444] text-[#ef4444]'
+                    : 'text-[var(--muted)] hover:border-[#ef4444] hover:text-[#ef4444]'
+                }`}
+                style={{ border: '1px solid var(--border)' }}
+              >
+                exit()
               </button>
               {showExitConfirm && (
                 <div
@@ -398,8 +434,8 @@ export default function RoomPage() {
         )}
       </main>
 
-      {/* Bottom Tab Bar */}
-      <nav className="sticky bottom-0 z-10 bg-[var(--bg)]" style={{ borderTop: '1px solid var(--border)' }}>
+      {/* Bottom Tab Bar (mobile only) */}
+      <nav className="sm:hidden sticky bottom-0 z-10 bg-[var(--bg)]" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="flex">
           {(['workout', 'leaderboard'] as const).map(t => (
             <button
