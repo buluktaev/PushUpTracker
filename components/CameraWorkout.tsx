@@ -330,17 +330,15 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
 
   return (
     <div
-      className="flex flex-col gap-3 mx-auto w-full"
-      style={{ maxWidth: 'calc((100dvh - 7rem) * 4 / 3)' }}
+      className="camera-wrapper flex flex-col gap-3 mx-auto w-full"
     >
 
       {/* Camera container — always dark bg regardless of theme */}
       <div
-        className="relative overflow-hidden"
+        className="camera-container relative overflow-hidden"
         style={{
           background: '#0a0a0a',
           aspectRatio: '4/3',
-          maxHeight: 'calc(100dvh - 11rem)',
           border: `1px solid ${cameraOn ? status.color : 'var(--border)'}`,
           borderRadius: 0,
           transition: 'border-color 0.2s',
