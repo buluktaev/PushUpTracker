@@ -25,6 +25,8 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const countRef = useRef(0)
   const sessionActiveRef = useRef(false)
+  const angleBufferRef = useRef<number[]>([])
+  const lastRepTimeRef = useRef<number>(0)
 
   const [mpLoaded, setMpLoaded] = useState(false)
   const [cameraOn, setCameraOn] = useState(false)
@@ -146,7 +148,17 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     }
 
     const src = wlm ?? lm
-    const angle = angleBetween(src[11], src[13], src[15])
+    const rawAngle = angleBetween(src[11], src[13], src[15])
+
+    // Median filter: buffer last 5 angles, remove ±2σ outliers, take median
+    const buf = angleBufferRef.current
+    buf.push(rawAngle)
+    if (buf.length > 5) buf.shift()
+    const mean = buf.reduce((s, v) => s + v, 0) / buf.length
+    const std = Math.sqrt(buf.reduce((s, v) => s + (v - mean) ** 2, 0) / buf.length)
+    const filtered = buf.filter(v => Math.abs(v - mean) <= 2 * std)
+    const sorted = [...filtered].sort((a, b) => a - b)
+    const angle = sorted[Math.floor(sorted.length / 2)] ?? rawAngle
 
     if (!hipVisible) {
       setStatus({ text: 'show full body', color: '#f59e0b' })
@@ -160,7 +172,9 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
       posePhaseRef.current = 'down'
     } else if (angle > 150 && posePhaseRef.current === 'down') {
       posePhaseRef.current = 'up'
-      if (sessionActiveRef.current && isHorizontal) {
+      const now = Date.now()
+      if (sessionActiveRef.current && isHorizontal && now - lastRepTimeRef.current >= 500) {
+        lastRepTimeRef.current = now
         countRef.current += 1
         setCount(countRef.current)
       }
@@ -230,6 +244,8 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
 
   function startSession() {
     countRef.current = 0
+    angleBufferRef.current = []
+    lastRepTimeRef.current = 0
     setCount(0)
     setElapsed(0)
     setCountdown(5)
