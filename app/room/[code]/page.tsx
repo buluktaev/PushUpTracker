@@ -70,8 +70,6 @@ export default function RoomPage() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'leaderboard' | 'workout'>('workout')
   const [copied, setCopied] = useState(false)
-  const [creatorNameInput, setCreatorNameInput] = useState('')
-  const [showCreatorForm, setShowCreatorForm] = useState(false)
 
   // Сброс при переходе между комнатами
   useEffect(() => {
@@ -94,9 +92,34 @@ export default function RoomPage() {
       }
       const isCreator = searchParams.get('created') === '1'
       if (isCreator) {
-        setShowCreatorForm(true)
-        setLoading(false)
-        return
+        // Автоматически вступаем — имя берётся из Profile на сервере
+        const res = await fetch(`/api/rooms/${code}/join`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        })
+
+        if (res.status === 401) {
+          router.push('/login')
+          return
+        }
+
+        if (!res.ok) {
+          router.push('/')
+          return
+        }
+
+        const data = await res.json()
+        const roomNameFromUrl = searchParams.get('name') ?? code
+        const saved: SavedRoom = {
+          roomCode: code,
+          participantId: data.id,
+          name: data.name,
+          roomName: roomNameFromUrl,
+        }
+        addRoom(saved)
+        setIdentity(saved)
+        // loading остаётся true, loadRoom запустится через useEffect на identity
       } else {
         router.push('/')
       }
@@ -104,26 +127,6 @@ export default function RoomPage() {
     init()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, rooms, loaded])
-
-  async function submitCreatorName() {
-    if (!creatorNameInput.trim()) return
-    const res = await fetch(`/api/rooms/${code}/join`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: creatorNameInput }),
-    })
-    if (res.ok) {
-      const data = await res.json()
-      const roomNameFromUrl = searchParams.get('name') ?? code
-      const saved: SavedRoom = { roomCode: code, participantId: data.id, name: data.name, roomName: roomNameFromUrl }
-      addRoom(saved)
-      setIdentity(saved)
-      setShowCreatorForm(false)
-      setLoading(true)
-    } else {
-      router.push('/')
-    }
-  }
 
   const loadRoom = useCallback(async () => {
     await new Promise(r => setTimeout(r, 1000))
@@ -159,37 +162,6 @@ export default function RoomPage() {
     } else {
       router.push('/')
     }
-  }
-
-  if (showCreatorForm) {
-    return (
-      <div className="min-h-dvh flex items-center justify-center bg-[var(--bg)] relative">
-        <div className="absolute top-3 right-4"><ThemeToggle /></div>
-        <div className="w-full max-w-sm p-6 flex flex-col gap-4">
-          <div>
-            <p className="text-[10px] tracking-widest uppercase text-[var(--muted)]">// комната создана</p>
-            <h2 className="text-lg font-bold text-[var(--text)] mt-1">Как вас зовут?</h2>
-          </div>
-          <input
-            type="text"
-            placeholder="ваше_имя"
-            value={creatorNameInput}
-            onChange={e => setCreatorNameInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && submitCreatorName()}
-            className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
-            style={{ border: '1px solid var(--border)' }}
-            autoFocus
-          />
-          <button
-            onClick={submitCreatorName}
-            disabled={!creatorNameInput.trim()}
-            className="w-full py-3 text-sm font-normal text-white bg-[#ff6b35] disabled:opacity-40"
-          >
-            войти в комнату
-          </button>
-        </div>
-      </div>
-    )
   }
 
   if (loading || !room) {
