@@ -37,8 +37,19 @@ export default function RegisterPage() {
       if (!data.user) throw new Error('Ошибка регистрации')
 
       if (data.session) {
+        // Email автоподтверждён (dev-режим) — сразу создаём Profile
+        const profileRes = await fetch('/api/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name }),
+        })
+        if (!profileRes.ok) {
+          const d = await profileRes.json()
+          if (!d.error?.includes('Unique')) throw new Error(d.error || 'Ошибка создания профиля')
+        }
         router.push('/')
       } else {
+        // Email-подтверждение требуется — Profile создастся в /auth/confirm
         router.push(`/verify-email?email=${encodeURIComponent(email)}`)
       }
     } catch (e: unknown) {
