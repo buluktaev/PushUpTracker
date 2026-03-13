@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { createClient } from '@/lib/supabase-server'
 
 function generateCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -10,6 +11,12 @@ function generateCode(): string {
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { name } = await request.json()
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Название комнаты обязательно' }, { status: 400 })
@@ -27,7 +34,7 @@ export async function POST(request: Request) {
     } while (await prisma.room.findUnique({ where: { code } }))
 
     const room = await prisma.room.create({
-      data: { name: name.trim(), code }
+      data: { name: name.trim(), code, ownerId: user.id },
     })
 
     return NextResponse.json(room, { status: 201 })

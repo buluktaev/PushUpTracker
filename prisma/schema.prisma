@@ -10,6 +10,7 @@ model Room {
   id           String        @id @default(cuid())
   name         String
   code         String        @unique
+  ownerId      String?       // nullable для существующих комнат
   createdAt    DateTime      @default(now())
   participants Participant[]
 }

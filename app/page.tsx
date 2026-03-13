@@ -15,7 +15,6 @@ function HomePageContent() {
   const [showNew, setShowNew] = useState(false)
   const [roomName, setRoomName] = useState('')
   const [joinCode, setJoinCode] = useState('')
-  const [joinName, setJoinName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -54,7 +53,6 @@ function HomePageContent() {
 
   async function handleJoin() {
     if (!joinCode.trim()) return setError('введите код комнаты')
-    if (!joinName.trim()) return setError('введите ваше имя')
     setLoading(true)
     setError('')
     try {
@@ -62,7 +60,7 @@ function HomePageContent() {
       const res = await fetch(`/api/rooms/${code}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: joinName }),
+        body: JSON.stringify({}),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -217,25 +215,11 @@ function HomePageContent() {
                     placeholder="ABC123"
                     value={joinCode}
                     onChange={e => setJoinCode(e.target.value.toUpperCase())}
+                    onKeyDown={e => e.key === 'Enter' && handleJoin()}
                     maxLength={6}
                     className="w-full px-3 py-2.5 text-sm tracking-[0.25em] bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
                     style={{ border: '1px solid var(--border)' }}
                     autoFocus
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="join-name" className="text-[10px] tracking-widest uppercase text-[var(--muted)]">
-                    your_name =
-                  </label>
-                  <input
-                    id="join-name"
-                    type="text"
-                    placeholder="name"
-                    value={joinName}
-                    onChange={e => setJoinName(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleJoin()}
-                    className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
-                    style={{ border: '1px solid var(--border)' }}
                   />
                 </div>
                 {error && (
