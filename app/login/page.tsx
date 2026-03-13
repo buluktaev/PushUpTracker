@@ -1,14 +1,15 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-client'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useRooms } from '@/hooks/useRooms'
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { rooms } = useRooms()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -42,7 +43,8 @@ export default function LoginPage() {
         })
       }
 
-      router.push('/')
+      const next = searchParams.get('next') ?? '/'
+      router.push(next)
       router.refresh()
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'ошибка')
@@ -119,5 +121,13 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
   )
 }

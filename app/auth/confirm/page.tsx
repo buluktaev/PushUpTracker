@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import { useRooms } from '@/hooks/useRooms'
@@ -8,10 +8,17 @@ import { useRooms } from '@/hooks/useRooms'
 function ConfirmContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { rooms } = useRooms()
+  const { rooms, loaded } = useRooms()
   const [error, setError] = useState('')
+  const confirmedRef = useRef(false)
 
   useEffect(() => {
+    // Ждём загрузки localStorage перед выполнением
+    if (!loaded) return
+    // Защита от повторного вызова при ре-рендерах
+    if (confirmedRef.current) return
+    confirmedRef.current = true
+
     const token_hash = searchParams.get('token_hash')
     const type = searchParams.get('type')
 
@@ -62,7 +69,7 @@ function ConfirmContent() {
     }
 
     confirm()
-  }, [searchParams, rooms, router])
+  }, [loaded, searchParams, rooms, router])
 
   return (
     <main className="min-h-dvh flex flex-col items-center justify-center p-6 bg-[var(--bg)]">
