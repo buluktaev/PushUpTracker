@@ -113,7 +113,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
         const hZ = (wlm[23].z + wlm[24].z) / 2
         const dy = sY - hY
         const torsoLen = Math.sqrt((sX - hX) ** 2 + dy ** 2 + (sZ - hZ) ** 2)
-        isHorizontal = torsoLen > 0 ? Math.abs(dy / torsoLen) < 0.35 : false
+        isHorizontal = torsoLen > 0 ? Math.abs(dy / torsoLen) < 0.45 : false
       } else {
         const shoulderY = (lm[11].y + lm[12].y) / 2
         const hipY = (lm[23].y + lm[24].y) / 2
@@ -153,7 +153,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     // Median filter: buffer last 5 angles, remove ±2σ outliers, take median
     const buf = angleBufferRef.current
     buf.push(rawAngle)
-    if (buf.length > 5) buf.shift()
+    if (buf.length > 3) buf.shift()
     const mean = buf.reduce((s, v) => s + v, 0) / buf.length
     const std = Math.sqrt(buf.reduce((s, v) => s + (v - mean) ** 2, 0) / buf.length)
     const filtered = buf.filter(v => Math.abs(v - mean) <= 2 * std)
@@ -168,9 +168,9 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
       setStatus({ text: `elbow: ${Math.round(angle)}°`, color: '#ff6b35' })
     }
 
-    if (angle < 90 && posePhaseRef.current === 'up') {
+    if (angle < 100 && posePhaseRef.current === 'up') {
       posePhaseRef.current = 'down'
-    } else if (angle > 150 && posePhaseRef.current === 'down') {
+    } else if (angle > 140 && posePhaseRef.current === 'down') {
       posePhaseRef.current = 'up'
       const now = Date.now()
       if (sessionActiveRef.current && isHorizontal && now - lastRepTimeRef.current >= 500) {
