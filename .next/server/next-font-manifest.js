@@ -1,1 +1,0 @@
-self.__NEXT_FONT_MANIFEST='{"pages":{},"app":{"/Users/buluktaev/Documents/GitHub/PushUpTracker/.worktrees/phase1-auth/app/layout":["static/media/78fec81b34c4a365.p.woff2"]},"appUsingSizeAdjust":false,"pagesUsingSizeAdjust":false}';

@@ -1,1 +1,0 @@
-self.__REACT_LOADABLE_MANIFEST='{"app/room/[code]/page.tsx -> @/components/CameraWorkout":{"id":514,"files":["static/chunks/381.1258d5524d19a6ec.js","static/chunks/514.180d2ef9b735e219.js"]}}';
