@@ -13,6 +13,8 @@
     "@number-flow/react": "^0.6.0",
     "@prisma/adapter-pg": "^7.4.2",
     "@prisma/client": "^7.4.2",
+    "@supabase/ssr": "^0.9.0",
+    "@supabase/supabase-js": "^2.99.1",
     "@tabler/icons-react": "^3.38.0",
     "@types/pg": "^8.18.0",
     "dotenv": "^17.3.1",
