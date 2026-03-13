@@ -2,16 +2,17 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import ThemeToggle from '@/components/ThemeToggle'
 
 export default function RegisterPage() {
+  const router = useRouter()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [emailSent, setEmailSent] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -35,54 +36,16 @@ export default function RegisterPage() {
       if (authError) throw new Error(authError.message)
       if (!data.user) throw new Error('Ошибка регистрации')
 
-      setEmailSent(true)
+      if (data.session) {
+        router.push('/')
+      } else {
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`)
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'ошибка')
     } finally {
       setLoading(false)
     }
-  }
-
-  if (emailSent) {
-    return (
-      <main className="min-h-dvh flex flex-col items-center justify-center p-6 bg-[var(--bg)]">
-        <div className="fixed top-3 right-4 z-50">
-          <ThemeToggle />
-        </div>
-        <div className="w-full max-w-sm">
-          <div className="mb-10">
-            <div className="flex items-center gap-2 mb-5">
-              <img src="/icon.svg" width={20} height={20} alt="" />
-              <span className="text-[10px] tracking-widest uppercase text-[var(--muted)]">
-                // pushup tracker
-              </span>
-            </div>
-            <h1 className="text-[28px] font-bold text-[var(--text)] leading-[1.15] tracking-tight">
-              check_email()
-            </h1>
-            <p className="text-xs text-[var(--muted)] mt-2.5">письмо отправлено</p>
-          </div>
-
-          <p className="text-sm text-[var(--text)] mb-2">
-            письмо с подтверждением отправлено на
-          </p>
-          <p className="text-sm font-medium text-[#ff6b35] mb-6 break-all">{email}</p>
-
-          <div
-            className="p-4 text-xs text-[var(--muted)] leading-relaxed"
-            style={{ border: '1px solid var(--border)', background: 'var(--surface-dim)' }}
-          >
-            // не получили письмо? проверьте папку spam или{' '}
-            <button
-              onClick={() => setEmailSent(false)}
-              className="text-[#ff6b35] hover:underline"
-            >
-              попробуйте снова
-            </button>
-          </div>
-        </div>
-      </main>
-    )
   }
 
   return (
