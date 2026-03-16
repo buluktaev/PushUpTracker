@@ -5,7 +5,7 @@ services:
     dockerfilePath: ./Dockerfile
     plan: free
     region: frankfurt
-    branch: main
+    branch: codex/staging-main-smoke
     autoDeployTrigger: commit
     envVars:
       - key: DATABASE_URL
