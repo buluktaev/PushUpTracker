@@ -9,7 +9,7 @@ import { useRooms, type SavedRoom } from '@/hooks/useRooms'
 
 const CameraWorkout = dynamic(() => import('@/components/CameraWorkout'), {
   ssr: false,
-  loading: () => <div className="py-8 text-[10px] tracking-widest text-[var(--muted)]">// загрузка камеры...</div>,
+  loading: () => <div className="py-8 text-[10px] tracking-widest text-[var(--muted)]">{'// загрузка камеры...'}</div>,
 })
 
 interface Participant {
@@ -168,7 +168,7 @@ export default function RoomPage() {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-[var(--bg)] relative">
         <div className="absolute top-3 right-4"><ThemeToggle /></div>
-        <span className="text-[10px] tracking-widest text-[var(--muted)]">// загрузка...</span>
+        <span className="text-[10px] tracking-widest text-[var(--muted)]">{'// загрузка...'}</span>
       </div>
     )
   }
@@ -293,7 +293,7 @@ export default function RoomPage() {
                   className="absolute top-full right-0 mt-1 z-50 p-3 flex flex-col gap-2 min-w-[160px] animate-pop-in-right"
                   style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
                 >
-                  <p className="text-[10px] tracking-widest text-[var(--muted)]">// покинуть комнату?</p>
+                  <p className="text-[10px] tracking-widest text-[var(--muted)]">{'// покинуть комнату?'}</p>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setShowExitConfirm(false)}
@@ -338,7 +338,7 @@ export default function RoomPage() {
             <div className="overflow-hidden" style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}>
               {room.leaderboard.length === 0 ? (
                 <div className="p-8 text-center text-[10px] tracking-widest text-[var(--muted)]">
-                  // пока никого нет. начните тренировку.
+                  {'// пока никого нет. начните тренировку.'}
                 </div>
               ) : (
                 room.leaderboard.map((p, i) => (

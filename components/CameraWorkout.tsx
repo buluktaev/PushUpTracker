@@ -9,7 +9,6 @@ interface Props {
   onSessionSaved: () => void
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyObj = any
 
 export default function CameraWorkout({ participantId, onSessionSaved }: Props) {
