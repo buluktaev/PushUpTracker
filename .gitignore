@@ -1,11 +1,14 @@
 .worktrees/
 .DS_Store
 node_modules/
+.next/
 *.db
 *.db-shm
 *.db-wal
 .env
 .env.*
+!.env.example
+!.env.staging.example
 *.log
 
 /app/generated/prisma

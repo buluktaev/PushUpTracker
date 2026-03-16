@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { FilesetResolver, PoseLandmarker, DrawingUtils } from '@mediapipe/tasks-vision'
 import NumberFlow from '@number-flow/react'
 import Icon from '@/components/Icon'
 
@@ -9,7 +10,6 @@ interface Props {
   onSessionSaved: () => void
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyObj = any
 
 export default function CameraWorkout({ participantId, onSessionSaved }: Props) {
@@ -43,22 +43,15 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
   const holdStartRef = useRef<number | null>(null)
   const [startDisabled, setStartDisabled] = useState(false)
   const startDisabledTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const mediapipeModelPath = '/mediapipe/models/pose_landmarker_full.task'
 
   const loadMP = useCallback(async () => {
     if (landmarkerRef.current) return
     try {
-      const vision: AnyObj = await import(
-        /* webpackIgnore: true */
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.9/vision_bundle.mjs' as AnyObj
-      )
-      const { PoseLandmarker, FilesetResolver, DrawingUtils } = vision
-      const resolver = await FilesetResolver.forVisionTasks(
-        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.9/wasm'
-      )
+      const resolver = await FilesetResolver.forVisionTasks('/mediapipe/wasm')
       landmarkerRef.current = await PoseLandmarker.createFromOptions(resolver, {
         baseOptions: {
-          modelAssetPath:
-            'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task',
+          modelAssetPath: mediapipeModelPath,
           delegate: 'GPU',
         },
         runningMode: 'VIDEO',
@@ -68,15 +61,18 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
         minTrackingConfidence: 0.5,
       })
       if (canvasRef.current) {
-        drawingRef.current = new DrawingUtils(canvasRef.current.getContext('2d'))
+        const context = canvasRef.current.getContext('2d')
+        if (context) {
+          drawingRef.current = new DrawingUtils(context)
+        }
       }
       setMpLoaded(true)
       setStatus({ text: 'searching...', color: '#f59e0b' })
     } catch (e) {
       console.error('MediaPipe load failed:', e)
-      setStatus({ text: 'err: mediapipe failed', color: '#ef4444' })
+      setStatus({ text: 'err: local mediapipe failed', color: '#ef4444' })
     }
-  }, [])
+  }, [mediapipeModelPath])
 
   function angleBetween(a: AnyObj, b: AnyObj, c: AnyObj): number {
     const ab = { x: b.x - a.x, y: b.y - a.y }

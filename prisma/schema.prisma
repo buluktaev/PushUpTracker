@@ -10,14 +10,23 @@ model Room {
   id           String        @id @default(cuid())
   name         String
   code         String        @unique
+  ownerId      String?       // nullable для существующих комнат
   createdAt    DateTime      @default(now())
   participants Participant[]
+}
+
+model Profile {
+  id        String   @id
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
 }
 
 model Participant {
   id        String    @id @default(cuid())
   roomId    String
   name      String
+  userId    String?   // nullable: существующие записи не имеют userId
   createdAt DateTime  @default(now())
   room      Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
   sessions  Session[]

@@ -1,36 +1,44 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { createClient } from '@/lib/supabase-server'
+import { ensureProfile } from '@/lib/profile'
 
 export async function POST(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ code: string }> }
 ) {
   try {
     const { code } = await params
-    const { name } = await request.json()
-    if (!name?.trim()) {
-      return NextResponse.json({ error: 'Имя обязательно' }, { status: 400 })
-    }
-    if (name.trim().length > 64) {
-      return NextResponse.json({ error: 'Имя не более 64 символов' }, { status: 400 })
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const profile = await ensureProfile(user)
+
     const room = await prisma.room.findUnique({
-      where: { code: code.toUpperCase() }
+      where: { code: code.toUpperCase() },
     })
     if (!room) {
       return NextResponse.json({ error: 'Комната не найдена' }, { status: 404 })
     }
 
+    // Проверить: уже участник этой комнаты?
     const existing = await prisma.participant.findFirst({
-      where: { roomId: room.id, name: { equals: name.trim(), mode: 'insensitive' } }
+      where: { roomId: room.id, userId: user.id },
     })
     if (existing) {
       return NextResponse.json({ ...existing, roomName: room.name })
     }
 
     const participant = await prisma.participant.create({
-      data: { name: name.trim(), roomId: room.id }
+      data: {
+        name: profile.name,
+        roomId: room.id,
+        userId: user.id,
+      },
     })
 
     return NextResponse.json({ ...participant, roomName: room.name }, { status: 201 })
