@@ -24,13 +24,6 @@ function HomePageContent() {
 
   const addMode = searchParams.get('add') === '1'
 
-  useEffect(() => {
-    if (!mounted || !loaded) return
-    if (rooms.length === 1 && !addMode) {
-      router.push(`/room/${rooms[0].roomCode}`)
-    }
-  }, [mounted, loaded, rooms, router, addMode])
-
   async function handleCreate() {
     if (!roomName.trim()) return setError('введите название комнаты')
     setLoading(true)
@@ -91,7 +84,6 @@ function HomePageContent() {
   }
 
   if (!mounted || !loaded) return null
-  if (rooms.length === 1 && !addMode) return null
 
   const showForms = rooms.length === 0 || showNew
 

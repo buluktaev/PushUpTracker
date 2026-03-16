@@ -9,6 +9,37 @@ function generateCode(): string {
   ).join('')
 }
 
+export async function GET() {
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const participants = await prisma.participant.findMany({
+      where: { userId: user.id },
+      include: { room: true },
+      orderBy: { createdAt: 'asc' },
+    })
+
+    const rooms = participants.map(participant => ({
+      roomCode: participant.room.code,
+      roomName: participant.room.name,
+      participantId: participant.id,
+      name: participant.name,
+    }))
+
+    return NextResponse.json({ rooms })
+  } catch (err) {
+    console.error(err)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
