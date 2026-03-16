@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 import Icon from '@/components/Icon'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useRooms, type SavedRoom } from '@/hooks/useRooms'
+import { createClient as createSupabaseClient } from '@/lib/supabase-client'
 
 const CameraWorkout = dynamic(() => import('@/components/CameraWorkout'), {
   ssr: false,
@@ -31,8 +32,14 @@ interface RoomStats {
 interface RoomData {
   name: string
   code: string
+  isOwner: boolean
   leaderboard: Participant[]
   stats: RoomStats
+}
+
+interface ProfileData {
+  email: string
+  name: string
 }
 
 export default function RoomPage() {
@@ -41,7 +48,7 @@ export default function RoomPage() {
   const router = useRouter()
   const code = (params.code as string).toUpperCase()
 
-  const { rooms, loaded, addRoom, removeRoom, getRoom, nextRoom } = useRooms()
+  const { rooms, loaded, addRoom, removeRoom, clearRooms, getRoom } = useRooms()
   const leavingRef = useRef(false)
   const switcherRef = useRef<HTMLDivElement>(null)
   const [showSwitcher, setShowSwitcher] = useState(false)
@@ -56,7 +63,6 @@ export default function RoomPage() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showSwitcher])
-  const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [copiedSwitcher, setCopiedSwitcher] = useState<string | null>(null)
 
   function copySwitcherCode(e: React.MouseEvent, roomCode: string) {
@@ -66,19 +72,34 @@ export default function RoomPage() {
     setTimeout(() => setCopiedSwitcher(null), 2000)
   }
   const [identity, setIdentity] = useState<SavedRoom | null>(null)
+  const [profile, setProfile] = useState<ProfileData | null>(null)
   const [room, setRoom] = useState<RoomData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'leaderboard' | 'workout'>('workout')
+  const [tab, setTab] = useState<'leaderboard' | 'workout' | 'profile'>('workout')
   const [copied, setCopied] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [busyAction, setBusyAction] = useState<'logout' | 'leave' | 'delete' | null>(null)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteRoomName, setDeleteRoomName] = useState('')
+  const [deletePassword, setDeletePassword] = useState('')
 
   // Сброс при переходе между комнатами
   useEffect(() => {
     setLoading(true)
     setRoom(null)
+    setProfile(null)
     setIdentity(null)
     setShowSwitcher(false)
-    setShowExitConfirm(false)
     leavingRef.current = false
+    setTab('workout')
+    setActionError(null)
+    setShowLogoutConfirm(false)
+    setShowLeaveConfirm(false)
+    setShowDeleteConfirm(false)
+    setDeleteRoomName('')
+    setDeletePassword('')
   }, [code])
 
   useEffect(() => {
@@ -131,10 +152,20 @@ export default function RoomPage() {
   const loadRoom = useCallback(async () => {
     await new Promise(r => setTimeout(r, 1000))
     try {
-      const res = await fetch(`/api/rooms/${code}`)
-      if (!res.ok) throw new Error('Комната не найдена')
-      const data = await res.json()
-      setRoom(data)
+      const [roomRes, profileRes] = await Promise.all([
+        fetch(`/api/rooms/${code}`),
+        fetch('/api/profile'),
+      ])
+
+      if (!roomRes.ok) throw new Error('Комната не найдена')
+
+      const roomData = await roomRes.json()
+      setRoom(roomData)
+
+      if (profileRes.ok) {
+        const profileData = await profileRes.json()
+        setProfile(profileData)
+      }
     } catch {
       removeRoom(code)
       router.push('/')
@@ -153,10 +184,73 @@ export default function RoomPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  function leaveRoom() {
-    leavingRef.current = true
-    removeRoom(code)
-    router.push('/')
+  async function logout() {
+    setActionError(null)
+    setBusyAction('logout')
+    try {
+      const supabase = createSupabaseClient()
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      clearRooms()
+      router.push('/login')
+    } catch {
+      setActionError('Не удалось выйти из аккаунта')
+    } finally {
+      setBusyAction(null)
+      setShowLogoutConfirm(false)
+    }
+  }
+
+  async function leaveRoom() {
+    setActionError(null)
+    setBusyAction('leave')
+    try {
+      const res = await fetch(`/api/rooms/${code}/membership`, {
+        method: 'DELETE',
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        throw new Error(data?.error ?? 'Не удалось покинуть комнату')
+      }
+
+      leavingRef.current = true
+      removeRoom(code)
+      router.push('/')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Не удалось покинуть комнату'
+      setActionError(message)
+    } finally {
+      setBusyAction(null)
+      setShowLeaveConfirm(false)
+    }
+  }
+
+  async function deleteRoom() {
+    setActionError(null)
+    setBusyAction('delete')
+    try {
+      const res = await fetch(`/api/rooms/${code}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomName: deleteRoomName,
+          password: deletePassword,
+        }),
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        throw new Error(data?.error ?? 'Не удалось удалить комнату')
+      }
+
+      leavingRef.current = true
+      removeRoom(code)
+      router.push('/')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Не удалось удалить комнату'
+      setActionError(message)
+    } finally {
+      setBusyAction(null)
+    }
   }
 
   if (loading || !room) {
@@ -237,7 +331,7 @@ export default function RoomPage() {
 
           {/* Center: tabs (desktop only) */}
           <nav className="hidden sm:flex items-stretch" role="tablist">
-            {(['workout', 'leaderboard'] as const).map(t => (
+            {(['workout', 'leaderboard', 'profile'] as const).map(t => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -251,6 +345,8 @@ export default function RoomPage() {
               >
                 {t === 'leaderboard' ? (
                   <><Icon name="emoji_events" size={13} /> leaderboard</>
+                ) : t === 'profile' ? (
+                  <><Icon name="person" size={13} /> profile</>
                 ) : (
                   <><Icon name="fitness_center" size={13} /> workout</>
                 )}
@@ -258,55 +354,8 @@ export default function RoomPage() {
             ))}
           </nav>
 
-          {/* Right: exit + theme */}
+          {/* Right: theme */}
           <div className="flex items-center gap-1 shrink-0 sm:justify-end sm:px-4 sm:py-3">
-            <div className="relative">
-              {/* Mobile: icon button */}
-              <button
-                onClick={() => setShowExitConfirm(v => !v)}
-                className={`sm:hidden flex items-center justify-center w-8 h-8 transition-colors ${
-                  showExitConfirm ? 'text-[#ef4444]' : 'text-[var(--muted)] hover:text-[#ef4444]'
-                }`}
-                aria-label="выйти из комнаты"
-              >
-                <Icon name="logout" size={18} />
-              </button>
-              {/* Desktop: text button */}
-              <button
-                onClick={() => setShowExitConfirm(v => !v)}
-                className={`hidden sm:flex text-[11px] px-3 py-1.5 transition-colors ${
-                  showExitConfirm
-                    ? 'border-[#ef4444] text-[#ef4444]'
-                    : 'text-[var(--muted)] hover:border-[#ef4444] hover:text-[#ef4444]'
-                }`}
-                style={{ border: '1px solid var(--border)' }}
-              >
-                exit()
-              </button>
-              {showExitConfirm && (
-                <div
-                  className="absolute top-full right-0 mt-1 z-50 p-3 flex flex-col gap-2 min-w-[160px] animate-pop-in-right"
-                  style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
-                >
-                  <p className="text-[10px] tracking-widest text-[var(--muted)]">{'// покинуть комнату?'}</p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowExitConfirm(false)}
-                      className="flex-1 py-1.5 text-[11px] text-[var(--muted)] hover:border-[var(--text)] hover:text-[var(--text)] transition-colors"
-                      style={{ border: '1px solid var(--border)' }}
-                    >
-                      cancel
-                    </button>
-                    <button
-                      onClick={leaveRoom}
-                      className="flex-1 py-1.5 text-[11px] text-white bg-[#ef4444] hover:opacity-85 transition-opacity"
-                    >
-                      exit()
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
             <ThemeToggle />
           </div>
         </div>
@@ -399,21 +448,215 @@ export default function RoomPage() {
             onSessionSaved={loadRoom}
           />
         )}
+
+        {tab === 'profile' && (
+          <div className="space-y-4">
+            <div
+              className="p-4 space-y-3"
+              style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}
+            >
+              <div className="text-[10px] tracking-widest text-[var(--muted)]">{'// profile'}</div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <div className="text-[10px] tracking-widest text-[var(--muted)]">name</div>
+                  <div className="mt-1 text-sm font-medium">{profile?.name ?? identity?.name ?? '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] tracking-widest text-[var(--muted)]">email</div>
+                  <div className="mt-1 text-sm break-all">{profile?.email ?? '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] tracking-widest text-[var(--muted)]">room</div>
+                  <div className="mt-1 text-sm font-medium">{room.name}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] tracking-widest text-[var(--muted)]">role</div>
+                  <div className="mt-1 text-sm">{room.isOwner ? 'owner' : 'member'}</div>
+                </div>
+              </div>
+            </div>
+
+            {actionError && (
+              <div
+                className="px-4 py-3 text-sm text-[#ef4444]"
+                style={{ border: '1px solid rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.08)' }}
+              >
+                {actionError}
+              </div>
+            )}
+
+            <div
+              className="p-4 space-y-3"
+              style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}
+            >
+              <div className="text-[10px] tracking-widest text-[var(--muted)]">{'// account'}</div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-sm text-[var(--muted)]">logout() завершит текущую сессию, но не удалит комнаты и статистику.</div>
+                {!showLogoutConfirm ? (
+                  <button
+                    onClick={() => setShowLogoutConfirm(true)}
+                    className="px-4 py-2 text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                    style={{ border: '1px solid var(--border)' }}
+                  >
+                    logout()
+                  </button>
+                ) : (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowLogoutConfirm(false)}
+                      className="px-4 py-2 text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                      style={{ border: '1px solid var(--border)' }}
+                    >
+                      cancel
+                    </button>
+                    <button
+                      onClick={logout}
+                      disabled={busyAction === 'logout'}
+                      className="px-4 py-2 text-sm text-white bg-[#ff6b35] hover:opacity-85 transition-opacity disabled:opacity-50"
+                    >
+                      {busyAction === 'logout' ? 'logout()...' : 'logout()'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {!room.isOwner ? (
+              <div
+                className="p-4 space-y-3"
+                style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}
+              >
+                <div className="text-[10px] tracking-widest text-[var(--muted)]">{'// room'}</div>
+                <div className="text-sm text-[var(--muted)]">
+                  leave_room() удалит твое участие в комнате и всю статистику без возможности восстановления.
+                </div>
+                {!showLeaveConfirm ? (
+                  <button
+                    onClick={() => setShowLeaveConfirm(true)}
+                    className="px-4 py-2 text-sm text-white bg-[#ef4444] hover:opacity-85 transition-opacity"
+                  >
+                    leave_room()
+                  </button>
+                ) : (
+                  <div
+                    className="p-3 space-y-3"
+                    style={{ border: '1px solid rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.08)' }}
+                  >
+                    <div className="text-sm text-[#ef4444]">
+                      Это действие удалит твои результаты из комнаты навсегда.
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setShowLeaveConfirm(false)}
+                        className="px-4 py-2 text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                        style={{ border: '1px solid var(--border)' }}
+                      >
+                        cancel
+                      </button>
+                      <button
+                        onClick={leaveRoom}
+                        disabled={busyAction === 'leave'}
+                        className="px-4 py-2 text-sm text-white bg-[#ef4444] hover:opacity-85 transition-opacity disabled:opacity-50"
+                      >
+                        {busyAction === 'leave' ? 'leave_room()...' : 'leave_room()'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div
+                className="p-4 space-y-3"
+                style={{ border: '1px solid rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.08)' }}
+              >
+                <div className="text-[10px] tracking-widest text-[#ef4444]">{'// danger zone'}</div>
+                <div className="text-sm text-[#ef4444]">
+                  Как владелец комнаты ты не можешь ее покинуть. Доступно только полное удаление комнаты со всеми участниками и результатами.
+                </div>
+                {!showDeleteConfirm ? (
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="px-4 py-2 text-sm text-white bg-[#ef4444] hover:opacity-85 transition-opacity"
+                  >
+                    delete_room()
+                  </button>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="text-sm text-[#ef4444]">
+                      Для удаления введи точное название комнаты и пароль от аккаунта.
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block">
+                        <span className="text-[10px] tracking-widest text-[var(--muted)]">room name</span>
+                        <input
+                          value={deleteRoomName}
+                          onChange={e => setDeleteRoomName(e.target.value)}
+                          className="mt-1 w-full px-3 py-2 text-sm bg-transparent outline-none"
+                          style={{ border: '1px solid var(--border)' }}
+                          placeholder={room.name}
+                        />
+                      </label>
+                      <label className="block">
+                        <span className="text-[10px] tracking-widest text-[var(--muted)]">password</span>
+                        <input
+                          type="password"
+                          value={deletePassword}
+                          onChange={e => setDeletePassword(e.target.value)}
+                          className="mt-1 w-full px-3 py-2 text-sm bg-transparent outline-none"
+                          style={{ border: '1px solid var(--border)' }}
+                          placeholder="••••••••"
+                        />
+                      </label>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setShowDeleteConfirm(false)
+                          setDeleteRoomName('')
+                          setDeletePassword('')
+                        }}
+                        className="px-4 py-2 text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                        style={{ border: '1px solid var(--border)' }}
+                      >
+                        cancel
+                      </button>
+                      <button
+                        onClick={deleteRoom}
+                        disabled={busyAction === 'delete' || deleteRoomName !== room.name || deletePassword.length === 0}
+                        className="px-4 py-2 text-sm text-white bg-[#ef4444] hover:opacity-85 transition-opacity disabled:opacity-50"
+                      >
+                        {busyAction === 'delete' ? 'delete_room()...' : 'delete_room()'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       {/* Bottom Tab Bar (mobile only) */}
-      <nav className="sm:hidden sticky bottom-0 z-10 bg-[var(--bg)]" style={{ borderTop: '1px solid var(--border)' }}>
+      <nav
+        className="sm:hidden sticky bottom-0 z-10 bg-[var(--bg)]"
+        style={{ borderTop: '1px solid var(--border)' }}
+        role="tablist"
+      >
         <div className="flex">
-          {(['workout', 'leaderboard'] as const).map(t => (
+          {(['workout', 'leaderboard', 'profile'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
+              role="tab"
               aria-selected={tab === t}
               className={`flex-1 flex flex-col items-center gap-1 py-3 transition-colors ${
                 tab === t ? 'text-[#ff6b35]' : 'text-[var(--muted)] hover:text-[var(--text)]'
               }`}
             >
-              <Icon name={t === 'workout' ? 'fitness_center' : 'emoji_events'} size={20} />
+              <Icon
+                name={t === 'workout' ? 'fitness_center' : t === 'leaderboard' ? 'emoji_events' : 'person'}
+                size={20}
+              />
               <span className="text-[10px] tracking-wide">{t}</span>
             </button>
           ))}

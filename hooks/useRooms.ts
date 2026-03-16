@@ -134,6 +134,11 @@ export function useRooms() {
     })
   }, [])
 
+  const clearRooms = useCallback(() => {
+    setRooms([])
+    save([])
+  }, [])
+
   const getRoom = useCallback((code: string): SavedRoom | null => {
     return rooms.find(r => r.roomCode === code) ?? null
   }, [rooms])
@@ -142,5 +147,5 @@ export function useRooms() {
     return rooms.find(r => r.roomCode !== currentCode) ?? null
   }, [rooms])
 
-  return { rooms, loaded, addRoom, removeRoom, getRoom, nextRoom }
+  return { rooms, loaded, addRoom, removeRoom, clearRooms, getRoom, nextRoom }
 }

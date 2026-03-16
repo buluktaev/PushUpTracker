@@ -31,6 +31,7 @@ export async function GET() {
       roomName: participant.room.name,
       participantId: participant.id,
       name: participant.name,
+      isOwner: participant.room.ownerId === user.id,
     }))
 
     return NextResponse.json({ rooms })
