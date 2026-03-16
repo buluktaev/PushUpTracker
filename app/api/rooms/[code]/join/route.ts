@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createClient } from '@/lib/supabase-server'
+import { ensureProfile } from '@/lib/profile'
 
 export async function POST(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ code: string }> }
 ) {
   try {
@@ -15,11 +16,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Получить имя из Profile
-    const profile = await prisma.profile.findUnique({ where: { id: user.id } })
-    if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
-    }
+    const profile = await ensureProfile(user)
 
     const room = await prisma.room.findUnique({
       where: { code: code.toUpperCase() },

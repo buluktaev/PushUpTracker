@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { createClient } from '@/lib/supabase-server'
+import { ensureProfile } from '@/lib/profile'
 
 export async function POST(request: Request) {
   try {
@@ -10,14 +10,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { name } = await request.json()
-    if (!name?.trim()) {
-      return NextResponse.json({ error: 'Имя обязательно' }, { status: 400 })
+    const body = await request.json().catch(() => ({}))
+    if (typeof body?.name === 'string' && body.name.trim().length > 0) {
+      user.user_metadata = { ...user.user_metadata, name: body.name.trim() }
     }
 
-    const profile = await prisma.profile.create({
-      data: { id: user.id, email: user.email!, name: name.trim() },
-    })
+    const profile = await ensureProfile(user)
 
     return NextResponse.json(profile, { status: 201 })
   } catch (err) {
@@ -34,10 +32,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const profile = await prisma.profile.findUnique({ where: { id: user.id } })
-    if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
-    }
+    const profile = await ensureProfile(user)
 
     return NextResponse.json(profile)
   } catch (err) {
