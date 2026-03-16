@@ -19,17 +19,39 @@ export async function ensureProfile(user: User) {
     throw new Error('User email is required')
   }
 
+  const email = user.email.trim()
   const name = inferName(user)
 
-  return prisma.profile.upsert({
+  const byId = await prisma.profile.findUnique({
     where: { id: user.id },
-    update: {
-      email: user.email,
-      name,
-    },
-    create: {
+  })
+  if (byId) {
+    return prisma.profile.update({
+      where: { id: user.id },
+      data: {
+        email,
+        name,
+      },
+    })
+  }
+
+  const byEmail = await prisma.profile.findUnique({
+    where: { email },
+  })
+  if (byEmail) {
+    return prisma.profile.update({
+      where: { email },
+      data: {
+        id: user.id,
+        name,
+      },
+    })
+  }
+
+  return prisma.profile.create({
+    data: {
       id: user.id,
-      email: user.email,
+      email,
       name,
     },
   })
