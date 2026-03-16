@@ -156,12 +156,7 @@ export default function RoomPage() {
   function leaveRoom() {
     leavingRef.current = true
     removeRoom(code)
-    const next = nextRoom(code)
-    if (next) {
-      router.push(`/room/${next.roomCode}`)
-    } else {
-      router.push('/')
-    }
+    router.push('/')
   }
 
   if (loading || !room) {
