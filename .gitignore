@@ -18,3 +18,17 @@ node_modules/
 .agents/
 .specstory/
 skills-lock.json
+AGENTS.md
+CLAUDE.md
+
+# Build artifacts
+*.tsbuildinfo
+
+# DB dump
+dump.sql
+
+# Docs (планы, спеки — локальные)
+docs/
+
+# Design system (живёт в Figma, не в git)
+public/design-system.html
