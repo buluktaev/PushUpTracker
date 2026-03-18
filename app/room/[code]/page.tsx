@@ -7,6 +7,7 @@ import Icon from '@/components/Icon'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useRooms, type SavedRoom } from '@/hooks/useRooms'
 import { createClient as createSupabaseClient } from '@/lib/supabase-client'
+import { getExerciseConfig, formatValue } from '@/lib/exerciseConfigs'
 
 const CameraWorkout = dynamic(() => import('@/components/CameraWorkout'), {
   ssr: false,
@@ -16,14 +17,14 @@ const CameraWorkout = dynamic(() => import('@/components/CameraWorkout'), {
 interface Participant {
   id: string
   name: string
-  totalPushups: number
+  totalValue: number
   sessionsCount: number
   bestSession: number
   activeToday: boolean
 }
 
 interface RoomStats {
-  totalPushups: number
+  totalValue: number
   participantsCount: number
   sessionsCount: number
   activeToday: number
@@ -32,6 +33,7 @@ interface RoomStats {
 interface RoomData {
   name: string
   code: string
+  discipline: string
   isOwner: boolean
   leaderboard: Participant[]
   stats: RoomStats
@@ -271,6 +273,12 @@ export default function RoomPage() {
           {/* Left: room name + switcher */}
           <div className="flex items-center gap-2 min-w-0 sm:px-4 sm:py-3" ref={switcherRef}>
             <h1 className="font-bold text-sm truncate">{room.name}</h1>
+            {(() => {
+              const config = getExerciseConfig(room.discipline)
+              return config ? (
+                <span className="text-[10px] text-[var(--muted)] truncate">· {config.name}</span>
+              ) : null
+            })()}
             <div className="relative shrink-0">
               <button
                 onClick={() => setShowSwitcher(v => !v)}
@@ -369,7 +377,12 @@ export default function RoomPage() {
               className="px-3 py-2 mb-4 text-[10px] tracking-wide text-[var(--muted)] flex flex-wrap gap-x-3 gap-y-1"
               style={{ background: 'var(--surface-dim)', border: '1px solid var(--border)' }}
             >
-              <span>total: <strong className="text-[var(--text)]">{room.stats.totalPushups.toLocaleString()}</strong> reps</span>
+              <span>total: <strong className="text-[var(--text)]">
+                {(() => {
+                  const c = getExerciseConfig(room.discipline)
+                  return c ? formatValue(room.stats.totalValue, c.mode) : room.stats.totalValue.toLocaleString()
+                })()}
+              </strong> {(() => { const c = getExerciseConfig(room.discipline); return c?.mode === 'hold' ? 'sec' : 'reps' })()}</span>
               <span>·</span>
               <span>members: <span className="text-[var(--text)]">{room.stats.participantsCount}</span></span>
               <span>·</span>
@@ -423,10 +436,18 @@ export default function RoomPage() {
                         )}
                       </div>
                       <div className="text-[10px] text-[var(--muted)] mt-0.5">
-                        {p.sessionsCount} sessions · best: {p.bestSession}
+                        {p.sessionsCount} sessions · best: {(() => {
+                          const c = getExerciseConfig(room.discipline)
+                          return c ? formatValue(p.bestSession, c.mode) : p.bestSession
+                        })()}
                       </div>
                     </div>
-                    <span className="text-sm font-bold tabular-nums shrink-0">{p.totalPushups}</span>
+                    <span className="text-sm font-bold tabular-nums shrink-0">
+                      {(() => {
+                        const c = getExerciseConfig(room.discipline)
+                        return c ? formatValue(p.totalValue, c.mode) : p.totalValue
+                      })()}
+                    </span>
                   </div>
                 ))
               )}
@@ -445,6 +466,7 @@ export default function RoomPage() {
         {tab === 'workout' && identity && (
           <CameraWorkout
             participantId={identity.participantId}
+            discipline={room.discipline}
             onSessionSaved={loadRoom}
           />
         )}
