@@ -30,16 +30,16 @@ export async function GET(
       .map(p => ({
         id: p.id,
         name: p.name,
-        totalPushups: p.sessions.reduce((s, x) => s + x.count, 0),
+        totalValue: p.sessions.reduce((s, x) => s + x.value, 0),
         sessionsCount: p.sessions.length,
-        bestSession: p.sessions.length > 0 ? Math.max(...p.sessions.map(s => s.count)) : 0,
+        bestSession: p.sessions.length > 0 ? Math.max(...p.sessions.map(s => s.value)) : 0,
         activeToday: p.sessions.some(s => s.date === today),
       }))
-      .sort((a, b) => b.totalPushups - a.totalPushups)
+      .sort((a, b) => b.totalValue - a.totalValue)
 
     const allSessions = room.participants.flatMap(p => p.sessions)
     const stats = {
-      totalPushups: allSessions.reduce((s, x) => s + x.count, 0),
+      totalValue: allSessions.reduce((s, x) => s + x.value, 0),
       participantsCount: room.participants.length,
       sessionsCount: allSessions.length,
       activeToday: leaderboard.filter(p => p.activeToday).length,
@@ -49,6 +49,7 @@ export async function GET(
       id: room.id,
       name: room.name,
       code: room.code,
+      discipline: room.discipline,
       isOwner: room.ownerId === user?.id,
       leaderboard,
       stats,

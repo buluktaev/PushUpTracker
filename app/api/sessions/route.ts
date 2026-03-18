@@ -3,11 +3,11 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(request: Request) {
   try {
-    const { participantId, count, duration } = await request.json()
+    const { participantId, value, duration } = await request.json()
 
-    if (!participantId || !count || count <= 0) {
+    if (!participantId || !value || value <= 0) {
       return NextResponse.json(
-        { error: 'participantId и count обязательны' },
+        { error: 'participantId и value обязательны' },
         { status: 400 }
       )
     }
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
     const date = new Date().toISOString().split('T')[0]
     const session = await prisma.session.create({
-      data: { participantId, count, duration: duration ?? 0, date }
+      data: { participantId, value, duration: duration ?? 0, date }
     })
 
     return NextResponse.json(session, { status: 201 })

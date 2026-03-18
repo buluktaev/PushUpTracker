@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createClient } from '@/lib/supabase-server'
+import { isValidDiscipline } from '@/lib/exerciseConfigs'
 
 function generateCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -32,6 +33,7 @@ export async function GET() {
       participantId: participant.id,
       name: participant.name,
       isOwner: participant.room.ownerId === user.id,
+      discipline: participant.room.discipline,
     }))
 
     return NextResponse.json({ rooms })
@@ -49,12 +51,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { name } = await request.json()
+    const { name, discipline } = await request.json()
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Название комнаты обязательно' }, { status: 400 })
     }
     if (name.trim().length > 64) {
       return NextResponse.json({ error: 'Название комнаты не более 64 символов' }, { status: 400 })
+    }
+    if (!discipline || !isValidDiscipline(discipline)) {
+      return NextResponse.json({ error: 'Невалидная дисциплина' }, { status: 400 })
     }
 
     let code: string
@@ -66,7 +71,7 @@ export async function POST(request: Request) {
     } while (await prisma.room.findUnique({ where: { code } }))
 
     const room = await prisma.room.create({
-      data: { name: name.trim(), code, ownerId: user.id },
+      data: { name: name.trim(), code, ownerId: user.id, discipline },
     })
 
     return NextResponse.json(room, { status: 201 })
