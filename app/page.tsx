@@ -12,7 +12,7 @@ function HomePageContent() {
   const searchParams = useSearchParams()
   const { rooms, loaded, addRoom } = useRooms()
   const [mounted, setMounted] = useState(false)
-  const [mode, setMode] = useState<'menu' | 'create' | 'join'>('menu')
+  const [mode, setMode] = useState<'menu' | 'create' | 'pick-discipline' | 'join'>('menu')
   const [showNew, setShowNew] = useState(false)
   const [roomName, setRoomName] = useState('')
   const [joinCode, setJoinCode] = useState('')
@@ -172,13 +172,33 @@ function HomePageContent() {
                     placeholder="команда_альфа"
                     value={roomName}
                     onChange={e => setRoomName(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleCreate()}
+                    onKeyDown={e => e.key === 'Enter' && roomName.trim() && setMode('pick-discipline')}
                     className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
                     style={{ border: '1px solid var(--border)' }}
                     autoFocus
                   />
                 </div>
-                {/* Discipline picker */}
+                {error && (
+                  <p className="text-[11px] text-[#ef4444]">! {error}</p>
+                )}
+                <button
+                  onClick={() => { setError(''); setMode('pick-discipline') }}
+                  disabled={!roomName.trim()}
+                  className="w-full py-3 text-sm font-normal text-white bg-[#ff6b35] disabled:opacity-40 hover:opacity-85 transition-opacity"
+                >
+                  next()
+                </button>
+                <button
+                  onClick={() => { setMode('menu'); setError('') }}
+                  className="text-xs text-[var(--muted)] hover:text-[#ff6b35] transition-colors text-left"
+                >
+                  ← back
+                </button>
+              </div>
+            )}
+
+            {mode === 'pick-discipline' && (
+              <div className="flex flex-col gap-3">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] tracking-widest uppercase text-[var(--muted)]">
                     discipline =
@@ -212,7 +232,7 @@ function HomePageContent() {
                   {loading ? '// выполняем...' : 'execute()'}
                 </button>
                 <button
-                  onClick={() => { setMode('menu'); setError(''); setSelectedDiscipline(null) }}
+                  onClick={() => { setMode('create'); setError(''); setSelectedDiscipline(null) }}
                   className="text-xs text-[var(--muted)] hover:text-[#ff6b35] transition-colors text-left"
                 >
                   ← back
