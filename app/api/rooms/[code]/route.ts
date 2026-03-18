@@ -60,6 +60,35 @@ export async function GET(
   }
 }
 
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ code: string }> }
+) {
+  try {
+    const { code } = await params
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const room = await prisma.room.findUnique({ where: { code: code.toUpperCase() } })
+    if (!room) return NextResponse.json({ error: 'Комната не найдена' }, { status: 404 })
+    if (room.ownerId !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+    const { name } = await request.json()
+    if (name !== undefined) {
+      if (!name?.trim()) return NextResponse.json({ error: 'Название обязательно' }, { status: 400 })
+      if (name.trim().length > 64) return NextResponse.json({ error: 'Не более 64 символов' }, { status: 400 })
+      const updated = await prisma.room.update({ where: { id: room.id }, data: { name: name.trim() } })
+      return NextResponse.json({ name: updated.name })
+    }
+
+    return NextResponse.json({ error: 'Нечего обновлять' }, { status: 400 })
+  } catch (err) {
+    console.error(err)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
+
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ code: string }> }

@@ -77,9 +77,12 @@ export default function RoomPage() {
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [room, setRoom] = useState<RoomData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'leaderboard' | 'workout' | 'profile'>('workout')
+  const [tab, setTab] = useState<'leaderboard' | 'workout' | 'settings' | 'profile'>('workout')
   const [copied, setCopied] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
+  const [settingsLoading, setSettingsLoading] = useState(false)
+  const [settingsError, setSettingsError] = useState('')
   const [busyAction, setBusyAction] = useState<'logout' | 'leave' | 'delete' | null>(null)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
@@ -255,6 +258,46 @@ export default function RoomPage() {
     }
   }
 
+  async function handleRename() {
+    if (!renameValue.trim() || !room) return
+    setSettingsLoading(true)
+    setSettingsError('')
+    try {
+      const res = await fetch(`/api/rooms/${code}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: renameValue }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setRoom(prev => prev ? { ...prev, name: data.name } : prev)
+      setRenameValue('')
+    } catch (e: unknown) {
+      setSettingsError(e instanceof Error ? e.message : 'ошибка')
+    } finally {
+      setSettingsLoading(false)
+    }
+  }
+
+  async function handleKick(participantId: string) {
+    setSettingsLoading(true)
+    setSettingsError('')
+    try {
+      const res = await fetch(`/api/rooms/${code}/participants/${participantId}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error)
+      }
+      await loadRoom()
+    } catch (e: unknown) {
+      setSettingsError(e instanceof Error ? e.message : 'ошибка')
+    } finally {
+      setSettingsLoading(false)
+    }
+  }
+
   if (loading || !room) {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-[var(--bg)] relative">
@@ -339,27 +382,27 @@ export default function RoomPage() {
 
           {/* Center: tabs (desktop only) */}
           <nav className="hidden sm:flex items-stretch" role="tablist">
-            {(['workout', 'leaderboard', 'profile'] as const).map(t => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                role="tab"
-                aria-selected={tab === t}
-                className={`px-5 text-[11px] tracking-wide transition-colors border-b-2 -mb-px flex items-center gap-1.5 ${
-                  tab === t
-                    ? 'border-[#ff6b35] text-[var(--text)] font-bold'
-                    : 'border-transparent text-[var(--muted)] hover:text-[var(--text)]'
-                }`}
-              >
-                {t === 'leaderboard' ? (
-                  <><Icon name="emoji_events" size={13} /> leaderboard</>
-                ) : t === 'profile' ? (
-                  <><Icon name="person" size={13} /> profile</>
-                ) : (
-                  <><Icon name="fitness_center" size={13} /> workout</>
-                )}
-              </button>
-            ))}
+            {(() => {
+              const tabs = room.isOwner
+                ? (['workout', 'leaderboard', 'settings', 'profile'] as const)
+                : (['workout', 'leaderboard', 'profile'] as const)
+              return tabs.map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  role="tab"
+                  aria-selected={tab === t}
+                  className={`px-5 text-[11px] tracking-wide transition-colors border-b-2 -mb-px flex items-center gap-1.5 ${
+                    tab === t
+                      ? 'border-[var(--accent-default)] text-[var(--text)] font-bold'
+                      : 'border-transparent text-[var(--muted)] hover:text-[var(--text)]'
+                  }`}
+                >
+                  <Icon name={t === 'leaderboard' ? 'emoji_events' : t === 'profile' ? 'person' : t === 'settings' ? 'settings' : 'fitness_center'} size={13} />
+                  {t}
+                </button>
+              ))
+            })()}
           </nav>
 
           {/* Right: theme */}
@@ -469,6 +512,136 @@ export default function RoomPage() {
             discipline={room.discipline}
             onSessionSaved={loadRoom}
           />
+        )}
+
+        {tab === 'settings' && room.isOwner && (
+          <div className="space-y-6">
+            {settingsError && (
+              <div className="px-4 py-3 text-sm text-[#ef4444]"
+                style={{ border: '1px solid rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.08)' }}>
+                {settingsError}
+              </div>
+            )}
+
+            {/* Rename */}
+            <div className="p-4 space-y-3"
+              style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}>
+              <div className="text-[10px] tracking-widest text-[var(--muted)]">{'// переименовать комнату'}</div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder={room.name}
+                  value={renameValue}
+                  onChange={e => setRenameValue(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleRename()}
+                  className="flex-1 px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none"
+                  style={{ border: '1px solid var(--border)' }}
+                />
+                <button
+                  onClick={handleRename}
+                  disabled={settingsLoading || !renameValue.trim()}
+                  className="px-4 py-2.5 text-sm text-white bg-[var(--accent-default)] disabled:opacity-40 hover:opacity-85 transition-opacity"
+                >
+                  save()
+                </button>
+              </div>
+            </div>
+
+            {/* Participants + kick */}
+            <div className="p-4 space-y-3"
+              style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}>
+              <div className="text-[10px] tracking-widest text-[var(--muted)]">{'// участники'}</div>
+              <div style={{ border: '1px solid var(--border)' }}>
+                {room.leaderboard.length === 0 ? (
+                  <div className="p-4 text-center text-[10px] text-[var(--muted)]">{'// пока никого'}</div>
+                ) : (
+                  room.leaderboard.map(p => (
+                    <div key={p.id}
+                      className="flex items-center justify-between px-4 py-3 text-sm"
+                      style={{ borderBottom: '1px solid var(--border)' }}>
+                      <div className="flex-1 min-w-0">
+                        <span className="truncate font-medium">{p.name}</span>
+                        {p.id === identity?.participantId && (
+                          <span className="ml-2 text-[10px] tracking-wider text-[var(--accent-default)]">[you]</span>
+                        )}
+                      </div>
+                      {p.id !== identity?.participantId && (
+                        <button
+                          onClick={() => handleKick(p.id)}
+                          disabled={settingsLoading}
+                          className="text-[11px] text-[var(--muted)] hover:text-[#ef4444] transition-colors disabled:opacity-40 ml-3 shrink-0"
+                        >
+                          kick()
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Delete room (moved from profile) */}
+            <div className="p-4 space-y-3"
+              style={{ border: '1px solid rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.08)' }}>
+              <div className="text-[10px] tracking-widest text-[#ef4444]">{'// danger zone'}</div>
+              <div className="text-sm text-[#ef4444]">
+                Удаление комнаты удалит всех участников и результаты без возможности восстановления.
+              </div>
+              {!showDeleteConfirm ? (
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="px-4 py-2 text-sm text-white bg-[#ef4444] hover:opacity-85 transition-opacity"
+                >
+                  delete_room()
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <div className="text-sm text-[#ef4444]">
+                    Для удаления введи точное название комнаты и пароль от аккаунта.
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block">
+                      <span className="text-[10px] tracking-widest text-[var(--muted)]">room name</span>
+                      <input
+                        value={deleteRoomName}
+                        onChange={e => setDeleteRoomName(e.target.value)}
+                        className="mt-1 w-full px-3 py-2 text-sm bg-transparent outline-none"
+                        style={{ border: '1px solid var(--border)' }}
+                        placeholder={room.name}
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-[10px] tracking-widest text-[var(--muted)]">password</span>
+                      <input
+                        type="password"
+                        value={deletePassword}
+                        onChange={e => setDeletePassword(e.target.value)}
+                        className="mt-1 w-full px-3 py-2 text-sm bg-transparent outline-none"
+                        style={{ border: '1px solid var(--border)' }}
+                        placeholder="••••••••"
+                      />
+                    </label>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { setShowDeleteConfirm(false); setDeleteRoomName(''); setDeletePassword('') }}
+                      className="px-4 py-2 text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                      style={{ border: '1px solid var(--border)' }}
+                    >
+                      cancel
+                    </button>
+                    <button
+                      onClick={deleteRoom}
+                      disabled={busyAction === 'delete' || deleteRoomName !== room.name || deletePassword.length === 0}
+                      className="px-4 py-2 text-sm text-white bg-[#ef4444] hover:opacity-85 transition-opacity disabled:opacity-50"
+                    >
+                      {busyAction === 'delete' ? 'delete_room()...' : 'delete_room()'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         )}
 
         {tab === 'profile' && (
@@ -589,69 +762,12 @@ export default function RoomPage() {
             ) : (
               <div
                 className="p-4 space-y-3"
-                style={{ border: '1px solid rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.08)' }}
+                style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}
               >
-                <div className="text-[10px] tracking-widest text-[#ef4444]">{'// danger zone'}</div>
-                <div className="text-sm text-[#ef4444]">
-                  Как владелец комнаты ты не можешь ее покинуть. Доступно только полное удаление комнаты со всеми участниками и результатами.
+                <div className="text-[10px] tracking-widest text-[var(--muted)]">{'// room'}</div>
+                <div className="text-sm text-[var(--muted)]">
+                  Управление комнатой доступно во вкладке settings.
                 </div>
-                {!showDeleteConfirm ? (
-                  <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="px-4 py-2 text-sm text-white bg-[#ef4444] hover:opacity-85 transition-opacity"
-                  >
-                    delete_room()
-                  </button>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="text-sm text-[#ef4444]">
-                      Для удаления введи точное название комнаты и пароль от аккаунта.
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block">
-                        <span className="text-[10px] tracking-widest text-[var(--muted)]">room name</span>
-                        <input
-                          value={deleteRoomName}
-                          onChange={e => setDeleteRoomName(e.target.value)}
-                          className="mt-1 w-full px-3 py-2 text-sm bg-transparent outline-none"
-                          style={{ border: '1px solid var(--border)' }}
-                          placeholder={room.name}
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="text-[10px] tracking-widest text-[var(--muted)]">password</span>
-                        <input
-                          type="password"
-                          value={deletePassword}
-                          onChange={e => setDeletePassword(e.target.value)}
-                          className="mt-1 w-full px-3 py-2 text-sm bg-transparent outline-none"
-                          style={{ border: '1px solid var(--border)' }}
-                          placeholder="••••••••"
-                        />
-                      </label>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          setShowDeleteConfirm(false)
-                          setDeleteRoomName('')
-                          setDeletePassword('')
-                        }}
-                        className="px-4 py-2 text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors"
-                        style={{ border: '1px solid var(--border)' }}
-                      >
-                        cancel
-                      </button>
-                      <button
-                        onClick={deleteRoom}
-                        disabled={busyAction === 'delete' || deleteRoomName !== room.name || deletePassword.length === 0}
-                        className="px-4 py-2 text-sm text-white bg-[#ef4444] hover:opacity-85 transition-opacity disabled:opacity-50"
-                      >
-                        {busyAction === 'delete' ? 'delete_room()...' : 'delete_room()'}
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -665,23 +781,28 @@ export default function RoomPage() {
         role="tablist"
       >
         <div className="flex">
-          {(['workout', 'leaderboard', 'profile'] as const).map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              role="tab"
-              aria-selected={tab === t}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 transition-colors ${
-                tab === t ? 'text-[#ff6b35]' : 'text-[var(--muted)] hover:text-[var(--text)]'
-              }`}
-            >
-              <Icon
-                name={t === 'workout' ? 'fitness_center' : t === 'leaderboard' ? 'emoji_events' : 'person'}
-                size={20}
-              />
-              <span className="text-[10px] tracking-wide">{t}</span>
-            </button>
-          ))}
+          {(() => {
+            const tabs = room.isOwner
+              ? (['workout', 'leaderboard', 'settings', 'profile'] as const)
+              : (['workout', 'leaderboard', 'profile'] as const)
+            return tabs.map(t => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                role="tab"
+                aria-selected={tab === t}
+                className={`flex-1 flex flex-col items-center gap-1 py-3 transition-colors ${
+                  tab === t ? 'text-[var(--accent-default)]' : 'text-[var(--muted)] hover:text-[var(--text)]'
+                }`}
+              >
+                <Icon
+                  name={t === 'workout' ? 'fitness_center' : t === 'leaderboard' ? 'emoji_events' : t === 'settings' ? 'settings' : 'person'}
+                  size={20}
+                />
+                <span className="text-[10px] tracking-wide">{t}</span>
+              </button>
+            ))
+          })()}
         </div>
       </nav>
     </div>
