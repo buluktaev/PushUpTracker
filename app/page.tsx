@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Icon from '@/components/Icon'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useRooms } from '@/hooks/useRooms'
+import { exerciseConfigs } from '@/lib/exerciseConfigs'
 
 function HomePageContent() {
   const router = useRouter()
@@ -17,6 +18,7 @@ function HomePageContent() {
   const [joinCode, setJoinCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [selectedDiscipline, setSelectedDiscipline] = useState<string | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -32,7 +34,7 @@ function HomePageContent() {
       const res = await fetch('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: roomName }),
+        body: JSON.stringify({ name: roomName, discipline: selectedDiscipline }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -176,18 +178,41 @@ function HomePageContent() {
                     autoFocus
                   />
                 </div>
+                {/* Discipline picker */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] tracking-widest uppercase text-[var(--muted)]">
+                    discipline =
+                  </label>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+                    {exerciseConfigs.map(d => (
+                      <button
+                        key={d.slug}
+                        type="button"
+                        onClick={() => setSelectedDiscipline(d.slug)}
+                        className={`flex flex-col items-center gap-1.5 py-3 px-2 text-xs transition-colors ${
+                          selectedDiscipline === d.slug
+                            ? 'text-white bg-[var(--accent-default)] ring-1 ring-inset ring-[var(--accent-default)]'
+                            : 'text-[var(--text)] bg-[var(--surface)] ring-1 ring-inset ring-[var(--border)] hover:ring-[var(--accent-default)]'
+                        }`}
+                      >
+                        <Icon name={d.icon} size={20} />
+                        <span className="text-center leading-tight">{d.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {error && (
                   <p className="text-[11px] text-[#ef4444]">! {error}</p>
                 )}
                 <button
                   onClick={handleCreate}
-                  disabled={loading}
+                  disabled={loading || !selectedDiscipline}
                   className="w-full py-3 text-sm font-normal text-white bg-[#ff6b35] disabled:opacity-40 hover:opacity-85 transition-opacity"
                 >
                   {loading ? '// выполняем...' : 'execute()'}
                 </button>
                 <button
-                  onClick={() => { setMode('menu'); setError('') }}
+                  onClick={() => { setMode('menu'); setError(''); setSelectedDiscipline(null) }}
                   className="text-xs text-[var(--muted)] hover:text-[#ff6b35] transition-colors text-left"
                 >
                   ← back
