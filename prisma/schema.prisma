@@ -11,6 +11,7 @@ model Room {
   name         String
   code         String        @unique
   ownerId      String?       // nullable для существующих комнат
+  discipline   String        @default("pushups")
   createdAt    DateTime      @default(now())
   participants Participant[]
 }
@@ -35,7 +36,7 @@ model Participant {
 model Session {
   id            String      @id @default(cuid())
   participantId String
-  count         Int
+  value         Int
   duration      Float
   date          String
   createdAt     DateTime    @default(now())
