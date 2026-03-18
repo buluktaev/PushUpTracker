@@ -4,15 +4,17 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { FilesetResolver, PoseLandmarker, DrawingUtils } from '@mediapipe/tasks-vision'
 import NumberFlow from '@number-flow/react'
 import Icon from '@/components/Icon'
+import { getExerciseConfig } from '@/lib/exerciseConfigs'
 
 interface Props {
   participantId: string
+  discipline: string
   onSessionSaved: () => void
 }
 
 type AnyObj = any
 
-export default function CameraWorkout({ participantId, onSessionSaved }: Props) {
+export default function CameraWorkout({ participantId, discipline, onSessionSaved }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -27,6 +29,11 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
   const sessionActiveRef = useRef(false)
   const angleBufferRef = useRef<number[]>([])
   const lastRepTimeRef = useRef<number>(0)
+  const holdTimeRef = useRef(0)
+  const lastHoldTickRef = useRef<number | null>(null)
+
+  const config = getExerciseConfig(discipline)
+  const isHoldMode = config?.mode === 'hold'
 
   const [mpLoaded, setMpLoaded] = useState(false)
   const [cameraOn, setCameraOn] = useState(false)
@@ -117,6 +124,13 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
       }
     }
 
+    let bodyCheckPassed = true
+    if (config!.bodyCheck === 'horizontal') {
+      bodyCheckPassed = isHorizontal
+    } else if (config!.bodyCheck === 'vertical') {
+      bodyCheckPassed = !isHorizontal
+    }
+
     if (drawingRef.current) {
       try {
         const connections = [
@@ -124,7 +138,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
           [11,23],[12,24],[23,25],[24,26],[25,27],[26,28]
         ]
         const ctx2 = canvas.getContext('2d')!
-        ctx2.strokeStyle = isHorizontal ? 'rgba(74,222,128,0.85)' : 'rgba(255,255,255,0.4)'
+        ctx2.strokeStyle = bodyCheckPassed ? 'rgba(74,222,128,0.85)' : 'rgba(255,255,255,0.4)'
         ctx2.lineWidth = 1.5
         for (const [a, b] of connections) {
           if (lm[a] && lm[b]) {
@@ -134,7 +148,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
             ctx2.stroke()
           }
         }
-        ctx2.fillStyle = isHorizontal ? '#4ade80' : '#ff6b35'
+        ctx2.fillStyle = bodyCheckPassed ? '#4ade80' : '#ff6b35'
         for (const point of lm) {
           ctx2.beginPath()
           ctx2.arc(point.x * canvas.width, point.y * canvas.height, 3, 0, 2 * Math.PI)
@@ -144,7 +158,11 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     }
 
     const src = wlm ?? lm
-    const rawAngle = angleBetween(src[11], src[13], src[15])
+    const [lA, lB, lC] = config!.keypointsLeft
+    const [rA, rB, rC] = config!.keypointsRight
+    const leftAngle = angleBetween(src[lA], src[lB], src[lC])
+    const rightAngle = angleBetween(src[rA], src[rB], src[rC])
+    const rawAngle = (leftAngle + rightAngle) / 2
 
     // Median filter: buffer last 5 angles, remove ±2σ outliers, take median
     const buf = angleBufferRef.current
@@ -158,21 +176,45 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
 
     if (!hipVisible) {
       setStatus({ text: 'show full body', color: '#f59e0b' })
-    } else if (!isHorizontal) {
-      setStatus({ text: 'get horizontal!', color: '#ef4444' })
+    } else if (!bodyCheckPassed) {
+      setStatus({
+        text: config!.bodyCheck === 'horizontal' ? 'get horizontal!' : 'get vertical!',
+        color: '#ef4444',
+      })
+    } else if (isHoldMode) {
+      setStatus({ text: 'hold position', color: '#22c55e' })
     } else {
-      setStatus({ text: `elbow: ${Math.round(angle)}°`, color: '#ff6b35' })
+      setStatus({ text: `angle: ${Math.round(angle)}°`, color: '#ff6b35' })
     }
 
-    if (angle < 100 && posePhaseRef.current === 'up') {
-      posePhaseRef.current = 'down'
-    } else if (angle > 140 && posePhaseRef.current === 'down') {
-      posePhaseRef.current = 'up'
-      const now = Date.now()
-      if (sessionActiveRef.current && isHorizontal && now - lastRepTimeRef.current >= 500) {
-        lastRepTimeRef.current = now
-        countRef.current += 1
+    if (!isHoldMode) {
+      // Reps mode: generic angle-based counting
+      const isDown = config!.isInverted ? angle > config!.downAngle : angle < config!.downAngle
+      const isUp = config!.isInverted ? angle < config!.upAngle : angle > config!.upAngle
+      if (isDown && posePhaseRef.current === 'up') {
+        posePhaseRef.current = 'down'
+      } else if (isUp && posePhaseRef.current === 'down') {
+        posePhaseRef.current = 'up'
+        const now = Date.now()
+        if (sessionActiveRef.current && bodyCheckPassed && now - lastRepTimeRef.current >= 500) {
+          lastRepTimeRef.current = now
+          countRef.current += 1
+          setCount(countRef.current)
+        }
+      }
+    } else if (sessionActiveRef.current) {
+      // Hold mode: count seconds while pose is held
+      if (bodyCheckPassed) {
+        const now = Date.now()
+        if (lastHoldTickRef.current !== null) {
+          holdTimeRef.current += (now - lastHoldTickRef.current) / 1000
+        }
+        lastHoldTickRef.current = now
+        countRef.current = Math.floor(holdTimeRef.current)
         setCount(countRef.current)
+      } else {
+        // Pose lost — pause timer
+        lastHoldTickRef.current = null
       }
     }
   }, [])
@@ -242,6 +284,8 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     countRef.current = 0
     angleBufferRef.current = []
     lastRepTimeRef.current = 0
+    holdTimeRef.current = 0
+    lastHoldTickRef.current = null
     setCount(0)
     setElapsed(0)
     setCountdown(5)
@@ -309,13 +353,13 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     startDisabledTimerRef.current = setTimeout(() => setStartDisabled(false), 800)
     const finalCount = countRef.current
     const duration = Math.floor((Date.now() - (sessionStartRef.current ?? Date.now())) / 1000)
-    if (finalCount === 0) return
+    if (finalCount < (isHoldMode ? 5 : 1)) return
     setSaving(true)
     try {
       const res = await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participantId, count: finalCount, duration }),
+        body: JSON.stringify({ participantId, value: finalCount, duration }),
       })
       if (res.ok) {
         onSessionSaved()
@@ -472,7 +516,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
                 ? '// сохраняем...'
                 : holding
                 ? '// удерживайте...'
-                : `finish() · ${count} reps`}
+                : `finish() · ${isHoldMode ? fmt(count) : count + ' reps'}`}
             </span>
           </button>
         )
