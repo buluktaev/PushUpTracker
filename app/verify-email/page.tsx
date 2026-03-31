@@ -132,7 +132,7 @@ function VerifyEmailContent() {
             </p>
             <p className="text-xs font-mono">
               повтор через{' '}
-              <span className="text-[#ff6b35]">{formatTime(secondsLeft)}</span>
+              <span className="text-[var(--accent-default)]">{formatTime(secondsLeft)}</span>
             </p>
           </div>
         ) : (
@@ -140,7 +140,7 @@ function VerifyEmailContent() {
             <button
               onClick={handleResend}
               disabled={sending || attemptsLeft === 0}
-              className="w-full py-3 text-sm font-normal text-white bg-[#ff6b35] disabled:opacity-40 hover:opacity-85 transition-opacity"
+              className="w-full py-3 text-sm font-normal text-white bg-[var(--accent-default)] disabled:opacity-40 hover:opacity-85 transition-opacity"
             >
               {sending ? '// отправляем...' : 'resend()'}
             </button>
@@ -162,7 +162,7 @@ function VerifyEmailContent() {
         )}
 
         <p className="text-xs text-[var(--muted)] mt-8">
-          <Link href="/login" className="text-[#ff6b35] hover:underline">
+          <Link href="/login" className="text-[var(--accent-default)] hover:underline">
             ← вернуться к login()
           </Link>
         </p>

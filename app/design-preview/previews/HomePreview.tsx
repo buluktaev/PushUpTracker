@@ -54,7 +54,7 @@ export default function HomePreview({
             {rooms.map(room => (
               <div
                 key={room.roomCode}
-                className="w-full flex items-center justify-between px-4 py-3 text-sm text-[var(--text)] bg-[var(--surface)] hover:border-[#ff6b35] transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between px-4 py-3 text-sm text-[var(--text)] bg-[var(--surface)] hover:border-[var(--accent-default)] transition-colors cursor-pointer"
                 style={{ border: '1px solid var(--border)' }}
               >
                 <span className="font-medium truncate">{room.roomName}</span>
@@ -79,12 +79,12 @@ export default function HomePreview({
             {mode === 'menu' && (
               <div className="flex flex-col gap-2">
                 <button
-                  className="w-full py-3 text-sm font-normal text-white bg-[#ff6b35] hover:opacity-85 transition-opacity"
+                  className="w-full py-3 text-sm font-normal text-white bg-[var(--accent-default)] hover:opacity-85 transition-opacity"
                 >
                   create_room()
                 </button>
                 <button
-                  className="w-full py-3 text-sm font-normal border text-[var(--text)] bg-[var(--surface)] hover:border-[#ff6b35] transition-colors"
+                  className="w-full py-3 text-sm font-normal border text-[var(--text)] bg-[var(--surface)] hover:border-[var(--accent-default)] transition-colors"
                   style={{ borderColor: 'var(--border)' }}
                 >
                   join_room()
@@ -103,7 +103,7 @@ export default function HomePreview({
                     type="text"
                     placeholder="команда_альфа"
                     defaultValue={roomName}
-                    className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
+                    className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent-default)] transition-colors"
                     style={{ border: '1px solid var(--border)' }}
                     readOnly
                   />
@@ -113,12 +113,12 @@ export default function HomePreview({
                 )}
                 <button
                   disabled={!roomName.trim()}
-                  className="w-full py-3 text-sm font-normal text-white bg-[#ff6b35] disabled:opacity-40 hover:opacity-85 transition-opacity"
+                  className="w-full py-3 text-sm font-normal text-white bg-[var(--accent-default)] disabled:opacity-40 hover:opacity-85 transition-opacity"
                 >
                   next()
                 </button>
                 <button
-                  className="text-xs text-[var(--muted)] hover:text-[#ff6b35] transition-colors text-left"
+                  className="text-xs text-[var(--muted)] hover:text-[var(--accent-default)] transition-colors text-left"
                 >
                   ← back
                 </button>
@@ -153,12 +153,12 @@ export default function HomePreview({
                 )}
                 <button
                   disabled={loading || !selectedDiscipline}
-                  className="w-full py-3 text-sm font-normal text-white bg-[#ff6b35] disabled:opacity-40 hover:opacity-85 transition-opacity"
+                  className="w-full py-3 text-sm font-normal text-white bg-[var(--accent-default)] disabled:opacity-40 hover:opacity-85 transition-opacity"
                 >
                   {loading ? '// выполняем...' : 'execute()'}
                 </button>
                 <button
-                  className="text-xs text-[var(--muted)] hover:text-[#ff6b35] transition-colors text-left"
+                  className="text-xs text-[var(--muted)] hover:text-[var(--accent-default)] transition-colors text-left"
                 >
                   ← back
                 </button>
@@ -177,7 +177,7 @@ export default function HomePreview({
                     placeholder="ABC123"
                     defaultValue={joinCode}
                     maxLength={6}
-                    className="w-full px-3 py-2.5 text-sm tracking-[0.25em] bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
+                    className="w-full px-3 py-2.5 text-sm tracking-[0.25em] bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent-default)] transition-colors"
                     style={{ border: '1px solid var(--border)' }}
                     readOnly
                   />
@@ -187,12 +187,12 @@ export default function HomePreview({
                 )}
                 <button
                   disabled={loading}
-                  className="w-full py-3 text-sm font-normal text-white bg-[#ff6b35] disabled:opacity-40 hover:opacity-85 transition-opacity"
+                  className="w-full py-3 text-sm font-normal text-white bg-[var(--accent-default)] disabled:opacity-40 hover:opacity-85 transition-opacity"
                 >
                   {loading ? '// входим...' : 'execute()'}
                 </button>
                 <button
-                  className="text-xs text-[var(--muted)] hover:text-[#ff6b35] transition-colors text-left"
+                  className="text-xs text-[var(--muted)] hover:text-[var(--accent-default)] transition-colors text-left"
                 >
                   ← back
                 </button>

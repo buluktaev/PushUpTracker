@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PushUpTracker — Icons</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --font-primary: "Google Sans", "GoogleSans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-secondary: "IBM Plex Mono", ui-monospace, monospace;
+    --neutral-0: #ffffff;
+    --neutral-50: #fafafa;
+    --neutral-100: #f5f5f5;
+    --neutral-200: #e5e5e5;
+    --neutral-400: #a1a1a1;
+    --neutral-500: #737373;
+    --neutral-800: #262626;
+    --orange-700: #c22302;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-primary);
+    background: var(--neutral-50);
+    color: var(--neutral-800);
+    padding: 32px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1 { font-size: 24px; line-height: 32px; font-weight: 700; margin-bottom: 8px; }
+  h2 { font-size: 14px; line-height: 22px; font-weight: 400; color: var(--neutral-500); margin-bottom: 24px; }
+  h3 {
+    margin: 40px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--neutral-200);
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--neutral-500);
+  }
+  p.note {
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--neutral-500);
+    margin-bottom: 12px;
+    max-width: 880px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: var(--neutral-0);
+    border: 1px solid var(--neutral-200);
+    padding: 14px;
+    min-height: 118px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .icon-box {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--neutral-200);
+    background: var(--neutral-0);
+  }
+  .icon-box img {
+    width: 16px;
+    height: 16px;
+    display: block;
+  }
+  .name {
+    font-family: var(--font-secondary);
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--neutral-800);
+  }
+  .meta {
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--neutral-500);
+  }
+  .pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .pill {
+    background: var(--neutral-0);
+    border: 1px solid var(--neutral-200);
+    padding: 10px 12px;
+    min-width: 220px;
+  }
+  .pill .k {
+    font-family: var(--font-secondary);
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--neutral-500);
+  }
+  .pill .v {
+    margin-top: 4px;
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--neutral-800);
+  }
+  .legacy {
+    font-family: var(--font-secondary);
+    font-size: 16px;
+    line-height: 1;
+    color: var(--orange-700);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+  }
+</style>
+</head>
+<body>
+  <h1>PushUpTracker Icons</h1>
+  <h2>Container-based Figma icon reference</h2>
+
+  <h3>01 — Figma Container Icons</h3>
+  <p class="note">Эти иконки заведены как контейнеры <code>16×16</code>. Это важный источник истины: в коде сохраняется не только path, но и посадка shape внутри контейнера, как в Figma.</p>
+  <div class="grid">
+    <div class="card"><div class="icon-box"><img src="/icons/fitness.svg" alt="fitness"></div><div class="name">fitness</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/trophy.svg" alt="trophy"></div><div class="name">trophy</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/settings.svg" alt="settings"></div><div class="name">settings</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/person.svg" alt="person"></div><div class="name">person</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/camera.svg" alt="camera"></div><div class="name">camera</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/copy.svg" alt="copy"></div><div class="name">copy</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/arrow_down.svg" alt="arrow_down"></div><div class="name">arrow_down</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/arrow_up.svg" alt="arrow_up"></div><div class="name">arrow_up</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/arrow_right.svg" alt="arrow_right"></div><div class="name">arrow_right</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/arrow_left.svg" alt="arrow_left"></div><div class="name">arrow_left</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/plus.svg" alt="plus"></div><div class="name">plus</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/moon.svg" alt="moon"></div><div class="name">moon</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/sun.svg" alt="sun"></div><div class="name">sun</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/check.svg" alt="check"></div><div class="name">check</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/close.svg" alt="close"></div><div class="name">close</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/crown.svg" alt="crown"></div><div class="name">crown</div><div class="meta">16×16 container</div></div>
+    <div class="card"><div class="icon-box"><img src="/icons/logout.svg" alt="logout"></div><div class="name">logout</div><div class="meta">16×16 container</div></div>
+  </div>
+
+  <h3>02 — Alias Map</h3>
+  <p class="note">Старые имена в приложении продолжают работать через alias-слой, поэтому не нужно массово переписывать весь JSX.</p>
+  <div class="pill-row">
+    <div class="pill"><div class="k">fitness_center</div><div class="v">fitness</div></div>
+    <div class="pill"><div class="k">emoji_events</div><div class="v">trophy</div></div>
+    <div class="pill"><div class="k">photo_camera</div><div class="v">camera</div></div>
+    <div class="pill"><div class="k">content_copy</div><div class="v">copy</div></div>
+    <div class="pill"><div class="k">add</div><div class="v">plus</div></div>
+    <div class="pill"><div class="k">dark_mode</div><div class="v">moon</div></div>
+    <div class="pill"><div class="k">light_mode</div><div class="v">sun</div></div>
+    <div class="pill"><div class="k">expand_more</div><div class="v">arrow_down</div></div>
+    <div class="pill"><div class="k">expand_less</div><div class="v">arrow_up</div></div>
+    <div class="pill"><div class="k">arrow_forward</div><div class="v">arrow_right</div></div>
+    <div class="pill"><div class="k">profile</div><div class="v">person</div></div>
+  </div>
+
+  <h3>03 — Legacy Fallback Icons</h3>
+  <p class="note">Эти иконки пока остаются в path-based fallback renderer. Они работают в приложении, но ещё не переведены на отдельные Figma container-assets.</p>
+  <div class="grid">
+    <div class="card"><div class="icon-box"><span class="legacy">•</span></div><div class="name">sports_martial_arts</div><div class="meta">fallback path icon</div></div>
+    <div class="card"><div class="icon-box"><span class="legacy">•</span></div><div class="name">airline_seat_flat</div><div class="meta">fallback path icon</div></div>
+    <div class="card"><div class="icon-box"><span class="legacy">•</span></div><div class="name">exercise</div><div class="meta">fallback path icon</div></div>
+    <div class="card"><div class="icon-box"><span class="legacy">•</span></div><div class="name">iron</div><div class="meta">fallback path icon</div></div>
+    <div class="card"><div class="icon-box"><span class="legacy">•</span></div><div class="name">pan_tool_alt</div><div class="meta">fallback path icon</div></div>
+    <div class="card"><div class="icon-box"><span class="legacy">•</span></div><div class="name">keyboard_double_arrow_up</div><div class="meta">fallback path icon</div></div>
+    <div class="card"><div class="icon-box"><span class="legacy">•</span></div><div class="name">directions_walk</div><div class="meta">fallback path icon</div></div>
+    <div class="card"><div class="icon-box"><span class="legacy">•</span></div><div class="name">directions_run</div><div class="meta">fallback path icon</div></div>
+    <div class="card"><div class="icon-box"><span class="legacy">•</span></div><div class="name">horizontal_rule</div><div class="meta">fallback path icon</div></div>
+  </div>
+
+  <h3>04 — Planned</h3>
+  <p class="note">Из Figma уже засветились ещё `join`, `eye_open`, `eye_close`, но asset URLs с MCP сейчас отдают `404`, поэтому они пока не включены в production set.</p>
+</body>
+</html>

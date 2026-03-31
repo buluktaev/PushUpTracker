@@ -40,7 +40,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
   const [count, setCount] = useState(0)
   const [sessionActive, setSessionActive] = useState(false)
   const [elapsed, setElapsed] = useState(0)
-  const [status, setStatus] = useState({ text: 'camera off', color: '#888880' })
+  const [status, setStatus] = useState({ text: 'camera off', color: 'var(--text-secondary)' })
   const [saving, setSaving] = useState(false)
   const [holding, setHolding] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
@@ -74,10 +74,10 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
         }
       }
       setMpLoaded(true)
-      setStatus({ text: 'searching...', color: '#f59e0b' })
+      setStatus({ text: 'searching...', color: 'var(--status-warning-default)' })
     } catch (e) {
       console.error('MediaPipe load failed:', e)
-      setStatus({ text: 'err: local mediapipe failed', color: '#ef4444' })
+      setStatus({ text: 'err: local mediapipe failed', color: 'var(--status-danger-default)' })
     }
   }, [mediapipeModelPath])
 
@@ -96,7 +96,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     if (!result.landmarks?.length) {
-      setStatus({ text: 'searching...', color: '#f59e0b' })
+      setStatus({ text: 'searching...', color: 'var(--status-warning-default)' })
       return
     }
 
@@ -148,7 +148,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
             ctx2.stroke()
           }
         }
-        ctx2.fillStyle = bodyCheckPassed ? '#4ade80' : '#ff6b35'
+        ctx2.fillStyle = bodyCheckPassed ? '#22c55e' : '#c22302'
         for (const point of lm) {
           ctx2.beginPath()
           ctx2.arc(point.x * canvas.width, point.y * canvas.height, 3, 0, 2 * Math.PI)
@@ -175,16 +175,16 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     const angle = sorted[Math.floor(sorted.length / 2)] ?? rawAngle
 
     if (!hipVisible) {
-      setStatus({ text: 'show full body', color: '#f59e0b' })
+      setStatus({ text: 'show full body', color: 'var(--status-warning-default)' })
     } else if (!bodyCheckPassed) {
       setStatus({
         text: config!.bodyCheck === 'horizontal' ? 'get horizontal!' : 'get vertical!',
-        color: '#ef4444',
+        color: 'var(--status-danger-default)',
       })
     } else if (isHoldMode) {
-      setStatus({ text: 'hold position', color: '#22c55e' })
+      setStatus({ text: 'hold position', color: 'var(--status-success-default)' })
     } else {
-      setStatus({ text: `angle: ${Math.round(angle)}°`, color: '#ff6b35' })
+      setStatus({ text: `angle: ${Math.round(angle)}°`, color: 'var(--accent-default)' })
     }
 
     if (!isHoldMode) {
@@ -251,7 +251,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
 
   async function startCamera() {
     try {
-      setStatus({ text: 'init...', color: '#f59e0b' })
+      setStatus({ text: 'init...', color: 'var(--status-warning-default)' })
       const s = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: 640, height: 480 },
         audio: false,
@@ -265,7 +265,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
       await loadMP()
     } catch (e) {
       console.error(e)
-      setStatus({ text: 'err: no camera access', color: '#ef4444' })
+      setStatus({ text: 'err: no camera access', color: 'var(--status-danger-default)' })
     }
   }
 
@@ -275,7 +275,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
     if (videoRef.current) videoRef.current.srcObject = null
     setCameraOn(false)
-    setStatus({ text: 'camera off', color: '#888880' })
+    setStatus({ text: 'camera off', color: 'var(--text-secondary)' })
     const canvas = canvasRef.current
     if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
   }
@@ -471,7 +471,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
             <button
               onClick={startCamera}
               className="flex flex-col items-center gap-2.5 px-8 py-5 text-white transition-opacity hover:opacity-80"
-              style={{ background: 'rgba(255,107,53,0.9)', backdropFilter: 'blur(6px)', borderRadius: 0 }}
+              style={{ background: 'var(--accent-default)', backdropFilter: 'blur(6px)', borderRadius: 0 }}
             >
               <Icon name="photo_camera" size={28} />
               <span className="text-[11px] tracking-widest">enable_camera()</span>
@@ -485,7 +485,8 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
         countdown !== null ? (
           <button
             onClick={cancelCountdown}
-            className="w-full py-3 text-sm font-normal text-[#888880] ring-1 ring-inset ring-[#888880] hover:opacity-60 transition-opacity"
+            className="w-full py-3 text-sm font-normal hover:opacity-60 transition-opacity"
+            style={{ color: 'var(--text-secondary)', boxShadow: 'inset 0 0 0 1px var(--border-primary-pressed)' }}
           >
             cancel()
           </button>
@@ -493,7 +494,8 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
           <button
             onClick={startSession}
             disabled={startDisabled}
-            className="w-full py-3 text-sm font-normal text-white bg-[#22c55e] disabled:opacity-40 hover:opacity-85 transition-opacity"
+            className="w-full py-3 text-sm font-normal text-white disabled:opacity-40 hover:opacity-85 transition-opacity"
+            style={{ background: 'var(--status-success-default)' }}
           >
             start_session()
           </button>
@@ -504,8 +506,8 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
             onPointerUp={cancelHold}
             onPointerLeave={cancelHold}
             disabled={saving}
-            className="relative w-full py-3 text-sm font-normal text-white bg-[#ef4444] disabled:opacity-40 overflow-hidden select-none"
-            style={{ touchAction: 'none' }}
+            className="relative w-full py-3 text-sm font-normal text-white disabled:opacity-40 overflow-hidden select-none"
+            style={{ background: 'var(--status-danger-default)', touchAction: 'none' }}
           >
             <span
               className="absolute inset-0 bg-white/20 origin-left"

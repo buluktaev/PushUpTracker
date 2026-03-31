@@ -94,7 +94,7 @@ function ConfirmContent() {
             {[0, 1, 2].map(i => (
               <div
                 key={i}
-                className="w-1.5 h-1.5 bg-[#ff6b35] rounded-full animate-bounce"
+                className="w-1.5 h-1.5 bg-[var(--accent-default)] rounded-full animate-bounce"
                 style={{ animationDelay: `${i * 0.15}s` }}
               />
             ))}
@@ -102,7 +102,7 @@ function ConfirmContent() {
         )}
 
         {error && (
-          <a href="/register" className="text-xs text-[#ff6b35] hover:underline">
+          <a href="/register" className="text-xs text-[var(--accent-default)] hover:underline">
             ← вернуться к регистрации
           </a>
         )}

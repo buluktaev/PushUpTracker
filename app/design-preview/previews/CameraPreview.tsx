@@ -10,12 +10,12 @@ interface CameraPreviewProps {
 }
 
 const STATUS_MAP: Record<string, { text: string; color: string }> = {
-  off: { text: 'camera off', color: '#888880' },
-  searching: { text: 'searching...', color: '#f59e0b' },
-  countdown: { text: 'get ready...', color: '#f59e0b' },
-  active: { text: 'angle: 120°', color: '#ff6b35' },
-  hold: { text: 'hold position', color: '#22c55e' },
-  saving: { text: 'saving...', color: '#888880' },
+  off: { text: 'camera off', color: 'var(--text-secondary)' },
+  searching: { text: 'searching...', color: 'var(--status-warning-default)' },
+  countdown: { text: 'get ready...', color: 'var(--status-warning-default)' },
+  active: { text: 'angle: 120°', color: 'var(--accent-default)' },
+  hold: { text: 'hold position', color: 'var(--status-success-default)' },
+  saving: { text: 'saving...', color: 'var(--text-secondary)' },
 }
 
 function fmt(s: number) {
@@ -104,7 +104,7 @@ export default function CameraPreview({
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <button
               className="flex flex-col items-center gap-2.5 px-8 py-5 text-white transition-opacity hover:opacity-80"
-              style={{ background: 'rgba(255,107,53,0.9)', backdropFilter: 'blur(6px)', borderRadius: 0 }}
+              style={{ background: 'var(--accent-default)', backdropFilter: 'blur(6px)', borderRadius: 0 }}
             >
               <Icon name="photo_camera" size={28} />
               <span className="text-[11px] tracking-widest">enable_camera()</span>
@@ -117,15 +117,16 @@ export default function CameraPreview({
       {cameraOn ? (
         isCountdown ? (
           <button
-            className="w-full py-3 text-sm font-normal text-[#888880] ring-1 ring-inset ring-[#888880] hover:opacity-60 transition-opacity"
+            className="w-full py-3 text-sm font-normal hover:opacity-60 transition-opacity"
+            style={{ color: 'var(--text-secondary)', boxShadow: 'inset 0 0 0 1px var(--border-primary-pressed)' }}
           >
             cancel()
           </button>
         ) : isActive ? (
           <button
             disabled={isSaving}
-            className="relative w-full py-3 text-sm font-normal text-white bg-[#ef4444] disabled:opacity-40 overflow-hidden select-none"
-            style={{ touchAction: 'none' }}
+            className="relative w-full py-3 text-sm font-normal text-white disabled:opacity-40 overflow-hidden select-none"
+            style={{ background: 'var(--status-danger-default)', touchAction: 'none' }}
           >
             <span
               className="absolute inset-0 bg-white/20 origin-left"
@@ -148,7 +149,8 @@ export default function CameraPreview({
           </button>
         ) : (
           <button
-            className="w-full py-3 text-sm font-normal text-white bg-[#22c55e] hover:opacity-85 transition-opacity"
+            className="w-full py-3 text-sm font-normal text-white hover:opacity-85 transition-opacity"
+            style={{ background: 'var(--status-success-default)' }}
           >
             start_session()
           </button>

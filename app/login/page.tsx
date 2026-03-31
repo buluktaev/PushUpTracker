@@ -82,7 +82,7 @@ function LoginContent() {
               placeholder="ivan@example.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
+              className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent-default)] transition-colors"
               style={{ border: '1px solid var(--border)' }}
               autoFocus
             />
@@ -97,7 +97,7 @@ function LoginContent() {
               placeholder="пароль"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
+              className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent-default)] transition-colors"
               style={{ border: '1px solid var(--border)' }}
             />
           </div>
@@ -107,7 +107,7 @@ function LoginContent() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 text-sm font-normal text-white bg-[#ff6b35] disabled:opacity-40 hover:opacity-85 transition-opacity mt-1"
+            className="w-full py-3 text-sm font-normal text-white bg-[var(--accent-default)] disabled:opacity-40 hover:opacity-85 transition-opacity mt-1"
           >
             {loading ? '// входим...' : 'execute()'}
           </button>
@@ -115,7 +115,7 @@ function LoginContent() {
 
         <p className="text-xs text-[var(--muted)] mt-6">
           нет аккаунта?{' '}
-          <Link href="/register" className="text-[#ff6b35] hover:underline">
+          <Link href="/register" className="text-[var(--accent-default)] hover:underline">
             register()
           </Link>
         </p>

@@ -21,20 +21,20 @@ export default function DisciplineCard({
       onClick={onClick}
       className={`flex flex-col items-center cursor-pointer transition-colors duration-100 ${className}`}
       style={{
-        padding: '12px 16px',
-        gap: 8,
+        padding: 'var(--space-12) var(--space-16)',
+        gap: 'var(--space-8)',
         borderRadius: 0,
-        backgroundColor: selected ? '#FE4711' : '#FFFFFF', // accent/default : bg/surface
-        border: selected ? 'none' : '1px solid #E5E5E5',   // none : border/primary-default
-        color: selected ? '#FFFFFF' : '#262626',            // text/on-accent : text/primary
+        backgroundColor: selected ? 'var(--accent-default)' : 'var(--surface)',
+        border: selected ? 'none' : '1px solid var(--border-primary-default)',
+        color: selected ? 'var(--text-on-accent)' : 'var(--text-primary)',
         // Hover border handled below via CSS variable trick
       }}
-      // Hover: border changes to accent (#FE4711) only when not selected
+      // Hover: border swaps to the semantic accent token when not selected.
       onMouseEnter={
         !selected
           ? (e) => {
               ;(e.currentTarget as HTMLButtonElement).style.borderColor =
-                '#FE4711' // border/accent
+                'var(--border-accent)'
             }
           : undefined
       }
@@ -42,7 +42,7 @@ export default function DisciplineCard({
         !selected
           ? (e) => {
               ;(e.currentTarget as HTMLButtonElement).style.borderColor =
-                '#E5E5E5' // border/primary-default
+                'var(--border-primary-default)'
             }
           : undefined
       }
@@ -51,9 +51,9 @@ export default function DisciplineCard({
       <span
         className="flex items-center justify-center"
         style={{
-          width: 16,
-          height: 16,
-          color: selected ? '#FFFFFF' : 'inherit',
+          width: 'var(--icon-size-16)',
+          height: 'var(--icon-size-16)',
+          color: selected ? 'var(--text-on-accent)' : 'inherit',
         }}
       >
         {icon}
@@ -61,7 +61,7 @@ export default function DisciplineCard({
 
       {/* Label */}
       <span
-        className="text-sm font-normal leading-[22px] text-center"
+        className="text-[var(--size-14)] font-normal leading-[var(--line-height-22)] text-center"
         style={{ color: 'inherit' }}
       >
         {name}

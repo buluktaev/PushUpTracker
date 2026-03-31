@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { GeistMono } from 'geist/font/mono';
 import Script from "next/script";
 import "./globals.css";
 
@@ -23,11 +22,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className={GeistMono.variable} suppressHydrationWarning>
+    <html lang="ru" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,1,-25&display=block" rel="stylesheet" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body>

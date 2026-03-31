@@ -30,7 +30,7 @@ export default function ThemeToggle() {
     <button
       onClick={toggle}
       aria-label={dark ? 'Переключить на светлую тему' : 'Переключить на тёмную тему'}
-      className="flex items-center justify-center w-8 h-8 text-[var(--muted)] hover:text-[#ff6b35] transition-colors sm:w-auto sm:h-auto sm:text-[11px] sm:tracking-wider sm:px-3 sm:py-1.5 sm:border sm:border-[var(--border)] sm:bg-[var(--surface)] sm:hover:border-[#ff6b35]"
+      className="flex items-center justify-center w-8 h-8 text-[var(--muted)] hover:text-[var(--accent-default)] transition-colors sm:w-auto sm:h-auto sm:text-[11px] sm:tracking-wider sm:px-3 sm:py-1.5 sm:border sm:border-[var(--border)] sm:bg-[var(--surface)] sm:hover:border-[var(--accent-default)]"
     >
       <span className="sm:hidden"><Icon name={dark ? 'light_mode' : 'dark_mode'} size={18} /></span>
       <span className="hidden sm:inline">{dark ? '[ light ]' : '[ dark ]'}</span>

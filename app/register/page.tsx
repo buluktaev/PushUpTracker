@@ -88,7 +88,7 @@ export default function RegisterPage() {
               placeholder="Иван"
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
+              className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent-default)] transition-colors"
               style={{ border: '1px solid var(--border)' }}
             />
           </div>
@@ -102,7 +102,7 @@ export default function RegisterPage() {
               placeholder="ivan@example.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
+              className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent-default)] transition-colors"
               style={{ border: '1px solid var(--border)' }}
             />
           </div>
@@ -116,7 +116,7 @@ export default function RegisterPage() {
               placeholder="минимум 6 символов"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[#ff6b35] transition-colors"
+              className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent-default)] transition-colors"
               style={{ border: '1px solid var(--border)' }}
             />
           </div>
@@ -126,7 +126,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 text-sm font-normal text-white bg-[#ff6b35] disabled:opacity-40 hover:opacity-85 transition-opacity mt-1"
+            className="w-full py-3 text-sm font-normal text-white bg-[var(--accent-default)] disabled:opacity-40 hover:opacity-85 transition-opacity mt-1"
           >
             {loading ? '// регистрируем...' : 'execute()'}
           </button>
@@ -134,7 +134,7 @@ export default function RegisterPage() {
 
         <p className="text-xs text-[var(--muted)] mt-6">
           уже есть аккаунт?{' '}
-          <Link href="/login" className="text-[#ff6b35] hover:underline">
+          <Link href="/login" className="text-[var(--accent-default)] hover:underline">
             login()
           </Link>
         </p>

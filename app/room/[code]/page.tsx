@@ -348,7 +348,7 @@ export default function RoomPage() {
                           className={`flex-1 flex items-center gap-2 px-3 py-3 text-xs text-left min-w-0 ${isCurrent ? 'cursor-default' : ''}`}
                         >
                           <span className={`truncate ${isCurrent ? 'text-[var(--text)] font-medium' : 'text-[var(--text)]'}`}>{r.roomName}</span>
-                          {isCurrent && <span className="text-[10px] tracking-wider text-[#ff6b35] shrink-0">[active]</span>}
+                          {isCurrent && <span className="text-[10px] tracking-wider text-[var(--accent-default)] shrink-0">[active]</span>}
                         </button>
                         <div className="flex items-center gap-2 pr-3 shrink-0">
                           <span className="text-[10px] text-[var(--muted)]">{r.roomCode}</span>
@@ -370,7 +370,7 @@ export default function RoomPage() {
                   <div style={{ borderTop: '1px solid var(--border)' }} className="mt-1 pt-1" />
                   <button
                     onClick={() => { setShowSwitcher(false); router.push('/?add=1') }}
-                    className="w-full flex items-center gap-2 px-3 py-3 sm:py-2 text-xs text-[#ff6b35] hover:bg-[var(--surface-dim)] transition-colors text-left"
+                    className="w-full flex items-center gap-2 px-3 py-3 sm:py-2 text-xs text-[var(--accent-default)] hover:bg-[var(--surface-dim)] transition-colors text-left"
                   >
                     <Icon name="add" size={14} />
                     <span>add_room()</span>
@@ -467,7 +467,7 @@ export default function RoomPage() {
                       <div className="text-sm font-medium flex items-center gap-2 flex-wrap">
                         <span className="truncate">{p.name}</span>
                         {p.id === identity?.participantId && (
-                          <span className="text-[10px] tracking-wider text-[#ff6b35] shrink-0">[you]</span>
+                          <span className="text-[10px] tracking-wider text-[var(--accent-default)] shrink-0">[you]</span>
                         )}
                         {p.activeToday && (
                           <span
@@ -707,7 +707,7 @@ export default function RoomPage() {
                     <button
                       onClick={logout}
                       disabled={busyAction === 'logout'}
-                      className="px-4 py-2 text-sm text-white bg-[#ff6b35] hover:opacity-85 transition-opacity disabled:opacity-50"
+                      className="px-4 py-2 text-sm text-white bg-[var(--accent-default)] hover:opacity-85 transition-opacity disabled:opacity-50"
                     >
                       {busyAction === 'logout' ? 'logout()...' : 'logout()'}
                     </button>
