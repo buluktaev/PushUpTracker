@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>PushUpTracker — Design Tokens</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Geist Mono', monospace; background: #F5F5F5; color: #262626; padding: 40px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  h2 { font-size: 14px; font-weight: 400; color: #737373; margin-bottom: 32px; }
+  h3 { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #737373; margin: 40px 0 16px; border-bottom: 1px solid #E5E5E5; padding-bottom: 8px; }
+  .group-label { font-size: 10px; color: #737373; letter-spacing: 0.5px; margin: 16px 0 8px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 12px; }
+  .swatch { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100px; }
+  .swatch-box { width: 56px; height: 56px; border: 1px solid #E5E5E5; }
+  .swatch-label { font-size: 10px; color: #737373; text-align: center; line-height: 1.3; }
+  .swatch-hex { font-size: 10px; color: #737373; font-family: 'Geist Mono', monospace; }
+
+  /* Semantic: side by side light/dark */
+  .semantic-pair { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 120px; }
+  .pair-boxes { display: flex; gap: 2px; }
+  .pair-box { width: 28px; height: 48px; }
+  .pair-box.light-border { border: 1px solid #ddd; }
+  .pair-box.dark-border { border: 1px solid #E5E5E5; }
+
+  /* Typography */
+  .type-row { display: flex; align-items: center; border-bottom: 1px solid #333; padding: 12px 0; }
+  .type-meta { width: 200px; flex-shrink: 0; }
+  .type-name { font-size: 12px; color: #737373; }
+  .type-spec { font-size: 11px; color: #737373; margin-top: 2px; }
+  .type-example { flex: 1; }
+
+  .section { margin-bottom: 24px; }
+
+  /* Two-column layout for semantic tokens */
+  table.tokens { border-collapse: collapse; width: 100%; margin: 8px 0 24px; }
+  table.tokens th { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #737373; text-align: left; padding: 6px 12px; border-bottom: 1px solid #333; }
+  table.tokens td { font-size: 12px; padding: 6px 12px; border-bottom: 1px solid #E5E5E5; vertical-align: middle; }
+  table.tokens .color-dot { display: inline-block; width: 16px; height: 16px; vertical-align: middle; margin-right: 8px; border: 1px solid #E5E5E5; }
+  table.tokens .hex { color: #737373; font-family: 'Geist Mono', monospace; }
+
+  /* Component previews */
+  .component-section { margin-bottom: 40px; }
+  .component-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; }
+  .component-row-label { font-size: 10px; color: #737373; letter-spacing: 0.5px; width: 80px; flex-shrink: 0; padding-top: 14px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-block;
+    padding: 12px 16px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 16px;
+    line-height: 24px;
+    text-align: center;
+    border-radius: 0;
+    cursor: pointer;
+    border: none;
+    min-width: 160px;
+  }
+  .btn-primary-default { background: #FE4711; color: #FFFFFF; }
+  .btn-primary-hovered { background: #FF6B35; color: #FFFFFF; }
+  .btn-primary-pressed { background: #EF2C07; color: #FFFFFF; }
+  .btn-primary-disabled { background: #FFC7A8; color: #FAFAFA; }
+  .btn-primary-loading { background: #FFC7A8; color: #FAFAFA; }
+
+  .btn-secondary-default { background: transparent; color: #262626; border: 1px solid #E5E5E5; }
+  .btn-secondary-hovered { background: transparent; color: #262626; border: 1px solid #D4D4D4; }
+  .btn-secondary-pressed { background: transparent; color: #262626; border: 1px solid #A1A1A1; }
+  .btn-secondary-disabled { background: transparent; color: #A1A1A1; border: 1px solid #E8E6E1; }
+  .btn-secondary-loading { background: transparent; color: #A1A1A1; border: 1px solid #E8E6E1; }
+
+  .btn-danger-default { background: #EF4444; color: #FFFFFF; }
+  .btn-danger-hovered { background: #F87171; color: #FFFFFF; }
+  .btn-danger-pressed { background: #DC2626; color: #FFFFFF; }
+  .btn-danger-disabled { background: #FECACA; color: #FAFAFA; }
+  .btn-danger-loading { background: #FECACA; color: #FAFAFA; }
+
+  /* Inputs */
+  .input-wrapper { display: flex; flex-direction: column; gap: 4px; min-width: 220px; }
+  .input-label { font-family: 'Geist Mono', monospace; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; }
+  .input-label-default { color: #737373; }
+  .input-label-focused { color: #FE4711; }
+  .input-label-error { color: #EF4444; }
+  .input-label-disabled { color: #A1A1A1; }
+  .input-field {
+    font-family: 'Geist Mono', monospace;
+    font-size: 16px;
+    line-height: 24px;
+    padding: 12px 16px;
+    background: #FFFFFF;
+    color: #262626;
+    border-radius: 0;
+    outline: none;
+    width: 100%;
+    border: none;
+  }
+  .input-border-default { box-shadow: inset 0 0 0 1px #E5E5E5; }
+  .input-border-focused { box-shadow: inset 0 0 0 1px #FE4711; }
+  .input-border-error { box-shadow: inset 0 0 0 1px #EF4444; }
+  .input-border-disabled { box-shadow: inset 0 0 0 1px #E8E6E1; color: #A1A1A1; -webkit-text-fill-color: #A1A1A1; }
+  .input-border-disabled::placeholder { color: #A1A1A1; -webkit-text-fill-color: #A1A1A1; opacity: 1; }
+
+  /* Discipline cards */
+  .cards-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .disc-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    width: 162px;
+    cursor: pointer;
+    font-family: 'Geist Mono', monospace;
+    font-size: 14px;
+    line-height: 22px;
+    text-align: center;
+    letter-spacing: 0;
+    border-radius: 0;
+  }
+  .disc-card-default { background: #FFFFFF; color: #262626; border: 1px solid #E5E5E5; }
+  .disc-card-hovered { background: #FFFFFF; color: #262626; border: 1px solid #FE4711; }
+  .disc-card-selected { background: #FE4711; color: #FFFFFF; border: none; }
+</style>
+</head>
+<body>
+
+<h1>PushUpTracker Design Tokens</h1>
+<h2>Figma source of truth &middot; Geist Mono &middot; Zero border-radius</h2>
+
+<!-- ============ PRIMITIVES ============ -->
+<h3>01 &mdash; Colors. Primitives</h3>
+
+<div class="group-label">orange/</div>
+<div class="grid">
+  <div class="swatch"><div class="swatch-box" style="background:#FFC7A8"></div><div class="swatch-label">200</div><div class="swatch-hex">#FFC7A8</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#FF6B35"></div><div class="swatch-label">400</div><div class="swatch-hex">#FF6B35</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#FE4711"></div><div class="swatch-label">500</div><div class="swatch-hex">#FE4711</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#EF2C07"></div><div class="swatch-label">600</div><div class="swatch-hex">#EF2C07</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#9D190F"></div><div class="swatch-label">800</div><div class="swatch-hex">#9D190F</div></div>
+</div>
+
+<div class="group-label">red/</div>
+<div class="grid">
+  <div class="swatch"><div class="swatch-box" style="background:#FECACA; border-color:#ddd"></div><div class="swatch-label">200</div><div class="swatch-hex">#FECACA</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#F87171"></div><div class="swatch-label">400</div><div class="swatch-hex">#F87171</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#EF4444"></div><div class="swatch-label">500</div><div class="swatch-hex">#EF4444</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#DC2626"></div><div class="swatch-label">600</div><div class="swatch-hex">#DC2626</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#991B1B"></div><div class="swatch-label">800</div><div class="swatch-hex">#991B1B</div></div>
+</div>
+
+<div class="group-label">green/</div>
+<div class="grid">
+  <div class="swatch"><div class="swatch-box" style="background:#BBF7D0; border-color:#ddd"></div><div class="swatch-label">200</div><div class="swatch-hex">#BBF7D0</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#4ADE80"></div><div class="swatch-label">400</div><div class="swatch-hex">#4ADE80</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#22C55E"></div><div class="swatch-label">500</div><div class="swatch-hex">#22C55E</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#16A34A"></div><div class="swatch-label">600</div><div class="swatch-hex">#16A34A</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#166534"></div><div class="swatch-label">800</div><div class="swatch-hex">#166534</div></div>
+</div>
+
+<div class="group-label">neutral/</div>
+<div class="grid">
+  <div class="swatch"><div class="swatch-box" style="background:#FFFFFF; border-color:#ddd"></div><div class="swatch-label">0</div><div class="swatch-hex">#FFFFFF</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#FAFAFA; border-color:#ddd"></div><div class="swatch-label">50</div><div class="swatch-hex">#FAFAFA</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#F5F5F5; border-color:#ddd"></div><div class="swatch-label">100</div><div class="swatch-hex">#F5F5F5</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#E8E6E1; border-color:#ddd"></div><div class="swatch-label">150</div><div class="swatch-hex">#E8E6E1</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#E5E5E5; border-color:#ddd"></div><div class="swatch-label">200</div><div class="swatch-hex">#E5E5E5</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#737373"></div><div class="swatch-label">500</div><div class="swatch-hex">#737373</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#525252"></div><div class="swatch-label">600</div><div class="swatch-hex">#525252</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#404040"></div><div class="swatch-label">700</div><div class="swatch-hex">#404040</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#262626"></div><div class="swatch-label">800</div><div class="swatch-hex">#262626</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#171717"></div><div class="swatch-label">900</div><div class="swatch-hex">#171717</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#141414"></div><div class="swatch-label">940</div><div class="swatch-hex">#141414</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#0A0A0A"></div><div class="swatch-label">950</div><div class="swatch-hex">#0A0A0A</div></div>
+</div>
+
+<div class="group-label">special/</div>
+<div class="grid">
+  <div class="swatch"><div class="swatch-box" style="background:#FFDF20"></div><div class="swatch-label">Gold</div><div class="swatch-hex">#FFDF20</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#A6A09B"></div><div class="swatch-label">Silver</div><div class="swatch-hex">#A6A09B</div></div>
+  <div class="swatch"><div class="swatch-box" style="background:#E17100"></div><div class="swatch-label">Bronze</div><div class="swatch-hex">#E17100</div></div>
+</div>
+
+<!-- ============ SEMANTIC TOKENS ============ -->
+<h3>02 &mdash; Colors. Semantic</h3>
+
+<table class="tokens">
+<tr><th>Token</th><th>Light</th><th>Dark</th><th>Primitive ref</th></tr>
+
+<tr><td colspan="4" style="color:#737373; font-size:10px; padding-top:12px">bg/</td></tr>
+<tr><td>bg/primary</td><td><span class="color-dot" style="background:#FAFAFA; border-color:#ddd"></span><span class="hex">#FAFAFA</span></td><td><span class="color-dot" style="background:#0A0A0A"></span><span class="hex">#0A0A0A</span></td><td style="color:#737373">neutral/50 &rarr; neutral/950</td></tr>
+<tr><td>bg/surface</td><td><span class="color-dot" style="background:#FFFFFF; border-color:#ddd"></span><span class="hex">#FFFFFF</span></td><td><span class="color-dot" style="background:#171717"></span><span class="hex">#171717</span></td><td style="color:#737373">neutral/0 &rarr; neutral/900</td></tr>
+<tr><td>bg/surface-dim</td><td><span class="color-dot" style="background:#F5F5F5; border-color:#ddd"></span><span class="hex">#F5F5F5</span></td><td><span class="color-dot" style="background:#141414"></span><span class="hex">#141414</span></td><td style="color:#737373">neutral/100 &rarr; neutral/940</td></tr>
+
+<tr><td colspan="4" style="color:#737373; font-size:10px; padding-top:12px">text/</td></tr>
+<tr><td>text/primary</td><td><span class="color-dot" style="background:#262626"></span><span class="hex">#262626</span></td><td><span class="color-dot" style="background:#E8E6E1; border-color:#737373"></span><span class="hex">#E8E6E1</span></td><td style="color:#737373">neutral/800 &rarr; neutral/150</td></tr>
+<tr><td>text/secondary</td><td><span class="color-dot" style="background:#737373"></span><span class="hex">#737373</span></td><td><span class="color-dot" style="background:#525252"></span><span class="hex">#525252</span></td><td style="color:#737373">neutral/500 &rarr; neutral/600</td></tr>
+<tr><td>text/on-accent</td><td><span class="color-dot" style="background:#FFFFFF; border-color:#ddd"></span><span class="hex">#FFFFFF</span></td><td><span class="color-dot" style="background:#FFFFFF; border-color:#737373"></span><span class="hex">#FFFFFF</span></td><td style="color:#737373">neutral/0</td></tr>
+<tr><td>text/accent</td><td><span class="color-dot" style="background:#FE4711"></span><span class="hex">#FE4711</span></td><td><span class="color-dot" style="background:#FE4711"></span><span class="hex">#FE4711</span></td><td style="color:#737373">orange/500</td></tr>
+<tr><td>text/danger</td><td><span class="color-dot" style="background:#EF4444"></span><span class="hex">#EF4444</span></td><td><span class="color-dot" style="background:#EF4444"></span><span class="hex">#EF4444</span></td><td style="color:#737373">red/500</td></tr>
+<tr><td>text/success</td><td><span class="color-dot" style="background:#22C55E"></span><span class="hex">#22C55E</span></td><td><span class="color-dot" style="background:#22C55E"></span><span class="hex">#22C55E</span></td><td style="color:#737373">green/500</td></tr>
+<tr><td>text/disabled</td><td><span class="color-dot" style="background:#A1A1A1"></span><span class="hex">#A1A1A1</span></td><td><span class="color-dot" style="background:#A1A1A1"></span><span class="hex">#A1A1A1</span></td><td style="color:#737373">— (NEW)</td></tr>
+<tr><td>text/on-accent-disabled</td><td><span class="color-dot" style="background:#FAFAFA; border-color:#ddd"></span><span class="hex">#FAFAFA</span></td><td><span class="color-dot" style="background:#FAFAFA; border-color:#737373"></span><span class="hex">#FAFAFA</span></td><td style="color:#737373">neutral/50 (NEW)</td></tr>
+
+<tr><td colspan="4" style="color:#737373; font-size:10px; padding-top:12px">border/</td></tr>
+<tr><td>border/primary-default</td><td><span class="color-dot" style="background:#E5E5E5; border-color:#ddd"></span><span class="hex">#E5E5E5</span></td><td><span class="color-dot" style="background:#404040"></span><span class="hex">#404040</span></td><td style="color:#737373">neutral/200 &rarr; neutral/700</td></tr>
+<tr><td>border/primary-hovered</td><td><span class="color-dot" style="background:#D4D4D4; border-color:#ddd"></span><span class="hex">#D4D4D4</span></td><td><span class="color-dot" style="background:#D4D4D4; border-color:#737373"></span><span class="hex">#D4D4D4</span></td><td style="color:#737373">— (NEW)</td></tr>
+<tr><td>border/primary-pressed</td><td><span class="color-dot" style="background:#A1A1A1"></span><span class="hex">#A1A1A1</span></td><td><span class="color-dot" style="background:#A1A1A1"></span><span class="hex">#A1A1A1</span></td><td style="color:#737373">— (NEW)</td></tr>
+<tr><td>border/disabled</td><td><span class="color-dot" style="background:#E8E6E1; border-color:#ddd"></span><span class="hex">#E8E6E1</span></td><td><span class="color-dot" style="background:#E8E6E1; border-color:#737373"></span><span class="hex">#E8E6E1</span></td><td style="color:#737373">neutral/150 (NEW)</td></tr>
+<tr><td>border/accent</td><td><span class="color-dot" style="background:#FE4711"></span><span class="hex">#FE4711</span></td><td><span class="color-dot" style="background:#FE4711"></span><span class="hex">#FE4711</span></td><td style="color:#737373">orange/500</td></tr>
+<tr><td>border/danger</td><td><span class="color-dot" style="background:#EF4444"></span><span class="hex">#EF4444</span></td><td><span class="color-dot" style="background:#EF4444"></span><span class="hex">#EF4444</span></td><td style="color:#737373">red/500</td></tr>
+
+<tr><td colspan="4" style="color:#737373; font-size:10px; padding-top:12px">icon/</td></tr>
+<tr><td>icon/default</td><td><span class="color-dot" style="background:#737373"></span><span class="hex">#737373</span></td><td><span class="color-dot" style="background:#525252"></span><span class="hex">#525252</span></td><td style="color:#737373">neutral/500 &rarr; neutral/600</td></tr>
+<tr><td>icon/accent</td><td><span class="color-dot" style="background:#FE4711"></span><span class="hex">#FE4711</span></td><td><span class="color-dot" style="background:#FE4711"></span><span class="hex">#FE4711</span></td><td style="color:#737373">orange/500</td></tr>
+<tr><td>icon/active</td><td><span class="color-dot" style="background:#22C55E"></span><span class="hex">#22C55E</span></td><td><span class="color-dot" style="background:#22C55E"></span><span class="hex">#22C55E</span></td><td style="color:#737373">green/500</td></tr>
+
+<tr><td colspan="4" style="color:#737373; font-size:10px; padding-top:12px">accent/</td></tr>
+<tr><td>accent/default</td><td><span class="color-dot" style="background:#FE4711"></span><span class="hex">#FE4711</span></td><td><span class="color-dot" style="background:#FE4711"></span><span class="hex">#FE4711</span></td><td style="color:#737373">orange/500</td></tr>
+<tr><td>accent/hover</td><td><span class="color-dot" style="background:#FF6B35"></span><span class="hex">#FF6B35</span></td><td><span class="color-dot" style="background:#FF6B35"></span><span class="hex">#FF6B35</span></td><td style="color:#737373">orange/400</td></tr>
+<tr><td>accent/pressed</td><td><span class="color-dot" style="background:#EF2C07"></span><span class="hex">#EF2C07</span></td><td><span class="color-dot" style="background:#EF2C07"></span><span class="hex">#EF2C07</span></td><td style="color:#737373">orange/600</td></tr>
+<tr><td>accent/disabled</td><td><span class="color-dot" style="background:#FFC7A8"></span><span class="hex">#FFC7A8</span></td><td><span class="color-dot" style="background:#9D190F"></span><span class="hex">#9D190F</span></td><td style="color:#737373">orange/200 &rarr; orange/800</td></tr>
+
+<tr><td colspan="4" style="color:#737373; font-size:10px; padding-top:12px">danger/</td></tr>
+<tr><td>danger/default</td><td><span class="color-dot" style="background:#EF4444"></span><span class="hex">#EF4444</span></td><td><span class="color-dot" style="background:#EF4444"></span><span class="hex">#EF4444</span></td><td style="color:#737373">red/500</td></tr>
+<tr><td>danger/hovered</td><td><span class="color-dot" style="background:#F87171"></span><span class="hex">#F87171</span></td><td><span class="color-dot" style="background:#F87171"></span><span class="hex">#F87171</span></td><td style="color:#737373">red/400 (NEW)</td></tr>
+<tr><td>danger/pressed</td><td><span class="color-dot" style="background:#DC2626"></span><span class="hex">#DC2626</span></td><td><span class="color-dot" style="background:#DC2626"></span><span class="hex">#DC2626</span></td><td style="color:#737373">red/600 (NEW)</td></tr>
+<tr><td>danger/weak</td><td><span class="color-dot" style="background:#FECACA; border-color:#ddd"></span><span class="hex">#FECACA</span></td><td><span class="color-dot" style="background:#991B1B"></span><span class="hex">#991B1B</span></td><td style="color:#737373">red/200 &rarr; red/800</td></tr>
+
+<tr><td colspan="4" style="color:#737373; font-size:10px; padding-top:12px">success/</td></tr>
+<tr><td>success/default</td><td><span class="color-dot" style="background:#22C55E"></span><span class="hex">#22C55E</span></td><td><span class="color-dot" style="background:#22C55E"></span><span class="hex">#22C55E</span></td><td style="color:#737373">green/500</td></tr>
+<tr><td>success/weak</td><td><span class="color-dot" style="background:#BBF7D0; border-color:#ddd"></span><span class="hex">#BBF7D0</span></td><td><span class="color-dot" style="background:#166534"></span><span class="hex">#166534</span></td><td style="color:#737373">green/200 &rarr; green/800</td></tr>
+
+<tr><td colspan="4" style="color:#737373; font-size:10px; padding-top:12px">warning/</td></tr>
+<tr><td>warning/default</td><td><span class="color-dot" style="background:#FE4711"></span><span class="hex">#FE4711</span></td><td><span class="color-dot" style="background:#FE4711"></span><span class="hex">#FE4711</span></td><td style="color:#737373">orange/500</td></tr>
+<tr><td>warning/weak</td><td><span class="color-dot" style="background:#FFC7A8"></span><span class="hex">#FFC7A8</span></td><td><span class="color-dot" style="background:#9D190F"></span><span class="hex">#9D190F</span></td><td style="color:#737373">orange/200 &rarr; orange/800</td></tr>
+</table>
+
+<!-- ============ TYPOGRAPHY ============ -->
+<h3>03 &mdash; Fonts. Settings (7 styles)</h3>
+
+<div class="type-row">
+  <div class="type-meta"><div class="type-name">heading/h1</div><div class="type-spec">24px &middot; 700 &middot; lh 32px</div></div>
+  <div class="type-example" style="font-size:24px; font-weight:700; line-height:32px; color:#262626">Командный трекер</div>
+</div>
+<div class="type-row">
+  <div class="type-meta"><div class="type-name">heading/h2</div><div class="type-spec">18px &middot; 700 &middot; lh 26px</div></div>
+  <div class="type-example" style="font-size:18px; font-weight:700; line-height:26px; color:#262626">Как вас зовут?</div>
+</div>
+<div class="type-row">
+  <div class="type-meta"><div class="type-name">body/sm</div><div class="type-spec">16px &middot; 400 &middot; lh 24px</div></div>
+  <div class="type-example" style="font-size:16px; font-weight:400; line-height:24px; color:#262626">create_room() Команда Альфа 1 234 reps</div>
+</div>
+<div class="type-row">
+  <div class="type-meta"><div class="type-name">body/xs</div><div class="type-spec">14px &middot; 400 &middot; lh 22px</div></div>
+  <div class="type-example" style="font-size:14px; font-weight:400; line-height:22px; color:#262626">создай комнату или войди по коду &larr; back</div>
+</div>
+<div class="type-row">
+  <div class="type-meta"><div class="type-name">label/mono</div><div class="type-spec">12px &middot; 400 &middot; lh 18px &middot; ls 1.5px &middot; uppercase</div></div>
+  <div class="type-example" style="font-size:12px; font-weight:400; line-height:18px; letter-spacing:1.5px; text-transform:uppercase; color:#262626">ROOM_NAME = // PUSHUP TRACKER</div>
+</div>
+<div class="type-row">
+  <div class="type-meta"><div class="type-name">meta/desktop-btn</div><div class="type-spec">11px &middot; 400 &middot; lh 16.5px &middot; ls 0.88px</div></div>
+  <div class="type-example" style="font-size:11px; font-weight:400; line-height:16.5px; letter-spacing:0.88px; color:#262626">[ dark ] exit() refresh() add_room()</div>
+</div>
+<div class="type-row">
+  <div class="type-meta"><div class="type-name">code/room</div><div class="type-spec">16px &middot; 400 &middot; lh 24px &middot; ls 3.5px &middot; uppercase</div></div>
+  <div class="type-example" style="font-size:16px; font-weight:400; line-height:24px; letter-spacing:3.5px; text-transform:uppercase; color:#262626">A B C 1 2 3</div>
+</div>
+
+<!-- ============ BUTTONS ============ -->
+<h3>04 &mdash; Buttons</h3>
+
+<table style="border-collapse:separate; border-spacing:24px 20px;">
+  <thead>
+    <tr>
+      <th style="font-size:12px; font-weight:400; color:#737373; text-align:left; padding:0"></th>
+      <th style="font-size:12px; font-weight:400; color:#737373; text-align:center; padding:0">primary</th>
+      <th style="font-size:12px; font-weight:400; color:#737373; text-align:center; padding:0">secondary</th>
+      <th style="font-size:12px; font-weight:400; color:#737373; text-align:center; padding:0">danger</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="font-size:12px; color:#737373; padding:0; vertical-align:middle">default</td>
+      <td style="padding:0"><div class="btn btn-primary-default">primary()</div></td>
+      <td style="padding:0"><div class="btn btn-secondary-default">secondary()</div></td>
+      <td style="padding:0"><div class="btn btn-danger-default">danger()</div></td>
+    </tr>
+    <tr>
+      <td style="font-size:12px; color:#737373; padding:0; vertical-align:middle">hovered</td>
+      <td style="padding:0"><div class="btn btn-primary-hovered">primary()</div></td>
+      <td style="padding:0"><div class="btn btn-secondary-hovered">secondary()</div></td>
+      <td style="padding:0"><div class="btn btn-danger-hovered">danger()</div></td>
+    </tr>
+    <tr>
+      <td style="font-size:12px; color:#737373; padding:0; vertical-align:middle">pressed</td>
+      <td style="padding:0"><div class="btn btn-primary-pressed">primary()</div></td>
+      <td style="padding:0"><div class="btn btn-secondary-pressed">secondary()</div></td>
+      <td style="padding:0"><div class="btn btn-danger-pressed">danger()</div></td>
+    </tr>
+    <tr>
+      <td style="font-size:12px; color:#737373; padding:0; vertical-align:middle">disabled</td>
+      <td style="padding:0"><div class="btn btn-primary-disabled">disabled()</div></td>
+      <td style="padding:0"><div class="btn btn-secondary-disabled">secondary()</div></td>
+      <td style="padding:0"><div class="btn btn-danger-disabled">danger()</div></td>
+    </tr>
+    <tr>
+      <td style="font-size:12px; color:#737373; padding:0; vertical-align:middle">loading</td>
+      <td style="padding:0"><div class="btn btn-primary-loading">// loading...</div></td>
+      <td style="padding:0"><div class="btn btn-secondary-loading">// loading...</div></td>
+      <td style="padding:0"><div class="btn btn-danger-loading">// loading...</div></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ============ INPUTS ============ -->
+<h3>05 &mdash; Inputs</h3>
+
+<div style="display:grid; grid-template-columns:80px 1fr 1fr 1fr 1fr; gap:20px 24px; align-items:start;">
+  <!-- Header row -->
+  <div></div>
+  <div style="font-size:12px; color:#737373; text-align:center">empty</div>
+  <div style="font-size:12px; color:#737373; text-align:center">value</div>
+  <div style="font-size:12px; color:#737373; text-align:center">errored · empty</div>
+  <div style="font-size:12px; color:#737373; text-align:center">errored · value</div>
+
+  <!-- default -->
+  <div style="font-size:12px; color:#737373; padding-top:4px">default</div>
+  <div class="input-wrapper"><div class="input-label input-label-default">EMAIL =</div><input class="input-field input-border-default" type="text" placeholder="ivan@example.com" readonly></div>
+  <div class="input-wrapper"><div class="input-label input-label-default">EMAIL =</div><input class="input-field input-border-default" type="text" value="ivan@example.com" readonly></div>
+  <div class="input-wrapper"><div class="input-label input-label-default">EMAIL =</div><input class="input-field input-border-error" type="text" placeholder="ivan@example.com" readonly></div>
+  <div class="input-wrapper"><div class="input-label input-label-default">EMAIL =</div><input class="input-field input-border-error" type="text" value="ivan@example.com" readonly></div>
+
+  <!-- hovered -->
+  <div style="font-size:12px; color:#737373; padding-top:4px">hovered</div>
+  <div class="input-wrapper"><div class="input-label input-label-default">EMAIL =</div><input class="input-field input-border-focused" type="text" placeholder="ivan@example.com" readonly></div>
+  <div class="input-wrapper"><div class="input-label input-label-default">EMAIL =</div><input class="input-field input-border-focused" type="text" value="ivan@example.com" readonly></div>
+  <div class="input-wrapper"><div class="input-label input-label-default">EMAIL =</div><input class="input-field input-border-focused" type="text" placeholder="ivan@example.com" readonly></div>
+  <div class="input-wrapper"><div class="input-label input-label-default">EMAIL =</div><input class="input-field input-border-focused" type="text" value="ivan@example.com" readonly></div>
+
+  <!-- focused -->
+  <div style="font-size:12px; color:#737373; padding-top:4px">focused</div>
+  <div class="input-wrapper"><div class="input-label input-label-default">EMAIL =</div><input class="input-field input-border-focused" type="text" placeholder="ivan@example.com" readonly></div>
+  <div class="input-wrapper"><div class="input-label input-label-default">EMAIL =</div><input class="input-field input-border-focused" type="text" value="ivan@example.com" readonly></div>
+  <div class="input-wrapper"><div class="input-label input-label-default">EMAIL =</div><input class="input-field input-border-focused" type="text" placeholder="ivan@example.com" readonly></div>
+  <div class="input-wrapper"><div class="input-label input-label-default">EMAIL =</div><input class="input-field input-border-focused" type="text" value="ivan@example.com" readonly></div>
+
+  <!-- disabled (no errored states) -->
+  <div style="font-size:12px; color:#737373; padding-top:4px">disabled</div>
+  <div class="input-wrapper"><div class="input-label input-label-disabled">EMAIL =</div><input class="input-field input-border-disabled" type="text" placeholder="ivan@example.com" disabled></div>
+  <div class="input-wrapper"><div class="input-label input-label-disabled">EMAIL =</div><input class="input-field input-border-disabled" type="text" value="ivan@example.com" disabled></div>
+  <div></div>
+  <div></div>
+</div>
+
+<!-- ============ DISCIPLINE CARDS ============ -->
+<h3>06 &mdash; Discipline Cards. Component Previews</h3>
+
+<div class="component-section">
+  <div class="cards-row">
+
+    <div class="disc-card disc-card-default">
+      <img src="/icons/fitness.svg" width="16" height="16" style="color:#737373" alt="">
+      <span>Отжимания</span>
+    </div>
+
+    <div class="disc-card disc-card-hovered">
+      <img src="/icons/fitness.svg" width="16" height="16" style="color:#737373" alt="">
+      <span>Отжимания</span>
+    </div>
+
+    <div class="disc-card disc-card-selected">
+      <img src="/icons/fitness.svg" width="16" height="16" style="filter:brightness(0) invert(1)" alt="">
+      <span>Отжимания</span>
+    </div>
+
+  </div>
+  <div style="margin-top:8px; display:flex; gap:24px;">
+    <div style="font-size:12px; color:#737373; width:162px; text-align:center">default</div>
+    <div style="font-size:12px; color:#737373; width:162px; text-align:center">hovered</div>
+    <div style="font-size:12px; color:#737373; width:162px; text-align:center">selected</div>
+  </div>
+</div>
+
+<!-- ============ ICONS ============ -->
+<h3>07 &mdash; Icons (Figma)</h3>
+<div class="component-section">
+  <div style="display:flex; flex-wrap:wrap; gap:24px;">
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/logout.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="logout">
+      <div style="font-size:10px; color:#737373">logout</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/crown.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="crown">
+      <div style="font-size:10px; color:#737373">crown</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/close.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="close">
+      <div style="font-size:10px; color:#737373">close</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/check.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="check">
+      <div style="font-size:10px; color:#737373">check</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/sun.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="sun">
+      <div style="font-size:10px; color:#737373">sun</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/moon.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="moon">
+      <div style="font-size:10px; color:#737373">moon</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/plus.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="plus">
+      <div style="font-size:10px; color:#737373">plus</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/arrow_left.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="arrow_left">
+      <div style="font-size:10px; color:#737373">arrow_left</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/arrow_right.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="arrow_right">
+      <div style="font-size:10px; color:#737373">arrow_right</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/arrow_up.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="arrow_up">
+      <div style="font-size:10px; color:#737373">arrow_up</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/arrow_down.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="arrow_down">
+      <div style="font-size:10px; color:#737373">arrow_down</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/copy.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="copy">
+      <div style="font-size:10px; color:#737373">copy</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/camera.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="camera">
+      <div style="font-size:10px; color:#737373">camera</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/person.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="person">
+      <div style="font-size:10px; color:#737373">person</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/settings.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="settings">
+      <div style="font-size:10px; color:#737373">settings</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/trophy.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="trophy">
+      <div style="font-size:10px; color:#737373">trophy</div>
+    </div>
+
+    <div style="width:80px; text-align:center;">
+      <img src="/icons/fitness.svg" width="24" height="24" style="display:block; margin:0 auto 6px;" alt="fitness">
+      <div style="font-size:10px; color:#737373">fitness</div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
