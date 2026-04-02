@@ -14,6 +14,9 @@ interface Props {
 
 type AnyObj = any
 
+const HORIZONTAL_POSITION_LABEL = 'займите горизонтальное положение'
+const HORIZONTAL_POSITION_LABEL_MOBILE = 'займите гор. положение'
+
 export default function CameraWorkout({ participantId, discipline, onSessionSaved }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -34,13 +37,18 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
 
   const config = getExerciseConfig(discipline)
   const isHoldMode = config?.mode === 'hold'
+  const cameraStatusText: Record<'off' | 'searching' | 'ready', string> = {
+    off: 'камера выключена',
+    searching: 'поиск позы',
+    ready: 'камера включена',
+  }
 
   const [mpLoaded, setMpLoaded] = useState(false)
   const [cameraOn, setCameraOn] = useState(false)
   const [count, setCount] = useState(0)
   const [sessionActive, setSessionActive] = useState(false)
   const [elapsed, setElapsed] = useState(0)
-  const [status, setStatus] = useState({ text: 'camera off', color: 'var(--text-secondary)' })
+  const [status, setStatus] = useState({ text: cameraStatusText.off, color: 'var(--status-warning-default)' })
   const [saving, setSaving] = useState(false)
   const [holding, setHolding] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
@@ -74,12 +82,12 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
         }
       }
       setMpLoaded(true)
-      setStatus({ text: 'searching...', color: 'var(--status-warning-default)' })
+      setStatus({ text: cameraStatusText.searching, color: 'var(--status-warning-default)' })
     } catch (e) {
       console.error('MediaPipe load failed:', e)
-      setStatus({ text: 'err: local mediapipe failed', color: 'var(--status-danger-default)' })
+      setStatus({ text: 'ошибка mediapipe', color: 'var(--status-danger-default)' })
     }
-  }, [mediapipeModelPath])
+  }, [cameraStatusText.off, cameraStatusText.searching, mediapipeModelPath])
 
   function angleBetween(a: AnyObj, b: AnyObj, c: AnyObj): number {
     const ab = { x: b.x - a.x, y: b.y - a.y }
@@ -96,7 +104,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     if (!result.landmarks?.length) {
-      setStatus({ text: 'searching...', color: 'var(--status-warning-default)' })
+      setStatus({ text: cameraStatusText.searching, color: 'var(--status-warning-default)' })
       return
     }
 
@@ -175,16 +183,16 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     const angle = sorted[Math.floor(sorted.length / 2)] ?? rawAngle
 
     if (!hipVisible) {
-      setStatus({ text: 'show full body', color: 'var(--status-warning-default)' })
+      setStatus({ text: 'покажите себя полностью', color: 'var(--status-warning-default)' })
     } else if (!bodyCheckPassed) {
       setStatus({
-        text: config!.bodyCheck === 'horizontal' ? 'get horizontal!' : 'get vertical!',
+        text: config!.bodyCheck === 'horizontal' ? HORIZONTAL_POSITION_LABEL : 'займите вертикаль',
         color: 'var(--status-danger-default)',
       })
     } else if (isHoldMode) {
-      setStatus({ text: 'hold position', color: 'var(--status-success-default)' })
+      setStatus({ text: 'держите позицию', color: 'var(--status-success-default)' })
     } else {
-      setStatus({ text: `angle: ${Math.round(angle)}°`, color: 'var(--accent-default)' })
+      setStatus({ text: `угол: ${Math.round(angle)}°`, color: 'var(--accent-default)' })
     }
 
     if (!isHoldMode) {
@@ -217,7 +225,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
         lastHoldTickRef.current = null
       }
     }
-  }, [])
+  }, [cameraStatusText.searching, isHoldMode])
 
   const runFrame = useCallback((ts: number) => {
     const video = videoRef.current
@@ -251,7 +259,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
 
   async function startCamera() {
     try {
-      setStatus({ text: 'init...', color: 'var(--status-warning-default)' })
+      setStatus({ text: 'включение камеры', color: 'var(--status-warning-default)' })
       const s = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: 640, height: 480 },
         audio: false,
@@ -262,10 +270,11 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
         await videoRef.current.play()
       }
       setCameraOn(true)
+      setStatus({ text: cameraStatusText.ready, color: 'var(--status-success-default)' })
       await loadMP()
     } catch (e) {
       console.error(e)
-      setStatus({ text: 'err: no camera access', color: 'var(--status-danger-default)' })
+      setStatus({ text: 'нет доступа к камере', color: 'var(--status-danger-default)' })
     }
   }
 
@@ -275,7 +284,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
     if (videoRef.current) videoRef.current.srcObject = null
     setCameraOn(false)
-    setStatus({ text: 'camera off', color: 'var(--text-secondary)' })
+    setStatus({ text: cameraStatusText.off, color: 'var(--status-warning-default)' })
     const canvas = canvasRef.current
     if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
   }
@@ -383,26 +392,63 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
   }, [])
 
   const fmt = (s: number) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+  const showSessionControls = cameraOn
+  const counterTextStyle = {
+    fontFamily: 'var(--font-family-secondary)',
+    fontWeight: 500,
+    fontSize: 72,
+    lineHeight: '80px',
+    textShadow: '0 4px 8px rgba(180,180,180,0.8)',
+  } as const
+  const elapsedTextStyle = {
+    fontFamily: 'var(--font-family-secondary)',
+    fontWeight: 400,
+    fontSize: 16,
+    lineHeight: '24px',
+    color: 'var(--text-on-accent)',
+    textShadow: '0 4px 8px rgba(180,180,180,0.8)',
+  } as const
+  const controlButtonLabel = countdown !== null
+    ? 'Отмена'
+    : !sessionActive
+      ? 'Начать сессию'
+      : saving
+        ? 'Сохраняем...'
+        : holding
+          ? 'удерживайте...'
+          : 'закончить сессию'
+  const statusBadgeTone = !cameraOn
+    ? { color: 'var(--accent-default)' }
+    : status.color === 'var(--status-success-default)'
+      ? { color: status.color }
+      : { color: 'var(--status-warning-default)' }
+  const isIdleCameraState = cameraOn && countdown === null && !sessionActive && !saving
+  const displayStatus = isIdleCameraState
+    ? {
+        text: HORIZONTAL_POSITION_LABEL,
+        color: 'var(--status-warning-default)',
+      }
+    : {
+        text: status.text,
+        color: statusBadgeTone.color,
+      }
 
   return (
     <div
-      className="camera-wrapper flex flex-col gap-3 mx-auto w-full"
+      className="camera-wrapper mx-auto w-full max-w-[1024px]"
     >
 
-      {/* Camera container — always dark bg regardless of theme */}
+      {/* Camera container — off-state follows reviewed Figma geometry */}
       <div
-        className="camera-container relative overflow-hidden"
+        className="camera-container relative mx-auto w-full max-w-[1024px] aspect-[3/4] overflow-hidden bg-[#171717] p-4 app-web:aspect-[4/3]"
         style={{
-          background: '#0a0a0a',
-          aspectRatio: '4/3',
-          border: `1px solid ${cameraOn ? status.color : 'var(--border)'}`,
           borderRadius: 0,
-          transition: 'border-color 0.2s',
+          transition: 'none',
         }}
       >
         <video
           ref={videoRef}
-          className="w-full h-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
           style={{ transform: 'scaleX(-1)', display: cameraOn ? 'block' : 'none' }}
           playsInline
           muted
@@ -416,11 +462,22 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
 
         {/* Status badge — top left */}
         <div
-          className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 text-[10px] tracking-wider"
-          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', borderRadius: 0 }}
+          className="absolute left-4 top-4 flex items-center pl-1 pr-2"
+          style={{ background: 'var(--surface)', borderRadius: 0 }}
         >
-          <span className="w-1.5 h-1.5 shrink-0" style={{ background: status.color }} />
-          <span style={{ color: status.color }}>[{status.text}]</span>
+          <span className="flex h-6 items-center justify-center px-1">
+            <span className="h-1.5 w-1.5 shrink-0" style={{ background: displayStatus.color }} />
+          </span>
+          <span className="py-[3px] text-[12px] leading-[18px]" style={{ color: displayStatus.color }}>
+            {displayStatus.text === HORIZONTAL_POSITION_LABEL ? (
+              <>
+                <span className="app-mobile:inline app-web:hidden">{HORIZONTAL_POSITION_LABEL_MOBILE}</span>
+                <span className="hidden app-web:inline">{HORIZONTAL_POSITION_LABEL}</span>
+              </>
+            ) : (
+              displayStatus.text
+            )}
+          </span>
         </div>
 
         {/* Counter overlay — bottom center */}
@@ -431,8 +488,8 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
             aria-atomic="true"
           >
             <div
-              className="font-bold text-white tabular-nums"
-              style={{ fontSize: 88, lineHeight: 1, textShadow: '0 2px 16px rgba(0,0,0,0.8)' }}
+              className="text-white tabular-nums"
+              style={counterTextStyle}
             >
               <NumberFlow
                 value={countdown !== null ? countdown : count}
@@ -444,8 +501,8 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
             </div>
             {sessionActive && (
               <div
-                className="text-base tabular-nums"
-                style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: '0.05em' }}
+                className="tabular-nums"
+                style={elapsedTextStyle}
               >
                 {fmt(elapsed)}
               </div>
@@ -454,76 +511,78 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
         )}
 
         {/* Disable camera — top right */}
-        {cameraOn && (
+        {cameraOn && !sessionActive && !saving && (
           <button
             onClick={stopCamera}
-            className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 text-[10px] tracking-wider text-white"
-            style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', borderRadius: 0 }}
+            className="absolute right-4 top-4 flex items-center pl-1 pr-2 text-[var(--text-secondary)] transition-opacity hover:opacity-80"
+            style={{ background: 'var(--surface)', borderRadius: 0 }}
           >
-            <Icon name="photo_camera" size={13} />
-            off
+            <span className="flex h-6 items-center justify-center pr-1">
+              <Icon name="photo_camera" size={16} />
+            </span>
+            <span className="py-[3px] text-[12px] leading-[18px]">отключить камеру</span>
           </button>
         )}
 
         {/* Enable camera — center */}
         {!cameraOn && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center">
             <button
               onClick={startCamera}
-              className="flex flex-col items-center gap-2.5 px-8 py-5 text-white transition-opacity hover:opacity-80"
-              style={{ background: 'var(--accent-default)', backdropFilter: 'blur(6px)', borderRadius: 0 }}
+              className="flex h-[72px] w-[140px] flex-col items-center justify-center bg-[var(--accent-default)] p-3 text-white transition-opacity hover:opacity-80"
+              style={{ borderRadius: 0 }}
             >
-              <Icon name="photo_camera" size={28} />
-              <span className="text-[11px] tracking-widest">enable_camera()</span>
+              <div className="relative shrink-0 p-1">
+                <Icon name="photo_camera" size={16} />
+              </div>
+              <div className="flex items-center justify-center px-[10px] py-[3px]">
+                <span className="text-[12px] leading-[18px]">включить камеру</span>
+              </div>
             </button>
           </div>
         )}
       </div>
 
-      {/* Session controls — placeholder сохраняет высоту когда камера выключена */}
-      {cameraOn ? (
-        countdown !== null ? (
-          <button
-            onClick={cancelCountdown}
-            className="w-full py-3 text-sm font-normal hover:opacity-60 transition-opacity"
-            style={{ color: 'var(--text-secondary)', boxShadow: 'inset 0 0 0 1px var(--border-primary-pressed)' }}
-          >
-            cancel()
-          </button>
-        ) : !sessionActive ? (
-          <button
-            onClick={startSession}
-            disabled={startDisabled}
-            className="w-full py-3 text-sm font-normal text-white disabled:opacity-40 hover:opacity-85 transition-opacity"
-            style={{ background: 'var(--status-success-default)' }}
-          >
-            start_session()
-          </button>
-        ) : (
-          <button
-            data-hold
-            onPointerDown={startHold}
-            onPointerUp={cancelHold}
-            onPointerLeave={cancelHold}
-            disabled={saving}
-            className="relative w-full py-3 text-sm font-normal text-white disabled:opacity-40 overflow-hidden select-none"
-            style={{ background: 'var(--status-danger-default)', touchAction: 'none' }}
-          >
-            <span
-              className="absolute inset-0 bg-white/20 origin-left"
-              style={{ transform: `scaleX(${holdProgress})`, transition: 'none' }}
-            />
-            <span className="relative">
-              {saving
-                ? '// сохраняем...'
-                : holding
-                ? '// удерживайте...'
-                : `finish() · ${isHoldMode ? fmt(count) : count + ' reps'}`}
-            </span>
-          </button>
-        )
+      {/* Session controls stay out of the Figma off-state and appear only after camera activation */}
+      {showSessionControls ? (
+        <div className="mt-4 px-4 app-web:mt-2 app-web:px-0">
+          {countdown !== null ? (
+            <button
+              onClick={cancelCountdown}
+              className="h-10 w-full text-[16px] leading-6 font-normal text-[var(--text-primary)] hover:opacity-60 transition-opacity"
+              style={{ background: 'var(--surface)', boxShadow: 'inset 0 0 0 1px var(--border-primary-default)' }}
+            >
+              отмена
+            </button>
+          ) : !sessionActive ? (
+            <button
+              onClick={startSession}
+              disabled={startDisabled}
+              className="h-10 w-full text-[16px] leading-6 font-normal text-white disabled:opacity-40 hover:opacity-85 transition-opacity"
+              style={{ background: 'var(--accent-default)' }}
+            >
+              начать сессию
+            </button>
+          ) : (
+            <button
+              data-hold
+              onPointerDown={startHold}
+              onPointerUp={cancelHold}
+              onPointerLeave={cancelHold}
+              disabled={saving}
+              className="relative h-10 w-full overflow-hidden select-none text-[16px] font-normal leading-6 text-white disabled:opacity-40"
+              style={{ background: 'var(--accent-default)', touchAction: 'none' }}
+            >
+              <span
+                className="absolute inset-0 bg-white/20 origin-left"
+                style={{ transform: `scaleX(${holdProgress})`, transition: 'none' }}
+              />
+              <span className="relative">{controlButtonLabel}</span>
+            </button>
+          )}
+        </div>
       ) : (
-        <div className="w-full py-3 text-sm" aria-hidden="true" style={{ visibility: 'hidden' }}>&nbsp;</div>
+        null
       )}
     </div>
   )

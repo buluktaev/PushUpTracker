@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Loader from '@/components/Loader'
 
 interface ButtonProps {
@@ -16,14 +17,16 @@ interface ButtonProps {
 export default function Button({
   children,
   variant = 'primary',
-  state = 'default',
+  state,
   disabled = false,
   loading = false,
   onClick,
   className = '',
   type = 'button',
 }: ButtonProps) {
+  const [interactionState, setInteractionState] = useState<'default' | 'hovered' | 'pressed'>('default')
   const isInactive = disabled || loading
+  const resolvedState = state ?? interactionState
   const content = loading ? null : <span>{children}</span>
 
   // Base styles applied to all variants
@@ -45,9 +48,9 @@ export default function Button({
   if (variant === 'primary') {
     variantStyle.backgroundColor = loading || disabled
       ? 'var(--accent-disabled)'
-      : state === 'hovered'
+      : resolvedState === 'hovered'
         ? 'var(--accent-hovered)'
-        : state === 'pressed'
+        : resolvedState === 'pressed'
           ? 'var(--accent-pressed)'
           : 'var(--accent-default)'
     variantStyle.color = loading || disabled ? 'var(--text-on-accent-disabled)' : 'var(--text-on-accent)'
@@ -59,9 +62,9 @@ export default function Button({
     variantStyle.border = `1px solid ${
       loading || disabled
         ? 'var(--border-disabled)'
-        : state === 'hovered'
+        : resolvedState === 'hovered'
           ? 'var(--border-primary-hovered)'
-          : state === 'pressed'
+          : resolvedState === 'pressed'
             ? 'var(--border-primary-pressed)'
             : 'var(--border-primary-default)'
     }`
@@ -71,9 +74,9 @@ export default function Button({
   if (variant === 'danger') {
     variantStyle.backgroundColor = loading || disabled
       ? 'var(--status-danger-weak)'
-      : state === 'hovered'
+      : resolvedState === 'hovered'
         ? 'var(--status-danger-hovered)'
-        : state === 'pressed'
+        : resolvedState === 'pressed'
           ? 'var(--status-danger-pressed)'
           : 'var(--status-danger-default)'
     variantStyle.color = loading || disabled ? 'var(--text-on-accent-disabled)' : 'var(--text-on-accent)'
@@ -85,6 +88,31 @@ export default function Button({
       type={type}
       onClick={isInactive ? undefined : onClick}
       disabled={isInactive}
+      onMouseEnter={() => {
+        if (!isInactive && state === undefined) {
+          setInteractionState('hovered')
+        }
+      }}
+      onMouseLeave={() => {
+        if (!isInactive && state === undefined) {
+          setInteractionState('default')
+        }
+      }}
+      onPointerDown={() => {
+        if (!isInactive && state === undefined) {
+          setInteractionState('pressed')
+        }
+      }}
+      onPointerUp={() => {
+        if (!isInactive && state === undefined) {
+          setInteractionState('hovered')
+        }
+      }}
+      onPointerCancel={() => {
+        if (!isInactive && state === undefined) {
+          setInteractionState('default')
+        }
+      }}
       className={`${base} ${padding} ${className}`}
       style={variantStyle}
     >

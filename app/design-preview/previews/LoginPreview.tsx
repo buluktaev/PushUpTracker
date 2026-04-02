@@ -1,79 +1,100 @@
 'use client'
 
 import Link from 'next/link'
-import ThemeToggle from '@/components/ThemeToggle'
+import AuthThemeSync from '@/components/AuthThemeSync'
+import Button from '@/components/Button'
+import Icon from '@/components/Icon'
+import Input from '@/components/Input'
+import TextButton from '@/components/TextButton'
 
 interface LoginPreviewProps {
   error?: string
   loading?: boolean
 }
 
-export function LoginPreview({ error, loading }: LoginPreviewProps) {
+export function LoginPreview({ error, loading = false }: LoginPreviewProps) {
   return (
-    <main className="relative min-h-[600px] flex flex-col items-center justify-center p-6 bg-[var(--bg)]">
-      <div className="absolute top-3 right-4">
-        <ThemeToggle />
-      </div>
-      <div className="w-full max-w-sm">
-        <div className="mb-10">
-          <div className="flex items-center gap-2 mb-5">
-            <img src="/icon.svg" width={20} height={20} alt="" />
-            <span className="text-[10px] tracking-widest uppercase text-[var(--muted)]">
-              {'// pushup tracker'}
+    <main className="flex min-h-dvh flex-col bg-[var(--bg-surface)]">
+      <AuthThemeSync />
+      <div className="mx-auto w-[400px] pt-[200px] app-mobile:w-[calc(100%-32px)] app-mobile:pt-[144px]">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center bg-[var(--accent-default)] text-[var(--text-on-accent)]">
+              <Icon name="fitness" size={16} />
+            </div>
+            <span className="text-[12px] font-normal leading-[18px] tracking-[0] text-[var(--text-secondary)]">
+              Selecty Wellness
             </span>
           </div>
-          <h1 className="text-[28px] font-bold text-[var(--text)] leading-[1.15] tracking-tight">
-            login()
-          </h1>
-          <p className="text-xs text-[var(--muted)] mt-2.5">вход в аккаунт</p>
+
+          <div className="h-[32px]">
+            <h1 className="text-[24px] font-medium leading-[32px] tracking-[0] text-[var(--text-primary)]">
+              авторизация
+            </h1>
+          </div>
+
+          <div className="flex flex-col gap-0">
+            <div className="pt-4">
+              <Input
+                label="Электронная почта"
+                type="email"
+                value="ivan@example.com"
+                placeholder="введите почту"
+                required
+                disabled={loading}
+                onChange={() => {}}
+              />
+            </div>
+
+            <div className="pt-4">
+              <Input
+                label="Пароль"
+                type="password"
+                value="password"
+                placeholder="введите пароль"
+                required
+                disabled={loading}
+                error={Boolean(error)}
+                caption={error}
+                showCaption={Boolean(error)}
+                onChange={() => {}}
+              />
+            </div>
+
+            <div className="flex h-6 w-full flex-col items-end">
+              <TextButton
+                variant="primary"
+                type="button"
+                disabled={loading}
+                className="!h-6 !justify-end !px-0 !text-[16px] !leading-[24px]"
+              >
+                Забыли пароль?
+              </TextButton>
+            </div>
+
+            <div className="pt-[32px]">
+              <Button type="button" loading={loading}>
+                войти
+              </Button>
+            </div>
+
+            <div className="h-[40px] pb-[2px] pt-[16px] text-[14px] font-normal leading-[22px] tracking-[0] text-[var(--text-secondary)]">
+              <span>нет аккаунта? </span>
+              {loading ? (
+                <span className="text-[var(--text-disabled)]" aria-disabled="true">
+                  зарегистрироваться
+                </span>
+              ) : (
+                <Link
+                  href="/register"
+                  className="text-[var(--accent-default)] hover:text-[var(--accent-hovered)] active:text-[var(--accent-pressed)]"
+                >
+                  зарегистрироваться
+                </Link>
+              )}
+            </div>
+          </div>
         </div>
-
-        <form className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] tracking-widest uppercase text-[var(--muted)]">
-              email =
-            </label>
-            <input
-              type="email"
-              placeholder="ivan@example.com"
-              defaultValue="ivan@example.com"
-              readOnly
-              className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent-default)] transition-colors"
-              style={{ border: '1px solid var(--border)' }}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[10px] tracking-widest uppercase text-[var(--muted)]">
-              password =
-            </label>
-            <input
-              type="password"
-              placeholder="пароль"
-              defaultValue="password"
-              readOnly
-              className="w-full px-3 py-2.5 text-sm bg-[var(--surface)] text-[var(--text)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--accent-default)] transition-colors"
-              style={{ border: '1px solid var(--border)' }}
-            />
-          </div>
-
-          {error && <p className="text-[11px] text-[#ef4444]">! {error}</p>}
-
-          <button
-            type="button"
-            disabled={loading}
-            className="w-full py-3 text-sm font-normal text-white bg-[var(--accent-default)] disabled:opacity-40 hover:opacity-85 transition-opacity mt-1"
-          >
-            {loading ? '// входим...' : 'execute()'}
-          </button>
-        </form>
-
-        <p className="text-xs text-[var(--muted)] mt-6">
-          нет аккаунта?{' '}
-          <Link href="/register" className="text-[var(--accent-default)] hover:underline">
-            register()
-          </Link>
-        </p>
       </div>
     </main>
   )

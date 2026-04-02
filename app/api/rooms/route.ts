@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { createClient } from '@/lib/supabase-server'
 import { isValidDiscipline } from '@/lib/exerciseConfigs'
+import { ROOM_CODE_LENGTH } from '@/lib/roomCode'
 
 function generateCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  return Array.from({ length: 6 }, () =>
+  return Array.from({ length: ROOM_CODE_LENGTH }, () =>
     chars[Math.floor(Math.random() * chars.length)]
   ).join('')
+}
+
+function isMissingColumnError(err: unknown): boolean {
+  return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2022'
 }
 
 export async function GET() {
@@ -21,20 +27,34 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const participants = await prisma.participant.findMany({
-      where: { userId: user.id },
-      include: { room: true },
-      orderBy: { createdAt: 'asc' },
-    })
+    let rooms: Array<{
+      roomCode: string
+      roomName: string
+      participantId: string
+      name: string
+      isOwner: boolean
+      discipline: string
+    }> = []
 
-    const rooms = participants.map(participant => ({
-      roomCode: participant.room.code,
-      roomName: participant.room.name,
-      participantId: participant.id,
-      name: participant.name,
-      isOwner: participant.room.ownerId === user.id,
-      discipline: participant.room.discipline,
-    }))
+    try {
+      const participants = await prisma.participant.findMany({
+        where: { userId: user.id },
+        include: { room: true },
+        orderBy: { createdAt: 'asc' },
+      })
+
+      rooms = participants.map(participant => ({
+        roomCode: participant.room.code,
+        roomName: participant.room.name,
+        participantId: participant.id,
+        name: participant.name,
+        isOwner: participant.room.ownerId === user.id,
+        discipline: participant.room.discipline,
+      }))
+    } catch (err) {
+      if (!isMissingColumnError(err)) throw err
+      rooms = []
+    }
 
     return NextResponse.json({ rooms })
   } catch (err) {
@@ -68,11 +88,24 @@ export async function POST(request: Request) {
       code = generateCode()
       attempts++
       if (attempts > 10) throw new Error('Cannot generate unique code')
-    } while (await prisma.room.findUnique({ where: { code } }))
+    } while (
+      await prisma.room.findUnique({
+        where: { code },
+        select: { id: true },
+      })
+    )
 
-    const room = await prisma.room.create({
-      data: { name: name.trim(), code, ownerId: user.id, discipline },
-    })
+    let room
+    try {
+      room = await prisma.room.create({
+        data: { name: name.trim(), code, ownerId: user.id, discipline },
+      })
+    } catch (err) {
+      if (!isMissingColumnError(err)) throw err
+      room = await prisma.room.create({
+        data: { name: name.trim(), code },
+      })
+    }
 
     return NextResponse.json(room, { status: 201 })
   } catch (err) {

@@ -1,8 +1,9 @@
 'use client'
 
+import type { ButtonHTMLAttributes } from 'react'
 import Icon from '@/components/Icon'
 
-interface TabProps {
+interface TabProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   label: string
   icon: string
   active?: boolean
@@ -18,30 +19,33 @@ export default function Tab({
   platform = 'web',
   className = '',
   onClick,
+  type = 'button',
+  ...buttonProps
 }: TabProps) {
   const isMobile = platform === 'mobile'
 
   return (
     <button
-      type="button"
+      type={type}
       onClick={onClick}
-      className={`inline-flex transition-colors duration-100 ${isMobile ? 'flex-col gap-1 px-3 py-3' : 'gap-2 px-4'} ${className}`}
+      className={`inline-flex transition-colors duration-100 ${isMobile ? 'flex-col px-3 py-0' : 'h-full gap-1.5 px-5'} ${className}`}
       style={{
         minWidth: isMobile ? 'var(--tab-mobile-min-width)' : undefined,
         minHeight: isMobile ? undefined : 'var(--tab-height-44)',
         alignItems: 'center',
         justifyContent: 'center',
-        color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
-        borderBottom: isMobile ? 'none' : `1px solid ${active ? 'var(--accent-default)' : 'transparent'}`,
+        color: active ? 'var(--accent-default)' : 'var(--text-secondary)',
+        borderBottom: 'none',
         backgroundColor: 'transparent',
       }}
+      {...buttonProps}
     >
-      <span style={{ color: active ? 'var(--accent-default)' : 'var(--icon-default)' }}>
+      <span className={isMobile ? 'flex items-center p-1' : 'flex items-center'} style={{ color: active ? 'var(--accent-default)' : 'var(--icon-default)' }}>
         <Icon name={icon} size={16} />
       </span>
       <span
-        className={isMobile ? 'text-[12px] leading-[18px]' : 'text-[14px] leading-[22px]'}
-        style={{ letterSpacing: isMobile ? 'var(--letter-spacing-1)' : 'var(--letter-spacing-0)' }}
+        className={isMobile ? 'px-1 py-[3px] text-[12px] leading-[18px]' : 'text-[12px] leading-[18px]'}
+        style={{ letterSpacing: 'var(--letter-spacing-0)' }}
       >
         {label}
       </span>

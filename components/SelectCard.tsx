@@ -1,12 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import Icon from '@/components/Icon'
 
 interface SelectCardProps {
   title: string
   icon: string
-  selected?: boolean
   state?: 'default' | 'hovered' | 'selected'
+  disabled?: boolean
   className?: string
   onClick?: () => void
 }
@@ -14,27 +15,53 @@ interface SelectCardProps {
 export default function SelectCard({
   title,
   icon,
-  selected = false,
-  state = 'default',
+  state,
+  disabled = false,
   className = '',
   onClick,
 }: SelectCardProps) {
-  const resolvedState = selected ? 'selected' : state
-  const isSelected = resolvedState === 'selected'
+  const [interactionState, setInteractionState] = useState<'default' | 'hovered'>('default')
+  const isInactive = disabled
+  const resolvedState = isInactive ? 'default' : state ?? interactionState
   const borderColor =
-    resolvedState === 'default' ? 'var(--border-primary-default)' : 'var(--accent-default)'
-  const iconColor = isSelected ? 'var(--accent-default)' : 'var(--icon-default)'
+    resolvedState === 'default'
+      ? 'var(--border-primary-default)'
+      : 'var(--accent-default)'
+  const iconColor = isInactive
+    ? 'var(--icon-disabled)'
+    : resolvedState === 'selected'
+      ? 'var(--accent-default)'
+      : 'var(--icon-default)'
 
   return (
     <button
       type="button"
-      onClick={onClick}
-      className={`inline-flex items-start gap-2 p-3 text-left transition-colors duration-100 ${className}`}
+      onClick={isInactive ? undefined : onClick}
+      disabled={isInactive}
+      onMouseEnter={() => {
+        if (!isInactive && state === undefined) {
+          setInteractionState('hovered')
+        }
+      }}
+      onMouseLeave={() => {
+        if (!isInactive && state === undefined) {
+          setInteractionState('default')
+        }
+      }}
+      onPointerCancel={() => {
+        if (!isInactive && state === undefined) {
+          setInteractionState('default')
+        }
+      }}
+      className={`inline-flex h-12 items-start gap-2 px-3 py-3 text-left transition-colors duration-100 ${className}`}
       style={{
-        width: '221px',
+        width: '100%',
+        boxSizing: 'border-box',
         backgroundColor: 'var(--surface)',
         border: `1px solid ${borderColor}`,
-        color: 'var(--text-primary)',
+        color: isInactive ? 'var(--text-disabled)' : 'var(--text-primary)',
+        cursor: isInactive ? 'default' : 'pointer',
+        pointerEvents: isInactive ? 'none' : undefined,
       }}
     >
       <span

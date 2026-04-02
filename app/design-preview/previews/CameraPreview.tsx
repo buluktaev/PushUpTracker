@@ -9,13 +9,16 @@ interface CameraPreviewProps {
   discipline?: string
 }
 
+const HORIZONTAL_POSITION_LABEL = 'займите горизонтальное положение'
+const HORIZONTAL_POSITION_LABEL_MOBILE = 'займите гор. положение'
+
 const STATUS_MAP: Record<string, { text: string; color: string }> = {
-  off: { text: 'camera off', color: 'var(--text-secondary)' },
-  searching: { text: 'searching...', color: 'var(--status-warning-default)' },
-  countdown: { text: 'get ready...', color: 'var(--status-warning-default)' },
-  active: { text: 'angle: 120°', color: 'var(--accent-default)' },
-  hold: { text: 'hold position', color: 'var(--status-success-default)' },
-  saving: { text: 'saving...', color: 'var(--text-secondary)' },
+  off: { text: 'камера выключена', color: 'var(--status-warning-default)' },
+  searching: { text: 'поиск позы', color: 'var(--status-warning-default)' },
+  countdown: { text: 'приготовьтесь', color: 'var(--status-warning-default)' },
+  active: { text: 'угол: 120°', color: 'var(--accent-default)' },
+  hold: { text: 'держите позицию', color: 'var(--status-success-default)' },
+  saving: { text: 'сохранение', color: 'var(--text-secondary)' },
 }
 
 function fmt(s: number) {
@@ -38,30 +41,76 @@ export default function CameraPreview({
   const isActive = state === 'active' || state === 'hold'
   const isSaving = state === 'saving'
   const isHolding = state === 'hold'
-
-  const borderColor = cameraOn ? status.color : 'var(--border)'
+  const showSessionControls = cameraOn
+  const counterTextStyle = {
+    fontFamily: 'var(--font-family-secondary)',
+    fontWeight: 500,
+    fontSize: 72,
+    lineHeight: '80px',
+    textShadow: '0 4px 8px rgba(180,180,180,0.8)',
+  } as const
+  const elapsedTextStyle = {
+    fontFamily: 'var(--font-family-secondary)',
+    fontWeight: 400,
+    fontSize: 16,
+    lineHeight: '24px',
+    color: 'var(--text-on-accent)',
+    textShadow: '0 4px 8px rgba(180,180,180,0.8)',
+  } as const
+  const controlButtonLabel = isCountdown
+    ? 'Отмена'
+    : !isActive && !isSaving
+      ? 'Начать сессию'
+      : isSaving
+        ? 'Сохраняем...'
+        : isHolding
+          ? 'удерживайте...'
+          : 'закончить сессию'
+  const statusBadgeTone = !cameraOn
+    ? { color: 'var(--accent-default)' }
+    : status.color === 'var(--status-success-default)'
+      ? { color: status.color }
+      : { color: 'var(--status-warning-default)' }
+  const isIdleCameraState = cameraOn && !isCountdown && !isActive && !isSaving
+  const displayStatus = isIdleCameraState
+    ? {
+        text: HORIZONTAL_POSITION_LABEL,
+        color: 'var(--status-warning-default)',
+      }
+    : {
+        text: status.text,
+        color: statusBadgeTone.color,
+      }
 
   return (
-    <div className="camera-wrapper flex flex-col gap-3 mx-auto w-full">
+    <div className="camera-wrapper mx-auto w-full max-w-[1024px]">
 
       {/* Camera container */}
       <div
-        className="camera-container relative overflow-hidden"
+        className="camera-container relative mx-auto w-full max-w-[1024px] aspect-[3/4] overflow-hidden bg-[#171717] p-4 app-web:aspect-[4/3]"
         style={{
-          background: '#0a0a0a',
-          aspectRatio: '4/3',
-          border: `1px solid ${borderColor}`,
           borderRadius: 0,
-          transition: 'border-color 0.2s',
+          transition: 'none',
         }}
       >
         {/* Status badge — top left */}
         <div
-          className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 text-[10px] tracking-wider"
-          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', borderRadius: 0 }}
+          className="absolute left-4 top-4 flex items-center pl-1 pr-2"
+          style={{ background: 'var(--surface)', borderRadius: 0 }}
         >
-          <span className="w-1.5 h-1.5 shrink-0" style={{ background: status.color }} />
-          <span style={{ color: status.color }}>[{status.text}]</span>
+          <span className="flex h-6 items-center justify-center px-1">
+            <span className="h-1.5 w-1.5 shrink-0" style={{ background: displayStatus.color }} />
+          </span>
+          <span className="py-[3px] text-[12px] leading-[18px]" style={{ color: displayStatus.color }}>
+            {displayStatus.text === HORIZONTAL_POSITION_LABEL ? (
+              <>
+                <span className="app-mobile:inline app-web:hidden">{HORIZONTAL_POSITION_LABEL_MOBILE}</span>
+                <span className="hidden app-web:inline">{HORIZONTAL_POSITION_LABEL}</span>
+              </>
+            ) : (
+              displayStatus.text
+            )}
+          </span>
         </div>
 
         {/* Counter overlay — bottom center */}
@@ -72,15 +121,15 @@ export default function CameraPreview({
             aria-atomic="true"
           >
             <div
-              className="font-bold text-white tabular-nums"
-              style={{ fontSize: 88, lineHeight: 1, textShadow: '0 2px 16px rgba(0,0,0,0.8)' }}
+              className="text-white tabular-nums"
+              style={counterTextStyle}
             >
               {isCountdown ? count : String(count).padStart(2, '0')}
             </div>
             {(isActive) && (
               <div
-                className="text-base tabular-nums"
-                style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: '0.05em' }}
+                className="tabular-nums"
+                style={elapsedTextStyle}
               >
                 {fmt(elapsed)}
               </div>
@@ -89,74 +138,76 @@ export default function CameraPreview({
         )}
 
         {/* Disable camera — top right */}
-        {cameraOn && (
+        {cameraOn && !isActive && !isSaving && (
           <button
-            className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 text-[10px] tracking-wider text-white"
-            style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', borderRadius: 0 }}
+            className="absolute right-4 top-4 flex items-center pl-1 pr-2 text-[var(--text-secondary)] transition-opacity hover:opacity-80"
+            style={{ background: 'var(--surface)', borderRadius: 0 }}
           >
-            <Icon name="photo_camera" size={13} />
-            off
+            <span className="flex h-6 items-center justify-center pr-1">
+              <Icon name="photo_camera" size={16} />
+            </span>
+            <span className="py-[3px] text-[12px] leading-[18px]">отключить камеру</span>
           </button>
         )}
 
         {/* Enable camera — center */}
         {!cameraOn && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center">
             <button
-              className="flex flex-col items-center gap-2.5 px-8 py-5 text-white transition-opacity hover:opacity-80"
-              style={{ background: 'var(--accent-default)', backdropFilter: 'blur(6px)', borderRadius: 0 }}
+              className="flex h-[72px] w-[140px] flex-col items-center justify-center bg-[var(--accent-default)] p-3 text-white transition-opacity hover:opacity-80"
+              style={{ borderRadius: 0 }}
             >
-              <Icon name="photo_camera" size={28} />
-              <span className="text-[11px] tracking-widest">enable_camera()</span>
+              <div className="relative shrink-0 p-1">
+                <Icon name="photo_camera" size={16} />
+              </div>
+              <div className="flex items-center justify-center px-[10px] py-[3px]">
+                <span className="text-[12px] leading-[18px]">включить камеру</span>
+              </div>
             </button>
           </div>
         )}
       </div>
 
       {/* Session controls */}
-      {cameraOn ? (
-        isCountdown ? (
-          <button
-            className="w-full py-3 text-sm font-normal hover:opacity-60 transition-opacity"
-            style={{ color: 'var(--text-secondary)', boxShadow: 'inset 0 0 0 1px var(--border-primary-pressed)' }}
-          >
-            cancel()
-          </button>
-        ) : isActive ? (
-          <button
-            disabled={isSaving}
-            className="relative w-full py-3 text-sm font-normal text-white disabled:opacity-40 overflow-hidden select-none"
-            style={{ background: 'var(--status-danger-default)', touchAction: 'none' }}
-          >
-            <span
-              className="absolute inset-0 bg-white/20 origin-left"
-              style={{ transform: `scaleX(${holdProgress})`, transition: 'none' }}
-            />
-            <span className="relative">
-              {isSaving
-                ? '// сохраняем...'
-                : isHolding
-                ? '// удерживайте...'
-                : `finish() · ${isHoldMode ? fmt(count) : count + ' reps'}`}
-            </span>
-          </button>
-        ) : isSaving ? (
-          <button
-            disabled
-            className="w-full py-3 text-sm font-normal text-[var(--muted)] ring-1 ring-inset ring-[var(--border)] disabled:opacity-60"
-          >
-            // сохраняем...
-          </button>
-        ) : (
-          <button
-            className="w-full py-3 text-sm font-normal text-white hover:opacity-85 transition-opacity"
-            style={{ background: 'var(--status-success-default)' }}
-          >
-            start_session()
-          </button>
-        )
+      {showSessionControls ? (
+        <div className="mt-4 px-4 app-web:mt-2 app-web:px-0">
+          {isCountdown ? (
+            <button
+              className="h-10 w-full text-[16px] leading-6 font-normal text-[var(--text-primary)] hover:opacity-60 transition-opacity"
+              style={{ background: 'var(--surface)', boxShadow: 'inset 0 0 0 1px var(--border-primary-default)' }}
+            >
+              отмена
+            </button>
+          ) : isActive ? (
+            <button
+              disabled={isSaving}
+              className="relative h-10 w-full overflow-hidden select-none text-[16px] font-normal leading-6 text-white disabled:opacity-40"
+              style={{ background: 'var(--accent-default)', touchAction: 'none' }}
+            >
+              <span
+                className="absolute inset-0 bg-white/20 origin-left"
+                style={{ transform: `scaleX(${holdProgress})`, transition: 'none' }}
+              />
+              <span className="relative">{controlButtonLabel}</span>
+            </button>
+          ) : isSaving ? (
+            <button
+              disabled
+              className="w-full py-3 text-sm font-normal text-[var(--muted)] ring-1 ring-inset ring-[var(--border)] disabled:opacity-60"
+            >
+              {controlButtonLabel}
+            </button>
+          ) : (
+            <button
+              className="h-10 w-full text-[16px] leading-6 font-normal text-white hover:opacity-85 transition-opacity"
+              style={{ background: 'var(--accent-default)' }}
+            >
+              начать сессию
+            </button>
+          )}
+        </div>
       ) : (
-        <div className="w-full py-3 text-sm" aria-hidden="true" style={{ visibility: 'hidden' }}>&nbsp;</div>
+        null
       )}
 
     </div>

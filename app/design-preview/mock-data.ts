@@ -5,11 +5,11 @@ export const mockRooms = [
 ]
 
 export const mockLeaderboard = [
-  { id: 'p1', name: 'Алексей', totalValue: 450, sessionsCount: 12, bestSession: 52, activeToday: true },
-  { id: 'p2', name: 'Мария', totalValue: 380, sessionsCount: 10, bestSession: 48, activeToday: true },
-  { id: 'p3', name: 'Дмитрий', totalValue: 290, sessionsCount: 8, bestSession: 40, activeToday: false },
-  { id: 'p4', name: 'Елена', totalValue: 210, sessionsCount: 6, bestSession: 35, activeToday: false },
-  { id: 'p5', name: 'Иван', totalValue: 150, sessionsCount: 4, bestSession: 30, activeToday: false },
+  { id: 'p1', name: 'Алексей', totalValue: 450, sessionsCount: 12, bestSession: 52, streakDays: 1, activeToday: true },
+  { id: 'p2', name: 'Мария', totalValue: 380, sessionsCount: 10, bestSession: 48, streakDays: 3, activeToday: true },
+  { id: 'p3', name: 'Дмитрий', totalValue: 290, sessionsCount: 8, bestSession: 40, streakDays: 0, activeToday: false },
+  { id: 'p4', name: 'Елена', totalValue: 210, sessionsCount: 6, bestSession: 35, streakDays: 0, activeToday: false },
+  { id: 'p5', name: 'Иван', totalValue: 150, sessionsCount: 4, bestSession: 30, streakDays: 0, activeToday: false },
 ]
 
 export const mockRoom = {

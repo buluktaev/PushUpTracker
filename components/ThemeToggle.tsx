@@ -2,38 +2,76 @@
 
 import { useEffect, useState } from 'react'
 import Icon from '@/components/Icon'
+import IconButton from '@/components/IconButton'
 
-export default function ThemeToggle() {
+interface ThemeToggleProps {
+  iconOnly?: boolean
+  compact?: boolean
+}
+
+export default function ThemeToggle({
+  iconOnly = false,
+  compact = false,
+}: ThemeToggleProps) {
   const [dark, setDark] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
     setDark(document.documentElement.classList.contains('dark'))
+
+    const observer = new MutationObserver(() => {
+      setDark(document.documentElement.classList.contains('dark'))
+    })
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
+
+    return () => observer.disconnect()
   }, [])
 
   function toggle() {
     const next = !dark
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     setDark(next)
-    if (next) {
-      document.documentElement.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
+
+    if (next === prefersDark) {
+      localStorage.removeItem('theme')
     } else {
-      document.documentElement.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
+      localStorage.setItem('theme', next ? 'dark' : 'light')
     }
+
+    document.documentElement.classList.toggle('dark', next)
   }
 
   if (!mounted) return null
+
+  const icon = dark ? 'light_mode' : 'dark_mode'
+
+  if (iconOnly) {
+    return (
+      <IconButton
+        icon="dark_mode"
+        alternateIcon="light_mode"
+        alternateActive={dark}
+        label={dark ? 'Переключить на светлую тему' : 'Переключить на тёмную тему'}
+        variant="secondary"
+        size={compact ? 'compact' : 'default'}
+        onClick={toggle}
+      />
+    )
+  }
 
   return (
     <button
       onClick={toggle}
       aria-label={dark ? 'Переключить на светлую тему' : 'Переключить на тёмную тему'}
-      className="flex items-center justify-center w-8 h-8 text-[var(--muted)] hover:text-[var(--accent-default)] transition-colors sm:w-auto sm:h-auto sm:text-[11px] sm:tracking-wider sm:px-3 sm:py-1.5 sm:border sm:border-[var(--border)] sm:bg-[var(--surface)] sm:hover:border-[var(--accent-default)]"
+      className="flex items-center justify-center w-8 h-8 text-[var(--muted)] hover:text-[var(--accent-default)] transition-colors app-web:w-auto app-web:h-auto app-web:text-[11px] app-web:tracking-wider app-web:px-3 app-web:py-1.5 app-web:border app-web:border-[var(--border)] app-web:bg-[var(--surface)] app-web:hover:border-[var(--accent-default)]"
     >
-      <span className="sm:hidden"><Icon name={dark ? 'light_mode' : 'dark_mode'} size={18} /></span>
-      <span className="hidden sm:inline">{dark ? '[ light ]' : '[ dark ]'}</span>
+      <span className="app-web:hidden"><Icon name={icon} size={18} /></span>
+      <span className="hidden app-web:inline">{dark ? '[ light ]' : '[ dark ]'}</span>
     </button>
   )
 }

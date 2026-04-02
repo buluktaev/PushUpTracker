@@ -1,49 +1,73 @@
 'use client'
 
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { useState } from 'react'
-import { ComponentSheet } from '@/app/design-preview/previews/ComponentSheet'
+
+const componentPages = [
+  {
+    href: '/components/buttons',
+    title: 'Buttons',
+    description: 'Primary, secondary, danger, loading, disabled, and interactive state validation.',
+    status: 'Ready',
+  },
+  {
+    href: '/components/inputs',
+    title: 'Inputs',
+    description: 'Label, placeholder, icon toggle, caption toggle, validation, and state coverage.',
+    status: 'Ready',
+  },
+  {
+    href: '/components/text-button',
+    title: 'Text Button',
+    description: 'Inline action states, icon toggle, disabled, and loading coverage.',
+    status: 'Ready',
+  },
+  {
+    href: '/components/icon-button',
+    title: 'Icon Button',
+    description: 'Icon-only action states, border/background treatment, and loading coverage.',
+    status: 'Ready',
+  },
+]
 
 export default function ComponentsPage() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
-
   if (process.env.NODE_ENV === 'production') {
     notFound()
   }
 
   return (
-    <main className="min-h-screen bg-zinc-900 p-6">
-      <div className="mx-auto max-w-[960px] space-y-4">
-        <div className="flex items-center justify-between border border-zinc-700 bg-zinc-900 px-4 py-3">
-          <div className="text-[11px] uppercase tracking-[0.12em] text-zinc-400">components preview</div>
-          <div className="inline-flex border border-zinc-700 bg-zinc-950 p-1">
-            <button
-              type="button"
-              onClick={() => setTheme('light')}
-              className="min-w-[88px] px-3 py-2 text-[11px] uppercase tracking-[0.12em] transition-colors"
-              style={{
-                backgroundColor: theme === 'light' ? '#fafafa' : 'transparent',
-                color: theme === 'light' ? '#171717' : '#a1a1aa',
-              }}
-            >
-              Light
-            </button>
-            <button
-              type="button"
-              onClick={() => setTheme('dark')}
-              className="min-w-[88px] px-3 py-2 text-[11px] uppercase tracking-[0.12em] transition-colors"
-              style={{
-                backgroundColor: theme === 'dark' ? '#262626' : 'transparent',
-                color: theme === 'dark' ? '#fafafa' : '#a1a1aa',
-              }}
-            >
-              Dark
-            </button>
-          </div>
-        </div>
+    <main className="min-h-screen bg-zinc-900 p-6 text-zinc-50">
+      <div className="mx-auto max-w-[1120px] space-y-8">
+        <header className="border border-zinc-700 bg-zinc-900 px-6 py-6">
+          <div className="text-[11px] uppercase tracking-[0.12em] text-zinc-400">components</div>
+          <h1 className="mt-4 text-3xl font-medium tracking-tight text-zinc-50">Design system pages</h1>
+          <p className="mt-3 max-w-[680px] text-sm leading-6 text-zinc-400">
+            Each component gets its own review page so we can lock states, interactions, and theme behavior
+            without drowning in one giant matrix.
+          </p>
+        </header>
 
-        <section className="overflow-hidden border border-zinc-700" data-theme={theme}>
-          <ComponentSheet />
+        <section className="grid gap-4 md:grid-cols-2">
+          {componentPages.map((page) => (
+            <Link
+              key={page.href}
+              href={page.href}
+              className="group border border-zinc-700 bg-zinc-900 p-6 transition-colors hover:border-zinc-500"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-medium text-zinc-50">{page.title}</h2>
+                  <p className="mt-3 text-sm leading-6 text-zinc-400">{page.description}</p>
+                </div>
+                <span className="border border-zinc-700 px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-zinc-300">
+                  {page.status}
+                </span>
+              </div>
+              <div className="mt-6 text-[11px] uppercase tracking-[0.12em] text-zinc-500 group-hover:text-zinc-300">
+                Open page
+              </div>
+            </Link>
+          ))}
         </section>
       </div>
     </main>

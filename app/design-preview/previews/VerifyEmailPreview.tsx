@@ -1,98 +1,126 @@
 'use client'
 
 import Link from 'next/link'
-import ThemeToggle from '@/components/ThemeToggle'
+import { useState } from 'react'
+import Button from '@/components/Button'
+import Icon from '@/components/Icon'
+import TextButton from '@/components/TextButton'
 
 interface VerifyEmailPreviewProps {
+  isMobile?: boolean
   email?: string
+  attemptsLeft?: number
   isBlocked?: boolean
   secondsLeft?: number
-  attemptsLeft?: number
-  message?: string
-}
-
-function formatTime(s: number) {
-  const m = Math.floor(s / 60)
-  const sec = s % 60
-  return `${m}:${String(sec).padStart(2, '0')}`
+  mode?: 'cooldown' | 'available' | 'attempts-exceeded'
 }
 
 export function VerifyEmailPreview({
-  email = '',
+  isMobile = false,
+  email = 'ivan@example.com',
+  attemptsLeft = 0,
   isBlocked = false,
-  secondsLeft = 0,
-  attemptsLeft = 3,
-  message = '',
+  secondsLeft = 30,
+  mode = 'cooldown',
 }: VerifyEmailPreviewProps) {
+  const [linkState, setLinkState] = useState<'default' | 'hovered' | 'pressed'>('default')
+  const shellWidth = isMobile ? 'w-[343px]' : 'w-[400px]'
+  const viewportHeight = isMobile ? 'min-h-[812px]' : 'min-h-[900px]'
+  const topPadding = isMobile ? 'pt-[144px]' : 'pt-[200px]'
+  const resolvedMode = isBlocked ? 'attempts-exceeded' : mode
+  const formHeight = resolvedMode === 'attempts-exceeded' ? (isMobile ? 'h-[440px]' : 'h-[418px]') : 'h-[370px]'
+  const warningText = 'лимит исчерпан — подождите перед повторной отправкой'
+  const warningWrapperHeight = isMobile ? 'h-[62px]' : 'h-[40px]'
+
   return (
-    <main className="relative min-h-[600px] flex flex-col items-center justify-center p-6 bg-[var(--bg)]">
-      <div className="absolute top-3 right-4">
-        <ThemeToggle />
-      </div>
-      <div className="w-full max-w-sm">
-        <div className="mb-10">
-          <div className="flex items-center gap-2 mb-5">
-            <img src="/icon.svg" width={20} height={20} alt="" />
-            <span className="text-[10px] tracking-widest uppercase text-[var(--muted)]">
-              {'// pushup tracker'}
-            </span>
+    <main className={`flex ${viewportHeight} flex-col bg-[var(--bg-surface)]`}>
+      <div className={`mx-auto ${shellWidth} ${topPadding}`}>
+        <div className="flex flex-col">
+          <div className={`flex flex-col ${formHeight}`}>
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center bg-[var(--accent-default)] text-[var(--text-on-accent)]">
+                <Icon name="fitness" size={16} />
+              </div>
+              <span className="text-[12px] font-normal leading-[18px] tracking-[0] text-[var(--text-secondary)]">
+                Selecty Wellness
+              </span>
+            </div>
+
+            <div className="flex flex-col">
+              <h1 className="text-[24px] font-medium leading-[32px] tracking-[0] text-[var(--text-primary)]">
+                подтверждение
+              </h1>
+
+              <div className="h-[32px] pt-[8px]">
+                <p className="text-[14px] font-normal leading-[22px] tracking-[0] text-[var(--text-secondary)]">
+                  проверьте почту и перейдите по ссылке
+                </p>
+              </div>
+            </div>
+
+            <div className="h-[130px] pt-[16px]">
+              <div className="h-[114px] border border-[var(--border-primary-default)] bg-[var(--bg-primary)] px-[16px] py-[16px]">
+                <div>
+                  <p className="text-[12px] font-normal leading-[18px] tracking-[0] text-[var(--text-secondary)]">
+                    Электронная почта
+                  </p>
+                </div>
+                <div className="pt-[8px]">
+                  <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[16px] font-normal leading-[24px] tracking-[0] text-[var(--text-primary)]">
+                    {email}
+                  </p>
+                </div>
+                <div className="flex w-full items-center justify-center pb-[2px] pt-[8px]">
+                  <TextButton
+                    type="button"
+                    variant="primary"
+                    className="!h-auto !w-full !justify-start !px-0 !text-[14px] !leading-[22px]"
+                  >
+                    изменить почту
+                  </TextButton>
+                </div>
+              </div>
+            </div>
+
+            {resolvedMode === 'attempts-exceeded' ? (
+              <div className={`${warningWrapperHeight} pt-[16px]`}>
+                <p className={`text-[14px] font-normal leading-[22px] tracking-[0] text-[var(--status-danger-default)] ${isMobile ? 'max-w-[343px]' : 'max-w-[400px]'}`}>
+                  {warningText}
+                </p>
+              </div>
+            ) : null}
+
+            <div className="h-[72px] pt-[32px]">
+              {resolvedMode === 'available' ? (
+                <Button type="button">
+                  Отправить повторно
+                </Button>
+              ) : (
+                <Button type="button" disabled>
+                  {resolvedMode === 'attempts-exceeded'
+                    ? 'Отправить повторно через 14:07'
+                    : `Отправить повторно через ${secondsLeft}`}
+                </Button>
+              )}
+            </div>
+
+            <div className="h-[40px] pb-[2px] pt-[16px] text-[14px] font-normal leading-[22px] tracking-[0] text-[var(--text-secondary)]">
+              <span>{'уже есть аккаунт? '}</span>
+              <Link
+                href="/login"
+                className="inline-flex align-top"
+                onMouseEnter={() => setLinkState('hovered')}
+                onMouseLeave={() => setLinkState('default')}
+                onPointerDown={() => setLinkState('pressed')}
+                onPointerUp={() => setLinkState('hovered')}
+              >
+                <TextButton as="span" variant="primary" state={linkState} className="!h-auto">
+                  авторизоваться
+                </TextButton>
+              </Link>
+            </div>
           </div>
-          <h1 className="text-[28px] font-bold text-[var(--text)] leading-[1.15] tracking-tight">
-            verify_email()
-          </h1>
-          <p className="text-xs text-[var(--muted)] mt-2.5">
-            проверьте почту и перейдите по ссылке
-          </p>
         </div>
-
-        <div
-          className="p-4 mb-6 text-sm text-[var(--text)]"
-          style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}
-        >
-          <p className="text-[10px] tracking-widest uppercase text-[var(--muted)] mb-2">
-            email =
-          </p>
-          <p className="font-mono">{email || '—'}</p>
-        </div>
-
-        {isBlocked ? (
-          <div className="text-sm text-[var(--muted)]">
-            <p className="text-[11px] text-[#ef4444] mb-1">
-              ! лимит исчерпан — подождите перед повторной отправкой
-            </p>
-            <p className="text-xs font-mono">
-              повтор через{' '}
-              <span className="text-[var(--accent-default)]">{formatTime(secondsLeft)}</span>
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            <button
-              type="button"
-              disabled={attemptsLeft === 0}
-              className="w-full py-3 text-sm font-normal text-white bg-[var(--accent-default)] disabled:opacity-40 hover:opacity-85 transition-opacity"
-            >
-              resend()
-            </button>
-
-            {attemptsLeft > 0 && (
-              <p className="text-[10px] text-[var(--muted)] text-center">
-                осталось попыток:{' '}
-                <span className="text-[var(--text)]">{attemptsLeft}</span>
-              </p>
-            )}
-
-            {message && (
-              <p className="text-[11px] text-[#4ade80]">{message}</p>
-            )}
-          </div>
-        )}
-
-        <p className="text-xs text-[var(--muted)] mt-8">
-          <Link href="/login" className="text-[var(--accent-default)] hover:underline">
-            ← вернуться к login()
-          </Link>
-        </p>
       </div>
     </main>
   )

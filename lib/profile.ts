@@ -14,18 +14,27 @@ function inferName(user: User): string {
   return 'user'
 }
 
+function resolveProfileName(user: User, existingName?: string): string {
+  const metadataName = typeof user.user_metadata?.name === 'string' ? user.user_metadata.name.trim() : ''
+  if (metadataName) return metadataName
+
+  const persistedName = existingName?.trim() ?? ''
+  if (persistedName) return persistedName
+
+  return inferName(user)
+}
+
 export async function ensureProfile(user: User) {
   if (!user.email) {
     throw new Error('User email is required')
   }
 
   const email = user.email.trim()
-  const name = inferName(user)
-
   const byId = await prisma.profile.findUnique({
     where: { id: user.id },
   })
   if (byId) {
+    const name = resolveProfileName(user, byId.name)
     return prisma.profile.update({
       where: { id: user.id },
       data: {
@@ -39,6 +48,7 @@ export async function ensureProfile(user: User) {
     where: { email },
   })
   if (byEmail) {
+    const name = resolveProfileName(user, byEmail.name)
     return prisma.profile.update({
       where: { email },
       data: {
@@ -47,6 +57,8 @@ export async function ensureProfile(user: User) {
       },
     })
   }
+
+  const name = resolveProfileName(user)
 
   return prisma.profile.create({
     data: {

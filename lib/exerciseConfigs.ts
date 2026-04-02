@@ -4,6 +4,7 @@ export type BodyCheck = "horizontal" | "vertical" | "none"
 export interface ExerciseConfig {
   slug: string
   name: string
+  tabLabel: string
   icon: string
   mode: ExerciseMode
   bodyCheck: BodyCheck
@@ -19,6 +20,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "pushups",
     name: "Отжимания",
+    tabLabel: "Отжимания",
     icon: "fitness_center",
     mode: "reps",
     bodyCheck: "horizontal",
@@ -30,6 +32,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "squats",
     name: "Приседания",
+    tabLabel: "Присед",
     icon: "sports_martial_arts",
     mode: "reps",
     bodyCheck: "vertical",
@@ -41,6 +44,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "situps",
     name: "Подъём корпуса",
+    tabLabel: "Корпус",
     icon: "airline_seat_flat",
     mode: "reps",
     bodyCheck: "horizontal",
@@ -52,6 +56,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "crunches",
     name: "Скручивания",
+    tabLabel: "Скручивания",
     icon: "airline_seat_flat",
     mode: "reps",
     bodyCheck: "horizontal",
@@ -63,6 +68,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "bicep_curl",
     name: "Сгибание на бицепс",
+    tabLabel: "Бицепс",
     icon: "exercise",
     mode: "reps",
     bodyCheck: "vertical",
@@ -75,6 +81,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "pullups",
     name: "Подтягивания",
+    tabLabel: "Подтягивания",
     icon: "iron",
     mode: "reps",
     bodyCheck: "vertical",
@@ -87,6 +94,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "lateral_raise",
     name: "Махи в стороны",
+    tabLabel: "Махи",
     icon: "pan_tool_alt",
     mode: "reps",
     bodyCheck: "vertical",
@@ -98,6 +106,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "overhead_press",
     name: "Жим над головой",
+    tabLabel: "Жим",
     icon: "keyboard_double_arrow_up",
     mode: "reps",
     bodyCheck: "vertical",
@@ -109,6 +118,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "leg_raise",
     name: "Подъём ног",
+    tabLabel: "Ноги",
     icon: "directions_walk",
     mode: "reps",
     bodyCheck: "horizontal",
@@ -120,6 +130,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "knee_raise",
     name: "Подъём колен",
+    tabLabel: "Колени",
     icon: "directions_run",
     mode: "reps",
     bodyCheck: "vertical",
@@ -131,6 +142,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "plank",
     name: "Планка",
+    tabLabel: "Планка",
     icon: "horizontal_rule",
     mode: "hold",
     bodyCheck: "horizontal",
@@ -143,6 +155,14 @@ export const exerciseConfigs: ExerciseConfig[] = [
 
 export function getExerciseConfig(slug: string): ExerciseConfig | undefined {
   return exerciseConfigs.find(c => c.slug === slug)
+}
+
+export function getExerciseTabMeta(slug: string | undefined): Pick<ExerciseConfig, "tabLabel" | "icon"> {
+  const config = slug ? getExerciseConfig(slug) : undefined
+  return {
+    tabLabel: config?.tabLabel ?? "Тренировка",
+    icon: config?.icon ?? "fitness_center",
+  }
 }
 
 export function isValidDiscipline(slug: string): boolean {

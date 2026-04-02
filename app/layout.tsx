@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import Script from "next/script";
+import AgentationRuntime from "@/components/AgentationRuntime";
+import ThemeRuntime from "@/components/ThemeRuntime";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,16 +22,30 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const themeInitScript = `
+    try {
+      var t = localStorage.getItem('theme');
+      if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    } catch (e) {}
+  `;
+
   return (
     <html lang="ru" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap"
+        />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
-        {/* Prevent FOUC: set dark class before first paint */}
-        <Script id="theme-init" strategy="beforeInteractive" src="/theme-init.js" />
+        <ThemeRuntime />
+        <AgentationRuntime />
         {children}
       </body>
     </html>

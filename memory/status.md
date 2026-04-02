@@ -1,0 +1,377 @@
+# Current Status
+
+Updated: 2026-04-02
+Branch: `feature/phase2-redesign-sync`
+Last memory checkpoint commit: `3429399` (`feat: continue redesign system sync`)
+
+## Current Goal
+
+Form/auth/create-join redesign phase is functionally closed. The next implementation phase is the room experience (`/room/[code]`) while keeping Figma as the visual source of truth and the repository as the code/behavior contract.
+
+## Active Preview Surface
+
+- Main preview page: `http://localhost:3000/components`
+- Main screen preview page: `http://localhost:3000/screens`
+- `/components` now renders one theme at a time
+- `/screens` now renders one theme at a time
+- Theme is switched locally with the `Light / Dark` toggle at the top of the page
+
+## Current State
+
+- Foundations and token previews are in place
+- Main primitive and card components are being synced incrementally from Figma
+- `ChoiceCard` and `SelectCard` are aligned to the latest reviewed Figma slices
+- `RadioButton` was rewritten to match Figma geometry exactly
+- Global typography polish is now split cleanly:
+  - crisp rendering stays global on `body`
+  - text wrapping is now global:
+    - `h1`-`h4` -> `text-wrap: balance`
+    - `p`, `li`, `figcaption`, `blockquote` -> `text-wrap: pretty`
+- Screen redesign workflow is now fixed:
+  - implement one screen at a time
+  - for each screen, close `light/dark` and `desktop/mobile PWA` together
+  - do not move to the next screen until the current one is visually stable
+- A dedicated screen catalog route now exists for review:
+  - `/screens` for single-theme screen review
+  - `app/design-preview/page.tsx` still exists as the broader catalog with both themes
+- Registration screen geometry currently locked from review:
+  - desktop/web form starts `200px` from the top edge
+  - desktop/web legal block sits `40px` from the bottom edge
+  - mobile/web form starts `144px` from the top edge
+  - mobile/web form width is `343px`
+  - mobile/web side paddings are `16px`
+  - mobile legal block sits `56px` from the bottom edge
+- Registration flow coverage on `/screens` now includes:
+  - email/password step:
+    - empty
+    - required validation
+    - filled
+    - invalid email format
+    - existing user
+    - password visible
+    - loading
+  - email confirmation:
+    - waiting for email link with cooldown
+    - resend available
+    - attempts exceeded
+    - confirmation in progress
+    - confirmation error
+  - welcome screen after confirmation
+  - name step:
+    - empty
+    - required validation
+    - too short
+    - filled
+- Real route rollout is now in progress on top of the existing working flow:
+  - `/register` is already on the new design
+  - `/verify-email` is now on the new design
+  - `/auth/confirm` is now on the new design
+  - `/auth/confirm` now transitions to `/welcome`
+  - `/welcome` remains the next real route before `/register/name`
+  - shared route-level app loading screen now exists for App Router transitions
+- Additional real-flow fixes now applied:
+  - global page/background alignment moved to `bg-surface`
+  - `auth/confirm` no longer leaks raw English Supabase errors
+  - `welcome`, `verify-email`, `confirm`, and `register/name` all use `min-h-dvh` instead of fixed heights
+  - pre-auth routes now force system theme and ignore local manual theme override
+- Post-auth create-room rollout has started on the real `/` route:
+  - old no-room landing UI has been replaced by the new post-auth room-entry logic
+  - room creation still uses the existing `/api/rooms` contract and redirects to `/room/[code]?created=1`
+  - room join still uses the existing `/api/rooms/[code]/join` contract
+  - create-room states are now mirrored on `/screens`
+  - join-room screens are now being rendered from the same shared `JoinRoomCodeStep` on both real `/` and `/screens`
+  - post-auth branch logic on `/` is now:
+    - `0 rooms` -> show the empty post-auth screen with immediate action cards
+    - `1 room` -> immediately redirect into that room
+    - `2+ rooms` -> show the returning-room list screen
+    - `2+ rooms + ?add=1` -> show the compact `Новая комната` chooser screen
+  - join-room geometry is now aligned to Figma section `175:9313`:
+    - no subtitle under the heading
+    - `logoWrapper` 24px, `headingWrapper` 32px
+    - `inputWrapper` top padding 16px
+    - `buttonWrapper` top padding 32px
+    - empty/filled/loading form height 232px
+    - required/not-found form height 256px
+  - invitation code input now uses a dedicated code-style text mode:
+    - uppercase
+    - `IBM Plex Mono`
+    - letter spacing `3.5px`
+  - existing-room list branch is no longer legacy-only:
+    - `ReturningRoomsStep` now drives the 2+ rooms state
+    - `NewRoomActionStep` now drives the 2+ rooms "new room" chooser
+- Room workout navigation has started syncing to the reviewed room Figma:
+  - the static workout tab has been replaced by a discipline-driven tab contract
+  - the workout tab now reuses per-discipline icon + short label metadata
+  - the discipline caption was removed from the room header
+  - the same room-tab metadata now drives both the real `/room/[code]` route and the room preview surface
+  - leaderboard rows now include `streakDays` and render Figma caption copy with `стрик`
+  - streak is defined as consecutive calendar days with at least one saved session where `value > 0`
+  - current streak resets to `0`, if the participant has no qualifying session today
+  - the workout camera off-state now matches the reviewed room Figma more closely:
+    - dark `cameraWrapper`
+    - warning badge `камера выключена`
+    - centered `включить камеру` CTA
+    - no phantom bottom control row while camera is off
+- Current env state:
+  - worktree `.env` and `.env.test` match the root `.env.test`
+  - current dev for this worktree is now started directly from `worktree/.env`
+  - Prisma Studio for the test DB requires a TLS-relaxed launch because Yandex Cloud presents a certificate chain that Prisma Studio does not accept by default
+  - standardized repo-local launch command: `npm run studio:test`
+  - standardized stable worktree dev launch: `npm run dev`
+  - repo-local `npm run dev` now cleans stale `.next`, validates the target port, and runs the real Next/Prisma startup in the foreground
+  - detached `nohup` startup via external guard script is not considered reliable for this worktree because the server can disappear after reaching `READY`
+- Current transition behavior fixes:
+  - `/register/name` now keeps the submit loading state until route transition starts
+  - this removes the dead idle gap before the next screen appears
+- `/login` is now redesigned on the live route using the same auth geometry contract as `/register`:
+  - `logoWrapper` 24px
+  - `headingWrapper` 32px
+  - `inputWrapper` uses `pt 16`
+  - `buttonWrapper` uses `pt 32`
+  - `signoutWrapper` uses `40px` height with `pt 16` and `pb 2`
+  - reset-password row is a right-aligned `TextButton`
+  - route state coverage now matches the reviewed Figma section:
+    - empty
+    - filled
+    - loading
+    - required validation
+    - wrong password
+- Auth/form phase is now considered closed for this branch:
+  - `/register`
+  - `/verify-email`
+  - `/auth/confirm`
+  - `/welcome`
+  - `/register/name`
+  - `/login`
+  - post-auth create/join entry on `/`
+- Form-phase interaction/polish now includes:
+  - system-theme-only pre-auth screens
+  - no light-theme flash on refresh
+  - unified route-level loading screen
+  - loading-time hard disabling of inputs/buttons/links/back controls
+  - global crisp text rendering
+  - global `text-wrap: balance/pretty`
+  - section-level stagger reveal on auth/create/join screens
+  - contextual password toggle icon animation
+- Current testing setup:
+  - Prisma Studio is available on a separate local port for the test DB
+  - room creation debugging should now be evaluated only against the worktree dev process, not mixed root-env runs
+- `/screens` is now ordered as a real registration flow:
+  - email/password step states
+  - email confirmation states
+  - app transition loading state
+  - welcome after email confirmation
+  - name step states
+- Repo-local Codex memory system is now in place:
+  - `MEMORY.md`
+  - `memory/status.md`
+  - `memory/decisions.md`
+  - `memory/sessions/YYYY-MM-DD.md`
+  - `memory/templates/session.md`
+- This worktree now also has its own local agent guidance file:
+  - `AGENTS.md`
+  - it captures implementation-era contracts specific to `phase2-redesign-sync`
+- Codex skill `project-memory` exists and the memory validator passes for this worktree
+- Codex skill `pushuptracker-redesign-workflow` now exists as the project-specific guide for:
+  - redesign component work
+  - redesign screen work
+  - production-first route rollout
+  - `/screens` parity updates
+  - token/icon/source-of-truth discipline
+
+## Next Recommended Step
+
+Move from the completed form/auth/create-join phase into the room screens:
+
+- continue the workout screen sync after the tab/header contract change
+- audit the remaining `/room/[code]` active/countdown/finish camera states against Figma camera layouts
+- replace any remaining legacy room UI/loading states
+- preserve already-fixed navigation contracts:
+  - logout -> `/login`
+  - `add_room()` -> `/?add=1&fromRoom=<code>`
+  - level-based back inside add-room flow
+
+## Dev Notes
+
+- Use one live dev process only:
+  - `cd /Users/buluktaev/Documents/GitHub/PushUpTracker/.worktrees/phase2-redesign-sync`
+  - `npm run dev`
+- If registration fails with `Failed to fetch`, verify which env the running dev server loaded before touching auth code:
+  - worktree `.env.test` currently contains a dead Supabase hostname
+  - root `.env` currently contains a reachable Supabase hostname
+- Never run `npm run build` while `next dev` is running in the same worktree
+- If `/components` behaves strangely, treat it as a dev/cache issue first and verify the response body, not just HTTP `200`
+- Screen-level review should happen first on `/screens`; component-level review stays on `/components`
+- `app/design-preview/page.tsx` remains useful as the full reference catalog and parity surface
+- During loading in auth/create/join flows, all interactive controls that can mutate or navigate must be disabled:
+  - inputs
+  - submit buttons
+  - back icon buttons
+  - inline navigation links / text buttons
+- Logout from the room screen is now server-side via `POST /api/auth/logout`, so middleware consistently sees the session as cleared before redirecting to `/login`.
+- The final redirect after logout is a hard browser navigation to `/login`, not just App Router navigation, to avoid rendering a cached post-auth `/` screen after the session is already gone.
+- `useRooms` now supports `hydrateFromServer: false` for public auth pages that only need local room ids. `/login` uses this mode to avoid `401 /api/rooms` noise in the console before the user is authenticated.
+- On auth/onboarding and create/join screens, `h1 + caption/body` is now treated as one internal visual group. External `gap-2` may separate the group from adjacent blocks, but must never separate `h1` from its own caption/body.
+- Theme initialization now runs inline in `<head>` before first paint so system dark mode does not flash light on refresh.
+- The action-choice mechanic is unified on post-auth create/join entry screens: both zero-room and add-room branches require selecting a card first and then pressing `Продолжить`.
+- `ChoiceCard` and `SelectCard` are not behaviorally identical:
+  - `ChoiceCard` must expose live `hovered` in product screens
+  - `SelectCard` must also expose live `hovered`, but keeps a different selected-state contract from `ChoiceCard`
+- `ChoiceCard` must clear its local hover state when group selection changes, so unselected sibling cards cannot keep a stale `hovered` border after another card is chosen.
+- When `add_room()` is opened from inside a room, the add-room flow must preserve the source room in query params and route the first-step back button back into that exact room, not into the room chooser branch on `/`.
+- In room-originated add-room flow, back is level-based:
+  - first add-room action screen -> back to source room
+  - deeper steps -> back to previous step inside the flow
+- Room workout shell is now partially synced to Figma `175:10842`:
+  - page root uses `bg-[var(--bg-surface)]`
+  - room header uses `bg-[var(--surface)]`
+  - room title is now the 18/26 Figma-style title without a discipline subtitle
+  - desktop and mobile tabbars now share the `Tab` component instead of route-local ad hoc buttons
+  - room header theme switcher uses `ThemeToggle iconOnly compact`, matching the icon-button contract
+  - camera frame now uses a stable responsive box:
+    - mobile -> `3:4`
+    - `sm+` / web -> `4:3`
+    - width capped at `1024px` (`1024x768` ceiling on desktop)
+  - off-state CTA `включить камеру` now has fixed `72px` height
+  - workout screen top spacing is now anchored under the header:
+    - mobile -> `24px`
+    - `sm+` / web -> `16px`
+- Workout camera controls are now mutually exclusive by state:
+  - camera off -> no bottom control row
+  - idle with camera on -> `Начать сессию`
+  - countdown -> `Отмена`
+  - active / hold / saving -> `Закончить сессию` / hold-progress danger control
+- The `camera enabled / session idle` state is now synced closer to Figma node `401:18467`:
+  - top-left warning chip is fixed to `займите горизонтальное положение` in this idle state
+  - top-right chip is now `отключить камеру` on a surface background, not the old dark `off` pill
+  - bottom start control is now an accent bar `40px` high
+  - spacing to the bottom control follows the node geometry:
+    - mobile -> `16px` with `24px` horizontal insets
+    - `sm+` / web -> `8px` with full `1024px` width
+- The room workout status chip now has an invariant surface background:
+  - chip background is always `bg/surface`
+  - only dot/text color changes by semantic state
+  - current mapping:
+    - camera off -> accent
+    - init / searching / pose guidance -> warning
+    - ready / success states -> success
+- The room workout countdown state is now synced closer to Figma node `402:19164`:
+  - reverse counter uses `Font Family Secondary`
+  - countdown number uses `72px / 80px`
+  - countdown cancel control is a `40px` surface bar with primary border
+  - this slice only affects countdown, not idle or active/finish states
+- The room workout active session state is now synced closer to Figma node `402:19446`:
+  - active counter now uses `Font Family Secondary` at `72px / 80px`
+  - elapsed timer now uses `Font Family Secondary` at `16px / 24px`
+  - active finish control is now a `40px` accent bar
+  - hold-to-finish interaction remains intact behind the updated accent bar visual
+- The room leaderboard screen is now synced closer to Figma node `175:14182`:
+  - legacy stats bar and `refresh()` control were removed from the leaderboard tab
+  - leaderboard now renders as a pure `ratingRow` list with `60px` rows
+  - mobile width now stretches to the full room shell with `16px` side insets, desktop width is `720px`
+  - row typography now follows Figma:
+    - name `16px / 24px` primary
+    - caption `12px / 18px` secondary mono
+    - score `16px / 24px` secondary mono
+  - route and preview now share the same `RoomLeaderboard` implementation
+  - long leaderboard scroll on desktop now keeps `56px` bottom breathing room at the end of the list
+- The room profile screen is now synced closer to Figma node `179:5065`:
+  - legacy debug cards `// profile`, `logout()`, and `leave_room()` were replaced with a shared `RoomProfilePanel`
+  - route and preview now share the same profile implementation
+  - main info block now follows the reviewed `2x2` desktop / stacked mobile geometry
+  - role labels are now fully Russian:
+    - owner -> `создатель комнаты`
+    - member -> `участник`
+  - logout block now uses Figma copy and confirm-state buttons:
+    - `выйти из профиля`
+    - `да, выйти`
+    - `нет, остаться`
+  - member-only danger zone now uses Figma copy and confirm-state buttons:
+    - `Покинуть комнату`
+    - `Да, покинуть`
+    - `Нет, остаться`
+  - owner leave-room action remains hidden because the backend contract still forbids owners from leaving their room
+- The room settings screen is now synced closer to Figma node `179:8135` for founders only:
+  - legacy owner-only debug cards were replaced with a shared `RoomSettingsPanel`
+  - route and preview now share the same settings implementation
+  - `roomNameWrapper` now uses the reviewed rename layout with:
+    - labeled room-name input
+    - lowercase `сохранить` button
+    - the input opens with the current room name as a real value, not as a placeholder-only state
+    - after a successful rename, the input stays filled with the updated room name
+    - disabled save state until the value is actually changed
+  - `участники` now render as `48px` rows with lowercase `исключить` actions instead of legacy `kick()`
+  - participant exclusion now uses a row-level confirm-state:
+    - `да, исключить`
+    - `нет, оставить`
+  - the owner row now renders the Figma label `создатель комнаты`
+    - `Font Family/Primary`
+    - `16px / 24px`
+    - `text-secondary`
+  - danger zone now uses the reviewed delete-room layout and confirm-state structure:
+    - base state `удалить комнату`
+    - confirm state with two inputs
+    - `отмена`
+    - `удалить комнату`
+    - opening the confirm state now auto-scrolls the settings screen to the action row so the full form becomes visible
+    - delete confirm now uses the clarified gating contract:
+      - action button stays disabled until the room name matches exactly and the password field is non-empty
+      - the actual password correctness is validated only by the server after submit
+      - when the server returns `Неверный пароль`, that message is now attached directly to the password field as:
+        - input caption
+        - danger border
+      - editing the password or closing the confirm form clears the field-level wrong-password error
+    - confirm action row now follows the reviewed breakpoint contract:
+      - desktop: `отмена` left, `удалить комнату` right
+      - mobile: vertical stack with `отмена` on top and `удалить комнату` below
+    - the mobile autoscroll target now keeps explicit bottom breathing room above the sticky tabbar
+  - screen-level settings layout now uses:
+    - a flexible participants section
+    - a fixed `56px` gap between the table and the danger zone
+    - bottom edge contract:
+      - mobile `16px`
+      - desktop `32px`
+  - settings remain visible only for founders/owners; member rooms still do not get a settings tab
+- Global project typography now loads the actual font families instead of fallback stacks:
+  - `Font Family/Primary` -> `Google Sans`
+  - `Font Family/Secondary` -> `IBM Plex Mono`
+  - both families are now injected from the root app layout via a single Google Fonts stylesheet
+  - form controls now inherit the active typography contract instead of keeping browser-default fonts
+- Room desktop tabs no longer use an active underline:
+  - shared `Tab` now relies on text/icon color only
+- For local review of the leaderboard screen, `/api/rooms/[code]` now adds a dev-only synthetic leaderboard augmentation for `FR2LAG`:
+  - only outside production
+  - the augmented response currently returns `23` leaderboard rows for scroll testing
+  - response stats are recalculated from the augmented leaderboard
+- Product responsive contract is now unified at `1024px` via app-specific Tailwind screens:
+  - `app-mobile` -> `<1024px`
+  - `app-web` -> `>=1024px`
+- This `1024px` split is already applied to:
+  - auth/onboarding routes
+  - create/join shared flow shell
+  - room route `/room/[code]`
+  - room/design-preview parity surfaces
+  - room workout camera geometry and idle controls
+- `/design-preview` room workout surface was brought back to parity with the real route for:
+  - shell background
+  - header background
+  - tabbar rendering
+  - camera off-state
+  - state-driven bottom control row
+- Profile desktop bottom anchoring depends on screen-level layout, not only the shared panel:
+  - `RoomProfilePanel` keeps the internal `mt-auto` stack
+  - the `profile` branch of room `main` must also stay `flex flex-col`, otherwise the lower logout/danger stack will not pin to the viewport bottom
+  - room `main` also uses `app-web:pb-0`, so the final bottom spacing contract for the profile screen must be owned by `RoomProfilePanel` itself:
+    - mobile bottom edge -> `16px`
+    - desktop bottom edge -> `32px`
+- Auth and create/join screen entry motion now uses a shared `RevealSection` wrapper with staggered section-level enter animation.
+- Password visibility toggle in `Input` now uses contextual icon animation with dual mounted icons and CSS `opacity + scale + blur`, instead of instant icon replacement.
+- Hidden password fields now use the native browser password mask again:
+  - shared `Input` returns to real `type="password"` in hidden state
+  - custom masked glyph typography is no longer used
+  - this restores password-manager recognition and password generation/autofill behavior on:
+    - room settings delete confirmation
+    - `/login`
+    - `/register`
+- Validate memory integrity with:
+  - `python3 /Users/buluktaev/.codex/skills/project-memory/scripts/validate_project_memory.py /Users/buluktaev/Documents/GitHub/PushUpTracker/.worktrees/phase2-redesign-sync`

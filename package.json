@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "postinstall": "prisma generate",
-    "dev": "prisma migrate deploy && next dev",
+    "dev": "./scripts/start-dev-worktree.sh",
+    "dev:next": "prisma migrate deploy && next dev",
+    "studio:test": "./scripts/prisma-studio-test.sh",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -31,6 +33,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "agentation": "^3.0.2",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",

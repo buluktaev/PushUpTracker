@@ -1,7 +1,9 @@
 'use client'
 
-import { useEffect, useState, useRef, Suspense } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import AuthThemeSync from '@/components/AuthThemeSync'
+import Icon from '@/components/Icon'
 import { createClient } from '@/lib/supabase-client'
 import { useRooms } from '@/hooks/useRooms'
 
@@ -9,50 +11,48 @@ function ConfirmContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { rooms, loaded } = useRooms()
-  const [error, setError] = useState('')
   const confirmedRef = useRef(false)
+  const [error, setError] = useState('')
+  const confirmErrorMessage = 'Ссылка некорректна, уже была использована или её срок действия истёк'
 
   useEffect(() => {
-    // Ждём загрузки localStorage перед выполнением
-    if (!loaded) return
-    // Защита от повторного вызова при ре-рендерах
-    if (confirmedRef.current) return
+    if (!loaded || confirmedRef.current) return
     confirmedRef.current = true
 
-    const token_hash = searchParams.get('token_hash')
+    const tokenHashParam = searchParams.get('token_hash')
     const type = searchParams.get('type')
 
-    if (!token_hash || type !== 'email') {
-      setError('неверная ссылка подтверждения')
+    if (!tokenHashParam || type !== 'email') {
+      setError(confirmErrorMessage)
       return
     }
+    const tokenHash = tokenHashParam
 
     async function confirm() {
       try {
         const supabase = createClient()
-
         const { data, error: otpError } = await supabase.auth.verifyOtp({
-          token_hash: token_hash!,
+          token_hash: tokenHash,
           type: 'email',
         })
-        if (otpError) throw new Error(otpError.message)
-        if (!data.user) throw new Error('Ошибка подтверждения')
 
-        // Создать Profile (имя из user_metadata)
-        const name = data.user.user_metadata?.name || data.user.email
+        if (otpError) throw new Error(confirmErrorMessage)
+        if (!data.user) throw new Error(confirmErrorMessage)
+
         const profileRes = await fetch('/api/profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name }),
+          body: JSON.stringify({}),
         })
-        // Если профиль уже существует — игнорируем ошибку
+
         if (!profileRes.ok) {
-          const d = await profileRes.json()
-          if (!d.error?.includes('Unique')) throw new Error(d.error)
+          const payload = await profileRes.json().catch(() => ({}))
+          if (!String(payload.error || '').includes('Unique')) {
+            throw new Error(payload.error || 'Ошибка сохранения профиля')
+          }
         }
 
-        // Привязать существующие participantIds из localStorage
-        const participantIds = rooms.map(r => r.participantId).filter(Boolean)
+        const participantIds = rooms.map(room => room.participantId).filter(Boolean)
         if (participantIds.length > 0) {
           await fetch('/api/auth/claim', {
             method: 'POST',
@@ -61,51 +61,49 @@ function ConfirmContent() {
           })
         }
 
-        router.push('/')
+        router.push('/welcome')
         router.refresh()
-      } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : 'ошибка подтверждения')
+      } catch (err: unknown) {
+        setError(err instanceof Error ? confirmErrorMessage : confirmErrorMessage)
       }
     }
 
-    confirm()
-  }, [loaded, searchParams, rooms, router])
+    void confirm()
+  }, [confirmErrorMessage, loaded, rooms, router, searchParams])
+
+  const isError = Boolean(error)
+  const shellWidth = 'w-[400px] app-mobile:w-[calc(100%-32px)]'
+  const formHeight = isError ? 'h-[126px]' : 'h-[64px]'
+  const topPadding = isError ? 'pt-[387px] app-mobile:pt-[343px]' : 'pt-[418px] app-mobile:pt-[374px]'
 
   return (
-    <main className="min-h-dvh flex flex-col items-center justify-center p-6 bg-[var(--bg)]">
-      <div className="w-full max-w-sm">
-        <div className="mb-10">
-          <div className="flex items-center gap-2 mb-5">
-            <img src="/icon.svg" width={20} height={20} alt="" />
-            <span className="text-[10px] tracking-widest uppercase text-[var(--muted)]">
-              {'// pushup tracker'}
+    <main className="flex min-h-dvh flex-col bg-[var(--bg-surface)]">
+      <AuthThemeSync />
+      <div className={`mx-auto ${shellWidth} ${topPadding}`}>
+        <div className={`${shellWidth} ${formHeight} flex flex-col items-start gap-2`}>
+          <div className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center bg-[var(--accent-default)] text-[var(--text-on-accent)]">
+              <Icon name="fitness" size={16} />
+            </div>
+            <span className="text-[12px] font-normal leading-[18px] tracking-[0] text-[var(--text-secondary)]">
+              Selecty Wellness
             </span>
           </div>
-          <h1 className="text-[28px] font-bold text-[var(--text)] leading-[1.15] tracking-tight">
-            {error ? 'error()' : 'confirming()'}
-          </h1>
-          <p className="text-xs text-[var(--muted)] mt-2.5">
-            {error ? error : '// подтверждаем аккаунт...'}
-          </p>
-        </div>
 
-        {!error && (
-          <div className="flex gap-1">
-            {[0, 1, 2].map(i => (
-              <div
-                key={i}
-                className="w-1.5 h-1.5 bg-[var(--accent-default)] rounded-full animate-bounce"
-                style={{ animationDelay: `${i * 0.15}s` }}
-              />
-            ))}
+          <div className="flex flex-col items-start">
+            <h1 className="text-[24px] font-medium leading-[32px] tracking-[0] text-[var(--text-primary)]">
+              {isError ? 'ошибка' : 'подтверждаем почту...'}
+            </h1>
+
+            {isError ? (
+              <div className="h-[54px] pt-[8px]">
+                <p className="text-[14px] font-normal leading-[22px] tracking-[0] text-[var(--text-secondary)]">
+                  {error}
+                </p>
+              </div>
+            ) : null}
           </div>
-        )}
-
-        {error && (
-          <a href="/register" className="text-xs text-[var(--accent-default)] hover:underline">
-            ← вернуться к регистрации
-          </a>
-        )}
+        </div>
       </div>
     </main>
   )

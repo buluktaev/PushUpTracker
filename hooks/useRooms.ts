@@ -7,6 +7,11 @@ export interface SavedRoom {
   participantId: string
   name: string      // имя пользователя в этой комнате
   roomName: string  // название комнаты для отображения
+  discipline?: string
+}
+
+interface UseRoomsOptions {
+  hydrateFromServer?: boolean
 }
 
 const KEY = 'pushup_rooms'
@@ -78,14 +83,19 @@ function isSavedRoom(room: unknown): room is SavedRoom {
   )
 }
 
-export function useRooms() {
+export function useRooms(options: UseRoomsOptions = {}) {
+  const { hydrateFromServer = true } = options
   const [rooms, setRooms] = useState<SavedRoom[]>([])
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     const localRooms = load()
     setRooms(localRooms)
-    setLoaded(true)
+
+    if (!hydrateFromServer) {
+      setLoaded(true)
+      return
+    }
 
     let cancelled = false
 
@@ -106,7 +116,12 @@ export function useRooms() {
           save(next)
           return next
         })
-      } catch {}
+      } catch {
+      } finally {
+        if (!cancelled) {
+          setLoaded(true)
+        }
+      }
     }
 
     void hydrateFromServer()
@@ -114,7 +129,7 @@ export function useRooms() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [hydrateFromServer])
 
   const addRoom = useCallback((room: SavedRoom) => {
     setRooms(prev => {

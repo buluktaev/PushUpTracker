@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Icon from '@/components/Icon'
 import Loader from '@/components/Loader'
 
@@ -7,8 +8,11 @@ type IconButtonVariant = 'primary' | 'secondary' | 'danger'
 
 interface IconButtonProps {
   icon: string
+  alternateIcon?: string
+  alternateActive?: boolean
   label: string
   variant?: IconButtonVariant
+  size?: 'default' | 'compact'
   state?: 'default' | 'hovered' | 'pressed'
   disabled?: boolean
   loading?: boolean
@@ -19,20 +23,26 @@ interface IconButtonProps {
 
 export default function IconButton({
   icon,
+  alternateIcon,
+  alternateActive = false,
   label,
   variant = 'primary',
-  state = 'default',
+  size = 'default',
+  state,
   disabled = false,
   loading = false,
   onClick,
   className = '',
   type = 'button',
 }: IconButtonProps) {
+  const [interactionState, setInteractionState] = useState<'default' | 'hovered' | 'pressed'>('default')
   const isInactive = disabled || loading
+  const resolvedState = isInactive ? 'default' : state ?? interactionState
+  const buttonSize = size === 'compact' ? 32 : 40
 
   const style: React.CSSProperties = {
-    width: 'var(--control-height-40)',
-    height: 'var(--control-height-40)',
+    width: buttonSize,
+    height: buttonSize,
     boxSizing: 'border-box',
     borderRadius: 0,
     border: '1px solid transparent',
@@ -44,9 +54,9 @@ export default function IconButton({
     style.backgroundColor =
       isInactive
         ? 'var(--accent-disabled)'
-        : state === 'hovered'
+        : resolvedState === 'hovered'
           ? 'var(--accent-hovered)'
-          : state === 'pressed'
+          : resolvedState === 'pressed'
             ? 'var(--accent-pressed)'
             : 'var(--accent-default)'
     style.color = isInactive ? 'var(--text-on-accent-disabled)' : 'var(--icon-on-accent)'
@@ -57,9 +67,9 @@ export default function IconButton({
     style.border = `1px solid ${
       isInactive
         ? 'var(--border-disabled)'
-        : state === 'hovered'
+        : resolvedState === 'hovered'
           ? 'var(--border-primary-hovered)'
-          : state === 'pressed'
+          : resolvedState === 'pressed'
             ? 'var(--border-primary-pressed)'
             : 'var(--border-primary-default)'
     }`
@@ -70,9 +80,9 @@ export default function IconButton({
     style.backgroundColor =
       isInactive
         ? 'var(--status-danger-weak)'
-        : state === 'hovered'
+        : resolvedState === 'hovered'
           ? 'var(--status-danger-hovered)'
-          : state === 'pressed'
+          : resolvedState === 'pressed'
             ? 'var(--status-danger-pressed)'
             : 'var(--status-danger-default)'
     style.color = isInactive ? 'var(--text-on-accent-disabled)' : 'var(--icon-on-accent)'
@@ -85,12 +95,55 @@ export default function IconButton({
       aria-busy={loading}
       disabled={isInactive}
       onClick={isInactive ? undefined : onClick}
-      className={`inline-flex items-center justify-center p-2 transition-colors duration-100 ${className}`}
+      onMouseEnter={() => {
+        if (!isInactive && state === undefined && interactionState !== 'pressed') {
+          setInteractionState('hovered')
+        }
+      }}
+      onMouseLeave={() => {
+        if (!isInactive && state === undefined) {
+          setInteractionState('default')
+        }
+      }}
+      onPointerDown={() => {
+        if (!isInactive && state === undefined) {
+          setInteractionState('pressed')
+        }
+      }}
+      onPointerUp={() => {
+        if (!isInactive && state === undefined) {
+          setInteractionState('hovered')
+        }
+      }}
+      className={`inline-flex items-center justify-center ${size === 'compact' ? 'p-2' : 'p-2'} transition-colors duration-100 ${className}`}
       style={style}
     >
-      <span className="inline-flex h-6 w-6 items-center justify-center p-1">
+      <span className={`relative inline-flex items-center justify-center ${size === 'compact' ? 'h-4 w-4' : 'h-6 w-6 p-1'}`}>
         {loading ? (
           <Loader size={16} color="currentColor" />
+        ) : alternateIcon ? (
+          <>
+            <span
+              aria-hidden="true"
+              className={`absolute inset-0 inline-flex items-center justify-center transition-[opacity,transform,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] ${
+                alternateActive
+                  ? 'opacity-0 scale-[0.25] blur-[4px]'
+                  : 'opacity-100 scale-100 blur-0'
+              }`}
+            >
+              <Icon name={icon} size={16} />
+            </span>
+            <span
+              aria-hidden="true"
+              className={`absolute inset-0 inline-flex items-center justify-center transition-[opacity,transform,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] ${
+                alternateActive
+                  ? 'opacity-100 scale-100 blur-0'
+                  : 'opacity-0 scale-[0.25] blur-[4px]'
+              }`}
+            >
+              <Icon name={alternateIcon} size={16} />
+            </span>
+          </>
         ) : (
           <Icon name={icon} size={16} />
         )}

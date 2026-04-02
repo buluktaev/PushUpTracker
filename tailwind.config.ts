@@ -8,7 +8,12 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      screens: {
+        'app-mobile': { max: '1023px' },
+        'app-web': '1024px',
+      },
+    },
   },
   plugins: [],
 };

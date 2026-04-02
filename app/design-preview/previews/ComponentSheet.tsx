@@ -91,6 +91,12 @@ export function ComponentSheet() {
           <TextButton variant="secondary" loading>secondary</TextButton>
           <TextButton variant="danger" loading>danger</TextButton>
         </div>
+
+        <div className="grid gap-3 pt-2" style={{ gridTemplateColumns: 'repeat(3, minmax(120px, 160px))' }}>
+          <TextButton variant="primary" state="default" icon="arrow_left" showIcon>primary</TextButton>
+          <TextButton variant="secondary" state="default" icon="arrow_left" showIcon>secondary</TextButton>
+          <TextButton variant="danger" state="default" icon="arrow_left" showIcon>danger</TextButton>
+        </div>
       </Section>
 
       <Section title="icon button">
@@ -138,6 +144,16 @@ export function ComponentSheet() {
           <Input label="email" value="ivan@example.com" required error state="hovered" caption="!поле обязательно для заполнения" />
           <Input label="email" value="ivan@example.com" required error state="focused" caption="!поле обязательно для заполнения" />
           <Input label="email" value="ivan@example.com" required error state="disabled" disabled caption="!поле обязательно для заполнения" />
+
+          <Input label="email" value="ivan@example.com" required state="default" icon="person" showIcon />
+          <Input label="email" value="ivan@example.com" required state="hovered" icon="person" showIcon />
+          <Input label="email" value="ivan@example.com" required state="focused" icon="person" showIcon />
+          <Input label="email" value="ivan@example.com" required state="default" icon="person" showIcon={false} />
+
+          <Input label="email" value="ivan@example.com" required error state="default" caption="!поле обязательно для заполнения" showCaption />
+          <Input label="email" value="ivan@example.com" required error state="hovered" caption="!поле обязательно для заполнения" showCaption />
+          <Input label="email" value="ivan@example.com" required error state="focused" caption="!поле обязательно для заполнения" showCaption={false} />
+          <Input label="email" value="ivan@example.com" required error state="default" showCaption={false} />
         </div>
       </Section>
 
