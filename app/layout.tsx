@@ -7,14 +7,14 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "PushUp Tracker",
   description: "Командный трекер отжиманий с автосчётом через камеру",
-  manifest: "/manifest.json",
+  manifest: "/manifest-v2.json",
   icons: {
     icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-v2.svg", type: "image/svg+xml" },
+      { url: "/icon-192-v2.png", sizes: "192x192", type: "image/png" },
     ],
-    shortcut: "/icon.svg",
-    apple: "/apple-touch-icon.png",
+    shortcut: "/icon-v2.svg",
+    apple: "/apple-touch-icon-v2.png",
   },
   appleWebApp: {
     capable: true,
@@ -49,7 +49,7 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap"
         />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon-v2.png" />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
