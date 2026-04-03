@@ -3,6 +3,8 @@
 import { LoginPreview } from './LoginPreview'
 import { RegisterPreview } from './RegisterPreview'
 import { VerifyEmailPreview } from './VerifyEmailPreview'
+import { ForgotPasswordPreview } from './ForgotPasswordPreview'
+import { ResetPasswordPreview } from './ResetPasswordPreview'
 import HomePreview from './HomePreview'
 import { RoomPreview } from './RoomPreview'
 import AppLoadingScreen from '@/components/AppLoadingScreen'
@@ -65,6 +67,34 @@ export function ScreenCatalog({ themeMode = 'both' }: { themeMode?: ThemeMode })
       <ScreenFrame id="login-error" label="Login — Error" themeMode={themeMode}>
         <LoginPreview error="Неверный email или пароль" />
       </ScreenFrame>
+
+      <ScreenFrame
+        id="forgot-password-form"
+        label="Forgot Password — Form"
+        themeMode={themeMode}
+        render={({ isMobile }) => <ForgotPasswordPreview isMobile={isMobile} mode="empty" />}
+      />
+
+      <ScreenFrame
+        id="forgot-password-sent"
+        label="Forgot Password — Sent"
+        themeMode={themeMode}
+        render={({ isMobile }) => <ForgotPasswordPreview isMobile={isMobile} mode="sent-cooldown" />}
+      />
+
+      <ScreenFrame
+        id="reset-password-form"
+        label="Reset Password — Form"
+        themeMode={themeMode}
+        render={({ isMobile }) => <ResetPasswordPreview isMobile={isMobile} mode="filled" />}
+      />
+
+      <ScreenFrame
+        id="reset-password-success"
+        label="Reset Password — Success"
+        themeMode={themeMode}
+        render={({ isMobile }) => <ResetPasswordPreview isMobile={isMobile} mode="success" />}
+      />
 
       <ScreenFrame id="register-default" label="Register — Default" themeMode={themeMode}>
         <RegisterPreview />

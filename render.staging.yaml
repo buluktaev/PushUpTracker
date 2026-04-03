@@ -1,12 +1,12 @@
 services:
   - type: web
-    name: pushup-tracker-auth-staging
+    name: pushuptracker-staging
     runtime: docker
     dockerfilePath: ./Dockerfile
     plan: free
     region: frankfurt
-    branch: codex/phase1-auth-staging-smoke
-    autoDeployTrigger: commit
+    branch: staging
+    autoDeployTrigger: off
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -14,8 +14,12 @@ services:
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
         sync: false
+      - key: APP_PUBLIC_URL
+        sync: false
       - key: ADMIN_API_KEY
         sync: false
+      - key: NEXT_PUBLIC_ENABLE_REVIEW_ROUTES
+        value: true
       - key: NODE_ENV
         value: production
     healthCheckPath: /api/health

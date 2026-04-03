@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Icon from '@/components/Icon'
 
 export const INPUT_LABEL_TEXT_CLASSNAME =
@@ -60,6 +60,7 @@ export default function Input({
 }: InputProps) {
   const [interactionState, setInteractionState] = useState<'default' | 'hovered' | 'focused'>('default')
   const [isPasswordVisible, setIsPasswordVisible] = useState(Boolean(passwordVisible))
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const inputId = id ?? label.toLowerCase().replace(/\s+/g, '-')
   const resolvedState = disabled ? 'disabled' : state ?? interactionState
@@ -78,6 +79,7 @@ export default function Input({
   const labelColor = resolvedState === 'disabled' ? 'var(--text-disabled)' : 'var(--text-secondary)'
   const requiredColor = resolvedState === 'disabled' ? 'var(--text-disabled)' : 'var(--accent-default)'
   const inputTextColor = resolvedState === 'disabled' ? 'var(--text-disabled)' : hasValue ? 'var(--text-primary)' : 'var(--text-secondary)'
+  const autofillTextColor = resolvedState === 'disabled' ? 'var(--text-disabled)' : 'var(--text-primary)'
   const captionText = showCaption ? caption ?? (error ? '!поле обязательно для заполнения' : undefined) : undefined
   const shouldShowIcon = isPasswordField ? true : (showIcon ?? Boolean(icon))
   const resolvedPasswordVisible = passwordVisible ?? isPasswordVisible
@@ -95,6 +97,17 @@ export default function Input({
     fontFamily: inputFontFamily,
     letterSpacing: inputLetterSpacing,
     textTransform: inputTextTransform,
+  }
+
+  const syncBrowserFilledValue = (nextValue: string) => {
+    if (!onChange || nextValue === (value ?? '')) {
+      return
+    }
+
+    onChange({
+      target: { value: nextValue },
+      currentTarget: { value: nextValue },
+    } as React.ChangeEvent<HTMLInputElement>)
   }
 
   return (
@@ -130,6 +143,7 @@ export default function Input({
           <div className="flex min-w-0 flex-1 items-center px-1">
             <div className="relative min-w-0 flex-1">
             <input
+              ref={inputRef}
               id={inputId}
               type={resolvedInputType}
               value={value}
@@ -144,13 +158,20 @@ export default function Input({
                 if (!disabled && state === undefined) {
                   setInteractionState('focused')
                 }
+                syncBrowserFilledValue(event.currentTarget.value)
                 onFocus?.(event)
               }}
               onBlur={(event) => {
                 if (!disabled && state === undefined) {
                   setInteractionState('default')
                 }
+                syncBrowserFilledValue(event.currentTarget.value)
                 onBlur?.(event)
+              }}
+              onAnimationStart={(event) => {
+                if (event.animationName === 'codex-input-autofill-start') {
+                  syncBrowserFilledValue(event.currentTarget.value)
+                }
               }}
               className="w-full bg-transparent text-[var(--size-16)] font-normal leading-[var(--line-height-24)] tracking-[var(--letter-spacing-0)] outline-none"
               style={inputStyle}
@@ -166,6 +187,7 @@ export default function Input({
                 onMouseDown={(event) => {
                   if (resolvedState !== 'disabled') {
                     event.preventDefault()
+                    syncBrowserFilledValue(inputRef.current?.value ?? '')
                   }
                 }}
                 onClick={() => {
@@ -207,6 +229,11 @@ export default function Input({
       </div>
 
       <style>{`
+        @keyframes codex-input-autofill-start {
+          from {}
+          to {}
+        }
+
         #${inputId}::placeholder {
           color: ${resolvedState === 'disabled' ? 'var(--text-disabled)' : 'var(--text-secondary)'};
         }
@@ -215,8 +242,10 @@ export default function Input({
         #${inputId}:-webkit-autofill:hover,
         #${inputId}:-webkit-autofill:focus,
         #${inputId}:-webkit-autofill:active {
-          -webkit-text-fill-color: ${inputTextColor};
-          caret-color: ${resolvedState === 'disabled' ? 'var(--text-disabled)' : 'var(--text-primary)'};
+          animation-name: codex-input-autofill-start;
+          animation-duration: 0.01s;
+          -webkit-text-fill-color: ${autofillTextColor};
+          caret-color: ${autofillTextColor};
           -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
           box-shadow: 0 0 0 1000px var(--surface) inset;
           transition: background-color 9999s ease-out 0s;

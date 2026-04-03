@@ -14,6 +14,7 @@ import {
   ToggleRow,
 } from '@/app/components/_shared/docs-primitives'
 import IconButton from '@/components/IconButton'
+import { areReviewRoutesEnabled } from '@/lib/review-routes'
 
 type IconButtonVariant = 'primary' | 'secondary' | 'danger'
 type IconButtonState = 'default' | 'hovered' | 'pressed'
@@ -117,7 +118,7 @@ function IconButtonPlayground({ theme }: { theme: ThemeMode }) {
 export default function IconButtonsPage() {
   const [theme, setTheme] = useState<ThemeMode>('light')
 
-  if (process.env.NODE_ENV === 'production') {
+  if (!areReviewRoutesEnabled()) {
     notFound()
   }
 

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { areReviewRoutesEnabled } from '@/lib/review-routes'
 
 const componentPages = [
   {
@@ -31,7 +32,7 @@ const componentPages = [
 ]
 
 export default function ComponentsPage() {
-  if (process.env.NODE_ENV === 'production') {
+  if (!areReviewRoutesEnabled()) {
     notFound()
   }
 

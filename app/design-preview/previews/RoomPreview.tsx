@@ -1,9 +1,12 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
+import IconButton from '@/components/IconButton'
 import { PreviewIcon as Icon } from './PreviewIcon'
 import RoomLeaderboard from '@/components/RoomLeaderboard'
 import RoomProfilePanel from '@/components/RoomProfilePanel'
 import RoomSettingsPanel from '@/components/RoomSettingsPanel'
+import RoomSwitcherMenu from '@/components/RoomSwitcherMenu'
 import Tab from '@/components/Tab'
 import { getExerciseConfig, formatValue } from '@/lib/exerciseConfigs'
 import { getRoomTabs } from '@/lib/roomTabs'
@@ -74,8 +77,13 @@ export function RoomPreview({
   cameraHoldProgress = 0,
   isMobile = false,
 }: RoomPreviewProps) {
+  const mainScrollRef = useRef<HTMLElement | null>(null)
   const exerciseConfig = getExerciseConfig(room.discipline)
   const roomTabs = getRoomTabs(room.discipline, room.isOwner)
+
+  useEffect(() => {
+    mainScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' })
+  }, [tab])
 
   return (
     <div className="min-h-[700px] flex flex-col bg-[var(--bg-surface)] text-[var(--text)]">
@@ -88,49 +96,23 @@ export function RoomPreview({
           <div className="flex items-center gap-2 min-w-0 app-web:px-4 app-web:py-3">
             <h1 className="text-[18px] font-medium leading-[26px] truncate">{room.name}</h1>
             <div className="relative shrink-0">
-              <button
-                className="flex h-8 w-8 items-center justify-center text-[var(--muted)] hover:text-[var(--text)] transition-colors"
-                style={{ border: '1px solid var(--border)' }}
-                aria-label="переключить комнату"
-              >
-                <Icon name={showSwitcher ? 'expand_less' : 'expand_more'} size={14} />
-              </button>
+              <IconButton
+                icon="expand_more"
+                alternateIcon="expand_less"
+                alternateActive={Boolean(showSwitcher)}
+                label="переключить комнату"
+                variant="secondary"
+                size="compact"
+              />
               {showSwitcher && (
-                <div
-                  className="fixed left-0 right-0 top-[57px] z-50 py-1 app-web:absolute app-web:top-full app-web:left-0 app-web:right-auto app-web:min-w-[200px] app-web:mt-1"
-                  style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
-                >
-                  {rooms.map(r => {
-                    const isCurrent = r.roomCode === room.code
-                    return (
-                      <div
-                        key={r.roomCode}
-                        className={`flex items-center transition-colors ${isCurrent ? 'bg-[var(--surface-dim)]' : 'hover:bg-[var(--surface-dim)]'}`}
-                      >
-                        <button
-                          className={`flex-1 flex items-center gap-2 px-3 py-3 text-xs text-left min-w-0 ${isCurrent ? 'cursor-default' : ''}`}
-                        >
-                          <span className={`truncate ${isCurrent ? 'text-[var(--text)] font-medium' : 'text-[var(--text)]'}`}>{r.roomName}</span>
-                          {isCurrent && <span className="text-[10px] tracking-wider text-[var(--accent-default)] shrink-0">[active]</span>}
-                        </button>
-                        <div className="flex items-center gap-2 pr-3 shrink-0">
-                          <span className="text-[10px] text-[var(--muted)]">{r.roomCode}</span>
-                          <button
-                            className="flex items-center justify-center w-8 h-8 app-web:w-6 app-web:h-6 text-[var(--muted)] hover:text-[var(--text)] transition-colors"
-                            aria-label="скопировать код"
-                          >
-                            <Icon name="content_copy" size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  <div style={{ borderTop: '1px solid var(--border)' }} className="mt-1 pt-1" />
-                  <button className="w-full flex items-center gap-2 px-3 py-3 app-web:py-2 text-xs text-[var(--accent-default)] hover:bg-[var(--surface-dim)] transition-colors text-left">
-                    <Icon name="add" size={14} />
-                    <span>add_room()</span>
-                  </button>
-                </div>
+                <RoomSwitcherMenu
+                  rooms={rooms}
+                  currentRoomCode={room.code}
+                  onCopyRoomCode={() => {}}
+                  onSelectRoom={() => {}}
+                  onAddRoom={() => {}}
+                  IconComponent={Icon}
+                />
               )}
             </div>
           </div>
@@ -162,7 +144,10 @@ export function RoomPreview({
         </div>
       </header>
 
-      <main className={`flex-1 w-full mx-auto overflow-y-auto pb-4 app-web:overflow-visible app-web:pb-0 ${tab === 'workout' ? 'max-w-[1024px] p-0 flex flex-col pt-4' : tab === 'leaderboard' ? 'p-4 app-web:pb-[56px]' : tab === 'profile' || tab === 'settings' ? 'p-4 flex flex-col' : 'max-w-2xl p-4'}`}>
+      <main
+        ref={mainScrollRef}
+        className={`flex-1 w-full mx-auto overflow-y-auto pb-4 app-web:overflow-visible app-web:pb-0 ${tab === 'workout' ? 'max-w-[1024px] p-0 flex flex-col pt-4' : tab === 'leaderboard' ? 'p-4 app-web:pb-[56px]' : tab === 'profile' || tab === 'settings' ? 'p-4 flex flex-col' : 'max-w-2xl p-4'}`}
+      >
 
         {/* Leaderboard tab */}
         {tab === 'leaderboard' && (

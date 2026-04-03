@@ -1,12 +1,12 @@
 # Current Status
 
-Updated: 2026-04-02
+Updated: 2026-04-03
 Branch: `feature/phase2-redesign-sync`
 Last memory checkpoint commit: `3429399` (`feat: continue redesign system sync`)
 
 ## Current Goal
 
-Form/auth/create-join redesign phase is functionally closed. The next implementation phase is the room experience (`/room/[code]`) while keeping Figma as the visual source of truth and the repository as the code/behavior contract.
+Redesign implementation is functionally closed. The current phase is pre-prod hardening for the whole product: prod-direct release gates, preview-route isolation, legacy audit, and smoke coverage before production.
 
 ## Active Preview Surface
 
@@ -120,6 +120,10 @@ Form/auth/create-join redesign phase is functionally closed. The next implementa
   - standardized stable worktree dev launch: `npm run dev`
   - repo-local `npm run dev` now cleans stale `.next`, validates the target port, and runs the real Next/Prisma startup in the foreground
   - detached `nohup` startup via external guard script is not considered reliable for this worktree because the server can disappear after reaching `READY`
+  - local Codex startup guidance has now been aligned with that reality:
+    - `dev-stability-guard` supports `--foreground`
+    - `pushuptracker-redesign-workflow` now explicitly requires live PTY startup for this worktree
+    - detached helper startup should be treated only as cleanup/diagnostic support, not as the final stand launch method here
 - Current transition behavior fixes:
   - `/register/name` now keeps the submit loading state until route transition starts
   - this removes the dead idle gap before the next screen appears
@@ -143,6 +147,8 @@ Form/auth/create-join redesign phase is functionally closed. The next implementa
   - `/welcome`
   - `/register/name`
   - `/login`
+  - `/forgot-password`
+  - `/reset-password`
   - post-auth create/join entry on `/`
 - Form-phase interaction/polish now includes:
   - system-theme-only pre-auth screens
@@ -153,6 +159,17 @@ Form/auth/create-join redesign phase is functionally closed. The next implementa
   - global `text-wrap: balance/pretty`
   - section-level stagger reveal on auth/create/join screens
   - contextual password toggle icon animation
+- Password recovery flow is now implemented production-first on the live routes:
+  - `/login` now links into `/forgot-password`
+  - `/forgot-password` supports URL-backed `form` and `sent` states via `?sent=1&email=...`
+  - request success is privacy-safe and does not disclose whether the email exists
+  - resend cooldown / attempts-exceeded now exist for password recovery separately from signup resend
+  - `/reset-password` is a dedicated recovery route and is not mixed into `/auth/confirm`
+  - `/reset-password` validates recovery on mount, shows a generic invalid-link state when recovery is missing/expired, and updates the password via Supabase before local sign-out
+- Review surfaces for auth recovery are now present and shared-component-driven:
+  - `/screens` includes full forgot/reset state coverage on desktop and mobile
+  - `app/design-preview/previews/ScreenCatalog.tsx` now includes forgot/reset frames
+  - preview and live routes reuse shared `ForgotPasswordScreen` and `ResetPasswordScreen`
 - Current testing setup:
   - Prisma Studio is available on a separate local port for the test DB
   - room creation debugging should now be evaluated only against the worktree dev process, not mixed root-env runs
@@ -181,15 +198,18 @@ Form/auth/create-join redesign phase is functionally closed. The next implementa
 
 ## Next Recommended Step
 
-Move from the completed form/auth/create-join phase into the room screens:
+Move into prod-direct rollout preparation:
 
-- continue the workout screen sync after the tab/header contract change
-- audit the remaining `/room/[code]` active/countdown/finish camera states against Figma camera layouts
-- replace any remaining legacy room UI/loading states
-- preserve already-fixed navigation contracts:
-  - logout -> `/login`
-  - `add_room()` -> `/?add=1&fromRoom=<code>`
-  - level-based back inside add-room flow
+- verify production env explicitly:
+  - `NEXT_PUBLIC_ENABLE_REVIEW_ROUTES=false`
+  - `APP_PUBLIC_URL=<prod-host>`
+- prepare production-safe smoke account and room codes
+- take DB backup / snapshot before deploy
+- run `workflow_dispatch` for `.github/workflows/preprod-gate.yml` after production deploy with `PROD_BASE_URL`
+- immediately execute post-deploy smoke:
+  - health smoke
+  - browser smoke
+  - manual auth/create-join/room/recovery checks on production
 
 ## Dev Notes
 
@@ -200,6 +220,10 @@ Move from the completed form/auth/create-join phase into the room screens:
   - worktree `.env.test` currently contains a dead Supabase hostname
   - root `.env` currently contains a reachable Supabase hostname
 - Never run `npm run build` while `next dev` is running in the same worktree
+- Use the release commands instead of ad hoc checks:
+  - `npm run preprod:static`
+  - `npm run smoke:health`
+  - `npm run smoke:browser`
 - If `/components` behaves strangely, treat it as a dev/cache issue first and verify the response body, not just HTTP `200`
 - Screen-level review should happen first on `/screens`; component-level review stays on `/components`
 - `app/design-preview/page.tsx` remains useful as the full reference catalog and parity surface
@@ -339,6 +363,15 @@ Move from the completed form/auth/create-join phase into the room screens:
   - form controls now inherit the active typography contract instead of keeping browser-default fonts
 - Room desktop tabs no longer use an active underline:
   - shared `Tab` now relies on text/icon color only
+- Owner room-tab order is now:
+  - `workout`
+  - `leaderboard`
+  - `profile`
+  - `settings`
+- This order is shared by:
+  - desktop room header tabs
+  - mobile room bottom tabbar
+  - room preview parity surface
 - For local review of the leaderboard screen, `/api/rooms/[code]` now adds a dev-only synthetic leaderboard augmentation for `FR2LAG`:
   - only outside production
   - the augmented response currently returns `23` leaderboard rows for scroll testing
@@ -358,6 +391,71 @@ Move from the completed form/auth/create-join phase into the room screens:
   - tabbar rendering
   - camera off-state
   - state-driven bottom control row
+- Room tab switching now resets scroll position instead of carrying the previous tab's scroll offset:
+  - the shared room content container is reused across tabs, so it must be manually reset on tab change
+  - real `/room/[code]` now resets both:
+    - internal `main` scroll container
+    - window scroll position for desktop overflow-visible branches
+  - `RoomPreview` mirrors the same scroll reset behavior for parity
+- Room tab persistence is now URL-driven on the real route:
+  - active tab is synced through `?tab=leaderboard|workout|profile|settings`
+  - refresh now keeps the current tab instead of resetting to `workout`
+  - invalid tab values fall back to `workout`
+  - `settings` falls back to `workout` for non-owner rooms
+  - changing tabs updates the URL without a full page reload
+  - tab clicks no longer use App Router navigation for query updates:
+    - local UI switches immediately
+    - URL is updated via `history.pushState/replaceState`
+    - this avoids the noticeable first-switch lag introduced by `router.push(...)` on each tab change
+  - follow-up fix:
+    - URL-to-state sync no longer depends on the local `tab` state itself
+    - this removes the rollback loop where a click updated the URL, but stale `searchParams` immediately restored the previous tab until refresh
+- Latest room follow-up batch after the previous checkpoint also stabilized:
+  - shared room switcher dropdown geometry/states/borders
+  - profile/settings localization and destructive-action copy
+  - settings delete-confirm validation, disabled-state, mobile autoscroll, and field-level wrong-password error binding
+- Room switcher dropdown is now a shared production component instead of duplicated inline header markup:
+  - `RoomSwitcherMenu` now drives both the real room route and the preview parity surface
+  - state coverage now includes:
+    - current room row
+    - available room row
+    - copy/check icon swap
+    - hover state for available rooms
+    - add-room CTA row
+  - copy was normalized to Russian:
+    - current tag -> `текущая`
+    - add CTA -> `добавить комнату`
+  - width contract:
+    - mobile -> stretched to the room shell via `left-4 right-4`
+    - web -> fixed width `280px`
+  - dropdown container now uses a `4px` inner inset around its bordered content groups
+  - later refinement removed the extra internal bordered groups:
+    - no per-item dividers between room rows
+    - no extra border around the room list
+    - no extra border around the add-room CTA block
+  - follow-up refinement restored a border on the room row container itself without bringing back:
+    - row dividers between items
+    - group-level list border
+  - final correction moved that border off the room rows:
+    - room rows stay borderless
+    - the lower part of the dropdown is now explicitly three-layer:
+      - last room list item
+      - separator container with a single line and `4px` top/bottom padding
+      - add-room text-button container
+  - extra top gap before the separator line was removed:
+    - no outer top padding above the separator block
+    - only the separator container itself keeps the `4px / 4px` rhythm
+  - current-room badge `текущая` now follows the reviewed typography:
+    - `Font Family Primary`
+    - `14px / 22px`
+    - `accent-accent-default`
+  - add-room icon now explicitly uses the accent token
+  - copied-state `check` icon now uses the success token instead of accent
+  - right-side room meta block now uses `8px` from the list-item edge to the icon wrapper
+  - long room names now truncate inside the left flexible area without pushing out:
+    - current tag
+    - room code
+    - copy button
 - Profile desktop bottom anchoring depends on screen-level layout, not only the shared panel:
   - `RoomProfilePanel` keeps the internal `mt-auto` stack
   - the `profile` branch of room `main` must also stay `flex flex-col`, otherwise the lower logout/danger stack will not pin to the viewport bottom
@@ -373,5 +471,131 @@ Move from the completed form/auth/create-join phase into the room screens:
     - room settings delete confirmation
     - `/login`
     - `/register`
+- Generic auth-recovery request errors now use global toast notifications via `sonner`:
+  - one shared `AppToaster` is mounted in the root layout
+  - toaster position is `top-center`
+  - toasts are styled with the project danger tokens and no corner radius
+  - only generic request/server/network failures were moved to toast on:
+    - `/forgot-password`
+    - `/reset-password`
+  - field-level validation stays inline inside the form controls
+- Password-recovery local tunnel workaround is now documented and implemented for pre-staging verification:
+  - root cause: recovery emails kept falling back to the Supabase `Site URL` (`pushup-tracker-auth-staging.onrender.com`) because the live staging service does not yet contain the new recovery routes
+  - additional root cause: the recovery request route originally derived `redirectTo` only from `request.url`, which is not reliable behind a tunnel/proxy
+  - fix:
+    - `app/api/auth/password-reset/request/route.ts` now resolves the public origin in this order:
+      - `APP_PUBLIC_URL`
+      - `x-forwarded-proto` + `x-forwarded-host`
+      - `request.url` fallback
+    - local worktree `.env` / `.env.test` currently pin `APP_PUBLIC_URL` to the active tunnel:
+      - `https://wohafg-ip-50-7-33-234.tunnelmole.net`
+  - current temporary testing contract:
+    - local app is tested through the tunnel instead of the stale staging host
+    - Supabase redirect allowlist must include the tunnel root and `/reset-password`
+  - follow-up recovery-session fix:
+    - the reset-password page originally listened only for `PASSWORD_RECOVERY`
+    - with the current PKCE-based `@supabase/ssr` browser client, recovery redirect can complete via `SIGNED_IN`
+    - the page now captures the recovery URL hint before Supabase cleans the URL and accepts:
+      - `PASSWORD_RECOVERY`
+      - `SIGNED_IN` when the page was opened from a recovery link
+  - operational caveat:
+    - PKCE recovery must be completed in the same browser/device where the reset email was requested, because the local code verifier cookie is required for session exchange
+  - invalid-link reset state now offers recovery retry instead of login:
+    - the old `уже есть аккаунт? авторизоваться` footer was removed from `/reset-password`
+    - invalid state now renders a secondary button `попробовать снова`
+    - the button routes back to `/forgot-password`
+  - password-reset request endpoint now distinguishes Supabase email send limits from true server failures:
+    - `over_email_send_rate_limit` / `429` from Supabase is mapped to route-level `429 rate_limit`
+    - the client-side forgot-password flow can now stay on the resend/blocked path instead of showing a fake generic `500` error
+  - forgot-password rate-limit behavior is now split by screen:
+    - initial `/forgot-password` submit no longer redirects into `sent-state` on `429`
+    - the first screen now stays in place and shows a toast with the remaining wait time
+    - repeated submit attempts while blocked reuse the stored timestamp and refresh the toast countdown without sending a new request
+    - inline blocked/cooldown UI remains only on the `проверьте почту` screen for the `отправить повторно` action
+  - shared auth-recovery toast polish now also includes:
+    - `8px` gap between icon and text
+    - real desktop centering by moving the width contract to the Sonner container instead of the inner toast node
+  - forgot-password sent-state resend CTA is now fully lowercase:
+    - `отправить повторно`
+    - `отправить повторно через ...`
+  - recovery transition polish now also includes:
+    - `/forgot-password` keeps the first-screen loading state through the route transition into `sent-state`, instead of unlocking the form before the next screen takes over
+    - shared `Input` now forces browser autofill/generated password text to use the real value color (`text-primary`), so generated passwords no longer look like placeholder text
+    - `/reset-password` recovery validation now polls for the session directly during the PKCE validation window, treats the first successful recovery resolution as final, and no longer flashes `ошибка` between `проверяем ссылку...` and the password form
+    - shared password inputs now also sync browser autofill/generated password values back into React state on recovery screens, so the custom eye-toggle can work on live `/reset-password`
+    - reset-password previews no longer force `passwordVisible={false}` in non-preview-visible states, so review surfaces and live route share the same self-managed toggle contract by default
+- successful password-recovery redirect now performs one clean handoff to `/reset-password` without the email-link PKCE URL state, so the password form runs on a stable page instance after the recovery session is confirmed
+- Preview/review routes now have a two-layer protection contract:
+  - page-level `notFound()` remains as a local fallback
+  - production/staging truth is enforced server-side in `middleware.ts`
+  - production-like smoke should validate them with `SMOKE_REVIEW_ROUTES_MODE=closed`
+- Current external blocker on final recovery verification:
+  - built-in Supabase email sending limits are now the bottleneck for repeat reset-password testing
+  - current upstream `over_email_send_rate_limit` does not provide a trustworthy countdown we can show as-is
+  - tomorrow's likely follow-up is to decide between:
+    - connecting custom SMTP for reliable repeated testing
+    - or removing the fake upstream countdown and keeping only honest non-timed messaging for Supabase-side rate limits
+- Pre-prod release pack now exists in the repo:
+  - `docs/pre-prod-release-checklist.md`
+  - `docs/pre-prod-status.md`
+  - `docs/pre-prod-test-plan.md`
+  - `.github/workflows/preprod-gate.yml`
+  - `playwright.config.ts`
+  - `tests/smoke/*`
+- Review-route env contract is now explicit:
+  - staging -> `NEXT_PUBLIC_ENABLE_REVIEW_ROUTES=true`
+  - production -> `NEXT_PUBLIC_ENABLE_REVIEW_ROUTES=false`
+  - `APP_PUBLIC_URL` is now part of the deploy contract for recovery links
+- Render deploy config now reflects the intended rollout path:
+  - `render.yaml` differentiates staging/prod review-route behavior
+  - `render.staging.yaml` no longer points at the stale `codex/phase1-auth-staging-smoke` branch
+- Repo-local release commands now exist:
+  - `npm run typecheck`
+  - `npm run audit:legacy`
+  - `npm run smoke:health`
+  - `npm run smoke:browser`
+  - `npm run preprod:static`
+- Current verified release state:
+  - `npm run preprod:static` -> OK
+  - local prod-like `smoke:health` -> OK
+  - local prod-like `smoke:browser` -> OK
+  - production-like runtime now returns `404` for:
+    - `/components`
+    - `/screens`
+    - `/design-preview`
+  - unauth redirect from `/room/[code]?tab=settings` no longer leaks `tab=settings` into the login page query
+- Current release warnings that still need explicit product/cleanup decisions:
+  - `LEGACY_PATH_ICONS` still exists in the icon layer
+  - `lib/exerciseConfigs.ts` still contains a TODO for placeholder exercise icons
+  - recovery upstream rate-limit UX still uses a synthetic fallback and should be revisited before final prod signoff
+- Remote release workflow is now production-oriented:
+  - `.github/workflows/preprod-gate.yml` uses `PROD_BASE_URL`
+  - post-deploy remote browser smoke runs with `SMOKE_REVIEW_ROUTES_MODE=closed`
+  - authenticated slices still require:
+    - `SMOKE_LOGIN_EMAIL`
+    - `SMOKE_LOGIN_PASSWORD`
+    - `SMOKE_ROOM_CODE`
+    - `SMOKE_OWNER_ROOM_CODE`
+- GitHub Actions production smoke contract is now configured at the repo level:
+  - variable:
+    - `PROD_BASE_URL=https://pushuptracker-oq2o.onrender.com`
+  - secrets:
+    - `SMOKE_LOGIN_EMAIL`
+    - `SMOKE_LOGIN_PASSWORD`
+    - `SMOKE_ROOM_CODE`
+    - `SMOKE_OWNER_ROOM_CODE`
+  - operational caveats:
+    - `workflow_dispatch` will still not be available until `.github/workflows/preprod-gate.yml` is merged into the default branch
+    - production DB backup/snapshot still must be created before the actual rollout
+- Production DB backup path for this project is now standardized in the local skill:
+  - `pushuptracker-redesign-workflow`
+  - preferred terminal backup uses `pg_dump` against the Yandex PostgreSQL host with:
+    - fixed host/user/db/port contract
+    - only the password requested from the user
+    - `sslmode=require`
+    - `pg_restore --list` verification after dump creation
+- The same backup contract is now also repo-managed:
+  - `AGENTS.md` requires pre-release DB backup and defines the canonical `pg_dump` path
+  - `docs/pre-prod-release-checklist.md` mirrors the same contract for human rollout steps
 - Validate memory integrity with:
   - `python3 /Users/buluktaev/.codex/skills/project-memory/scripts/validate_project_memory.py /Users/buluktaev/Documents/GitHub/PushUpTracker/.worktrees/phase2-redesign-sync`

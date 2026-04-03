@@ -14,8 +14,12 @@ services:
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
         sync: false
+      - key: APP_PUBLIC_URL
+        sync: false
       - key: ADMIN_API_KEY
         sync: false
+      - key: NEXT_PUBLIC_ENABLE_REVIEW_ROUTES
+        value: false
       - key: NODE_ENV
         value: production
     healthCheckPath: /api/health
@@ -34,8 +38,12 @@ services:
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
         sync: false
+      - key: APP_PUBLIC_URL
+        sync: false
       - key: ADMIN_API_KEY
         sync: false
+      - key: NEXT_PUBLIC_ENABLE_REVIEW_ROUTES
+        value: true
       - key: NODE_ENV
         value: production
     healthCheckPath: /api/health

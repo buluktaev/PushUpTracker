@@ -138,14 +138,21 @@ function LoginContent() {
             </RevealSection>
 
             <RevealSection delay={300} className="flex h-6 w-full flex-col items-end">
-                <TextButton
-                  variant="primary"
-                  type="button"
-                  disabled={loading}
-                  className="!h-6 !justify-end !px-0 !text-[16px] !leading-[24px]"
-                >
+              {loading ? (
+                <span className="text-[var(--text-disabled)]" aria-disabled="true">
                   Забыли пароль?
-                </TextButton>
+                </span>
+              ) : (
+                <Link href="/forgot-password" className="inline-flex">
+                  <TextButton
+                    as="span"
+                    variant="primary"
+                    className="!h-6 !justify-end !px-0 !text-[16px] !leading-[24px]"
+                  >
+                    Забыли пароль?
+                  </TextButton>
+                </Link>
+              )}
             </RevealSection>
 
             <RevealSection delay={400} className="pt-[32px]">

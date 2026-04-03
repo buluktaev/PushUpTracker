@@ -17,7 +17,9 @@ export function getRoomTabs(discipline: string | undefined, isOwner: boolean): R
   ]
 
   if (isOwner) {
+    tabs.push({ key: 'profile', label: 'Профиль', icon: 'person' })
     tabs.push({ key: 'settings', label: 'Настройки', icon: 'settings' })
+    return tabs
   }
 
   tabs.push({ key: 'profile', label: 'Профиль', icon: 'person' })

@@ -174,7 +174,7 @@ export function DesignSystemLight() {
   return (
     <div className="min-h-[700px] p-6 space-y-10" style={{ background: L.bg, color: L.text }}>
       <div className="space-y-1 pb-4" style={{ borderBottom: `1px solid ${L.border}` }}>
-        <div className="text-[10px] tracking-widest" style={{ color: L.muted }}>// DESIGN SYSTEM</div>
+        <div className="text-[10px] tracking-widest" style={{ color: L.muted }}>{'// DESIGN SYSTEM'}</div>
         <div className="text-2xl font-bold tracking-tight">PushUpTracker</div>
         <div className="text-[11px] tracking-wide" style={{ color: L.muted }}>
           Google Sans · Material Symbols · Zero border-radius

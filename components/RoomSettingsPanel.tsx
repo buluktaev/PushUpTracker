@@ -241,6 +241,7 @@ export default function RoomSettingsPanel({
                 label="Название комнаты"
                 value={deleteRoomName}
                 placeholder="Введите название комнаты"
+                autoComplete="off"
                 required
                 onChange={event => onDeleteRoomNameChange?.(event.target.value)}
               />
@@ -251,6 +252,7 @@ export default function RoomSettingsPanel({
                 type="password"
                 value={deletePassword}
                 placeholder="Введите пароль"
+                autoComplete="new-password"
                 required
                 error={Boolean(deletePasswordError)}
                 caption={deletePasswordError}

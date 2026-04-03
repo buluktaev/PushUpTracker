@@ -17,9 +17,9 @@ export interface RateLimitResult {
   retryAfter: number | null // unix ms timestamp когда сбросится лимит
 }
 
-export function checkRateLimit(email: string): RateLimitResult {
+export function checkRateLimit(email: string, scope = 'signup-resend'): RateLimitResult {
   const now = Date.now()
-  const key = email.toLowerCase().trim()
+  const key = `${scope}:${email.toLowerCase().trim()}`
   const entry = store.get(key)
 
   if (!entry || now - entry.windowStart >= WINDOW_MS) {

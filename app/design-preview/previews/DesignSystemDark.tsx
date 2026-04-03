@@ -174,7 +174,7 @@ export function DesignSystemDark() {
   return (
     <div className="min-h-[700px] p-6 space-y-10" style={{ background: D.bg, color: D.text }}>
       <div className="space-y-1 pb-4" style={{ borderBottom: `1px solid ${D.border}` }}>
-        <div className="text-[10px] tracking-widest" style={{ color: D.muted }}>// DESIGN SYSTEM</div>
+        <div className="text-[10px] tracking-widest" style={{ color: D.muted }}>{'// DESIGN SYSTEM'}</div>
         <div className="text-2xl font-bold tracking-tight">PushUpTracker</div>
         <div className="text-[11px] tracking-wide" style={{ color: D.muted }}>
           Google Sans · Material Symbols · Zero border-radius

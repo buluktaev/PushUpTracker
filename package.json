@@ -7,9 +7,15 @@
     "dev": "./scripts/start-dev-worktree.sh",
     "dev:next": "prisma migrate deploy && next dev",
     "studio:test": "./scripts/prisma-studio-test.sh",
+    "typecheck": "tsc --noEmit",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "audit:legacy": "bash ./scripts/audit-legacy.sh",
+    "smoke:health": "node ./scripts/smoke-health.mjs",
+    "smoke:browser": "playwright test",
+    "smoke:browser:headed": "playwright test --headed",
+    "preprod:static": "npm run typecheck && npm run lint && npm run build && npm run audit:legacy"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^0.10.32",
@@ -27,9 +33,11 @@
     "pg": "^8.20.0",
     "prisma": "^7.4.2",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AgentationRuntime from "@/components/AgentationRuntime";
+import AppToaster from "@/components/AppToaster";
 import ThemeRuntime from "@/components/ThemeRuntime";
 import "./globals.css";
 
@@ -47,6 +48,7 @@ export default function RootLayout({
         <ThemeRuntime />
         <AgentationRuntime />
         {children}
+        <AppToaster />
       </body>
     </html>
   );

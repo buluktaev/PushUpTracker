@@ -13,6 +13,7 @@ import {
   ToggleRow,
 } from '@/app/components/_shared/docs-primitives'
 import Input from '@/components/Input'
+import { areReviewRoutesEnabled } from '@/lib/review-routes'
 
 type InputVisualState = 'default' | 'hovered' | 'focused'
 
@@ -103,7 +104,7 @@ function InputPlayground({ theme }: { theme: ThemeMode }) {
 export default function InputsPage() {
   const [theme, setTheme] = useState<ThemeMode>('light')
 
-  if (process.env.NODE_ENV === 'production') {
+  if (!areReviewRoutesEnabled()) {
     notFound()
   }
 

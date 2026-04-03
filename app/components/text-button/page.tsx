@@ -14,6 +14,7 @@ import {
   ToggleRow,
 } from '@/app/components/_shared/docs-primitives'
 import TextButton from '@/components/TextButton'
+import { areReviewRoutesEnabled } from '@/lib/review-routes'
 
 type TextButtonVariant = 'primary' | 'secondary' | 'danger'
 type TextButtonState = 'default' | 'hovered' | 'pressed'
@@ -125,7 +126,7 @@ function TextButtonPlayground({ theme }: { theme: ThemeMode }) {
 export default function TextButtonsPage() {
   const [theme, setTheme] = useState<ThemeMode>('light')
 
-  if (process.env.NODE_ENV === 'production') {
+  if (!areReviewRoutesEnabled()) {
     notFound()
   }
 

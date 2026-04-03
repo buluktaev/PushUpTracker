@@ -9,11 +9,12 @@ import IconButton from '@/components/IconButton'
 import RoomLeaderboard from '@/components/RoomLeaderboard'
 import RoomProfilePanel from '@/components/RoomProfilePanel'
 import RoomSettingsPanel from '@/components/RoomSettingsPanel'
+import RoomSwitcherMenu from '@/components/RoomSwitcherMenu'
 import Tab from '@/components/Tab'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useRooms, type SavedRoom } from '@/hooks/useRooms'
 import { getExerciseConfig, formatValue } from '@/lib/exerciseConfigs'
-import { getRoomTabs } from '@/lib/roomTabs'
+import { getRoomTabs, type RoomTabKey } from '@/lib/roomTabs'
 
 const CameraWorkout = dynamic(() => import('@/components/CameraWorkout'), {
   ssr: false,
@@ -51,6 +52,18 @@ interface ProfileData {
   name: string
 }
 
+function resolveRoomTab(tabParam: string | null, isOwner: boolean): RoomTabKey {
+  if (tabParam === 'leaderboard' || tabParam === 'workout' || tabParam === 'profile') {
+    return tabParam
+  }
+
+  if (tabParam === 'settings' && isOwner) {
+    return 'settings'
+  }
+
+  return 'workout'
+}
+
 export default function RoomPage() {
   const params = useParams()
   const searchParams = useSearchParams()
@@ -60,6 +73,7 @@ export default function RoomPage() {
   const { rooms, loaded, addRoom, removeRoom, clearRooms, getRoom } = useRooms()
   const leavingRef = useRef(false)
   const switcherRef = useRef<HTMLDivElement>(null)
+  const mainScrollRef = useRef<HTMLElement | null>(null)
   const [showSwitcher, setShowSwitcher] = useState(false)
 
   useEffect(() => {
@@ -75,8 +89,7 @@ export default function RoomPage() {
   const [copiedSwitcher, setCopiedSwitcher] = useState<string | null>(null)
   const previousRoomNameRef = useRef<string | null>(null)
 
-  function copySwitcherCode(e: React.MouseEvent, roomCode: string) {
-    e.stopPropagation()
+  function copySwitcherCode(roomCode: string) {
     navigator.clipboard.writeText(roomCode)
     setCopiedSwitcher(roomCode)
     setTimeout(() => setCopiedSwitcher(null), 2000)
@@ -98,6 +111,28 @@ export default function RoomPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteRoomName, setDeleteRoomName] = useState('')
   const [deletePassword, setDeletePassword] = useState('')
+
+  const syncTabInUrl = useCallback((nextTab: RoomTabKey, replace = false) => {
+    const params = new URLSearchParams(searchParams.toString())
+
+    if (nextTab === 'workout') {
+      params.delete('tab')
+    } else {
+      params.set('tab', nextTab)
+    }
+
+    const query = params.toString()
+    const href = query ? `/room/${code}?${query}` : `/room/${code}`
+
+    const state = window.history.state
+
+    if (replace) {
+      window.history.replaceState(state, '', href)
+      return
+    }
+
+    window.history.pushState(state, '', href)
+  }, [code, searchParams])
 
   // Сброс при переходе между комнатами
   useEffect(() => {
@@ -201,6 +236,34 @@ export default function RoomPage() {
     }
     previousRoomNameRef.current = room.name
   }, [room, renameValue])
+
+  useEffect(() => {
+    if (!room) return
+
+    const requestedTab = searchParams.get('tab')
+    const resolvedTab = resolveRoomTab(requestedTab, room.isOwner)
+
+    if (tab !== resolvedTab) {
+      setTab(resolvedTab)
+    }
+
+    const normalizedRequestedTab = requestedTab === 'workout' ? null : requestedTab
+    const normalizedResolvedTab = resolvedTab === 'workout' ? null : resolvedTab
+
+    if (normalizedRequestedTab !== normalizedResolvedTab) {
+      syncTabInUrl(resolvedTab, true)
+    }
+  }, [room, searchParams, syncTabInUrl])
+
+  useEffect(() => {
+    mainScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' })
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }, [tab])
+
+  const handleTabChange = useCallback((nextTab: RoomTabKey) => {
+    setTab(nextTab)
+    syncTabInUrl(nextTab)
+  }, [syncTabInUrl])
 
   function copyCode() {
     navigator.clipboard.writeText(code)
@@ -351,68 +414,21 @@ export default function RoomPage() {
                 size="compact"
               />
               {showSwitcher && (
-                <div
-                  className="fixed left-0 right-0 top-[57px] z-50 py-1 animate-pop-in app-web:absolute app-web:top-full app-web:left-0 app-web:right-auto app-web:min-w-[200px] app-web:mt-1"
-                  style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
-                >
-                  {rooms.map(r => {
-                    const isCurrent = r.roomCode === code
-                    return (
-                      <div
-                        key={r.roomCode}
-                        className={`flex items-center transition-colors ${isCurrent ? 'bg-[var(--surface-dim)]' : 'hover:bg-[var(--surface-dim)]'}`}
-                      >
-                        <button
-                          onClick={() => { if (!isCurrent) { setShowSwitcher(false); router.push(`/room/${r.roomCode}`) } }}
-                          className={`flex-1 flex items-center gap-2 px-3 py-3 text-xs text-left min-w-0 ${isCurrent ? 'cursor-default' : ''}`}
-                        >
-                          <span className={`truncate ${isCurrent ? 'text-[var(--text)] font-medium' : 'text-[var(--text)]'}`}>{r.roomName}</span>
-                          {isCurrent && <span className="text-[10px] tracking-wider text-[var(--accent-default)] shrink-0">[active]</span>}
-                        </button>
-                        <div className="flex items-center gap-2 pr-3 shrink-0">
-                          <span className="text-[10px] text-[var(--muted)]">{r.roomCode}</span>
-                          <button
-                            onClick={e => copySwitcherCode(e, r.roomCode)}
-                            className="flex items-center justify-center w-8 h-8 app-web:w-6 app-web:h-6 text-[var(--muted)] hover:text-[var(--text)] transition-colors"
-                            aria-label="скопировать код"
-                          >
-                            <span className="relative inline-flex h-4 w-4 items-center justify-center">
-                              <span
-                                aria-hidden="true"
-                                className={`absolute inset-0 inline-flex items-center justify-center transition-[opacity,transform,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] ${
-                                  copiedSwitcher === r.roomCode
-                                    ? 'opacity-0 scale-[0.25] blur-[4px]'
-                                    : 'opacity-100 scale-100 blur-0'
-                                }`}
-                              >
-                                <Icon name="content_copy" size={16} />
-                              </span>
-                              <span
-                                aria-hidden="true"
-                                className={`absolute inset-0 inline-flex items-center justify-center transition-[opacity,transform,filter] duration-300 [transition-timing-function:cubic-bezier(0.2,0,0,1)] ${
-                                  copiedSwitcher === r.roomCode
-                                    ? 'opacity-100 scale-100 blur-0'
-                                    : 'opacity-0 scale-[0.25] blur-[4px]'
-                                }`}
-                                style={{ color: '#22c55e' }}
-                              >
-                                <Icon name="check" size={16} />
-                              </span>
-                            </span>
-                          </button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  <div style={{ borderTop: '1px solid var(--border)' }} className="mt-1 pt-1" />
-                  <button
-                    onClick={() => { setShowSwitcher(false); router.push(`/?add=1&fromRoom=${code}`) }}
-                    className="w-full flex items-center gap-2 px-3 py-3 app-web:py-2 text-xs text-[var(--accent-default)] hover:bg-[var(--surface-dim)] transition-colors text-left"
-                  >
-                    <Icon name="add" size={14} />
-                    <span>add_room()</span>
-                  </button>
-                </div>
+                <RoomSwitcherMenu
+                  rooms={rooms}
+                  currentRoomCode={code}
+                  copiedRoomCode={copiedSwitcher}
+                  onCopyRoomCode={copySwitcherCode}
+                  onSelectRoom={roomCode => {
+                    if (roomCode === code) return
+                    setShowSwitcher(false)
+                    router.push(`/room/${roomCode}`)
+                  }}
+                  onAddRoom={() => {
+                    setShowSwitcher(false)
+                    router.push(`/?add=1&fromRoom=${code}`)
+                  }}
+                />
               )}
             </div>
           </div>
@@ -422,7 +438,7 @@ export default function RoomPage() {
             {roomTabs.map(tabItem => (
                 <Tab
                   key={tabItem.key}
-                  onClick={() => setTab(tabItem.key)}
+                  onClick={() => handleTabChange(tabItem.key)}
                   role="tab"
                   aria-selected={tab === tabItem.key}
                   label={tabItem.label}
@@ -439,7 +455,10 @@ export default function RoomPage() {
         </div>
       </header>
 
-      <main className={`flex-1 w-full mx-auto overflow-y-auto pb-4 app-web:overflow-visible app-web:pb-0 ${tab === 'workout' ? 'max-w-[1024px] p-0 flex flex-col pt-4' : tab === 'leaderboard' ? 'p-4 app-web:pb-[56px]' : tab === 'profile' || tab === 'settings' ? 'p-4 flex flex-col' : 'max-w-2xl p-4'}`}>
+      <main
+        ref={mainScrollRef}
+        className={`flex-1 w-full mx-auto overflow-y-auto pb-4 app-web:overflow-visible app-web:pb-0 ${tab === 'workout' ? 'max-w-[1024px] p-0 flex flex-col pt-4' : tab === 'leaderboard' ? 'p-4 app-web:pb-[56px]' : tab === 'profile' || tab === 'settings' ? 'p-4 flex flex-col' : 'max-w-2xl p-4'}`}
+      >
         {tab === 'leaderboard' && (
           <div className="mx-auto w-full app-web:max-w-[720px]">
             <RoomLeaderboard
@@ -478,7 +497,12 @@ export default function RoomPage() {
             onRenameChange={setRenameValue}
             onRenameSubmit={handleRename}
             onKick={handleKick}
-            onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
+            onShowDeleteConfirm={() => {
+              setDeleteRoomName('')
+              setDeletePassword('')
+              setDeletePasswordError('')
+              setShowDeleteConfirm(true)
+            }}
             onHideDeleteConfirm={() => {
               setShowDeleteConfirm(false)
               setDeleteRoomName('')
@@ -527,7 +551,7 @@ export default function RoomPage() {
           {roomTabs.map(tabItem => (
               <Tab
                 key={tabItem.key}
-                onClick={() => setTab(tabItem.key)}
+                onClick={() => handleTabChange(tabItem.key)}
                 role="tab"
                 aria-selected={tab === tabItem.key}
                 label={tabItem.label}

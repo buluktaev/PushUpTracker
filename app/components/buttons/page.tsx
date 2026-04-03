@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import Button from '@/components/Button'
+import { areReviewRoutesEnabled } from '@/lib/review-routes'
 
 type ThemeMode = 'light' | 'dark'
 type ButtonVariant = 'primary' | 'secondary' | 'danger'
@@ -285,7 +286,7 @@ function InteractiveButtonDemo({ theme }: { theme: ThemeMode }) {
 export default function ButtonsPage() {
   const [theme, setTheme] = useState<ThemeMode>('light')
 
-  if (process.env.NODE_ENV === 'production') {
+  if (!areReviewRoutesEnabled()) {
     notFound()
   }
 

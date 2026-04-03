@@ -1,0 +1,83 @@
+name: preprod-gate
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  static-gates:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy?sslmode=no-verify
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key
+      APP_PUBLIC_URL: http://127.0.0.1:3000
+      NEXT_PUBLIC_ENABLE_REVIEW_ROUTES: true
+      ADMIN_API_KEY: dummy-admin-key
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run static pre-prod gates
+        run: npm run preprod:static
+
+  production-health-smoke:
+    needs: static-gates
+    if: ${{ github.event_name == 'workflow_dispatch' && vars.PROD_BASE_URL != '' }}
+    runs-on: ubuntu-latest
+    env:
+      SMOKE_BASE_URL: ${{ vars.PROD_BASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Health smoke against production
+        run: npm run smoke:health
+
+  production-browser-smoke:
+    needs: static-gates
+    if: ${{ github.event_name == 'workflow_dispatch' && vars.PROD_BASE_URL != '' }}
+    runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_BASE_URL: ${{ vars.PROD_BASE_URL }}
+      SMOKE_REVIEW_ROUTES_MODE: closed
+      SMOKE_LOGIN_EMAIL: ${{ secrets.SMOKE_LOGIN_EMAIL }}
+      SMOKE_LOGIN_PASSWORD: ${{ secrets.SMOKE_LOGIN_PASSWORD }}
+      SMOKE_ROOM_CODE: ${{ secrets.SMOKE_ROOM_CODE }}
+      SMOKE_OWNER_ROOM_CODE: ${{ secrets.SMOKE_OWNER_ROOM_CODE }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser smoke against production
+        run: npm run smoke:browser

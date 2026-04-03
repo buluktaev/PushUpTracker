@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { notFound } from 'next/navigation'
+import { areReviewRoutesEnabled } from '@/lib/review-routes'
 import { ComponentSheet } from './previews/ComponentSheet'
 import { DesignSystemLight } from './previews/DesignSystemLight'
 import { DesignSystemDark } from './previews/DesignSystemDark'
@@ -18,7 +19,7 @@ const NAV_ITEMS = [
 ]
 
 export default function DesignPreviewPage() {
-  if (process.env.NODE_ENV === 'production') {
+  if (!areReviewRoutesEnabled()) {
     notFound()
   }
 
