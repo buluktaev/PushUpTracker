@@ -105,7 +105,7 @@ function LoginContent() {
             <RevealSection delay={200} className="flex flex-col gap-2">
               <div className="pt-4">
                 <Input
-                  label="Электронная почта"
+                  label="электронная почта"
                   type="email"
                   value={email}
                   placeholder="введите почту"
@@ -139,17 +139,17 @@ function LoginContent() {
 
             <RevealSection delay={300} className="flex h-6 w-full flex-col items-end">
               {loading ? (
-                <span className="text-[var(--text-disabled)]" aria-disabled="true">
-                  Забыли пароль?
-                </span>
-              ) : (
-                <Link href="/forgot-password" className="inline-flex">
+                  <span className="text-[var(--text-disabled)]" aria-disabled="true">
+                  забыли пароль?
+                  </span>
+                ) : (
+                  <Link href="/forgot-password" className="inline-flex">
                   <TextButton
                     as="span"
                     variant="primary"
                     className="!h-6 !justify-end !px-0 !text-[16px] !leading-[24px]"
                   >
-                    Забыли пароль?
+                    забыли пароль?
                   </TextButton>
                 </Link>
               )}

@@ -13,16 +13,16 @@ export function getRoomTabs(discipline: string | undefined, isOwner: boolean): R
 
   const tabs: RoomTabItem[] = [
     { key: 'workout', label: workoutTab.tabLabel, icon: workoutTab.icon },
-    { key: 'leaderboard', label: 'Рейтинг', icon: 'emoji_events' },
+    { key: 'leaderboard', label: 'рейтинг', icon: 'emoji_events' },
   ]
 
   if (isOwner) {
-    tabs.push({ key: 'profile', label: 'Профиль', icon: 'person' })
-    tabs.push({ key: 'settings', label: 'Настройки', icon: 'settings' })
+    tabs.push({ key: 'profile', label: 'профиль', icon: 'person' })
+    tabs.push({ key: 'settings', label: 'настройки', icon: 'settings' })
     return tabs
   }
 
-  tabs.push({ key: 'profile', label: 'Профиль', icon: 'person' })
+  tabs.push({ key: 'profile', label: 'профиль', icon: 'person' })
 
   return tabs
 }

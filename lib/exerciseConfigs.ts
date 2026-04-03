@@ -36,7 +36,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "pushups",
     name: "Отжимания",
-    tabLabel: "Отжимания",
+    tabLabel: "отжимания",
     icon: "push_up",
     mode: "reps",
     bodyCheck: "horizontal",
@@ -56,7 +56,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "squats",
     name: "Приседания",
-    tabLabel: "Присед",
+    tabLabel: "присед",
     icon: "squad",
     mode: "reps",
     bodyCheck: "vertical",
@@ -76,7 +76,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "crunches",
     name: "Скручивания",
-    tabLabel: "Скручивания",
+    tabLabel: "скручивания",
     icon: "crunches",
     mode: "reps",
     bodyCheck: "horizontal",
@@ -96,7 +96,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "bicep_curl",
     name: "Сгибание на бицепс",
-    tabLabel: "Бицепс",
+    tabLabel: "бицепс",
     icon: "biceps",
     mode: "reps",
     bodyCheck: "vertical",
@@ -117,7 +117,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "pullups",
     name: "Подтягивания",
-    tabLabel: "Подтягивания",
+    tabLabel: "подтягивания",
     icon: "pull_up",
     mode: "reps",
     bodyCheck: "vertical",
@@ -138,7 +138,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "lateral_raise",
     name: "Махи в стороны",
-    tabLabel: "Махи",
+    tabLabel: "махи",
     icon: "swing",
     mode: "reps",
     bodyCheck: "vertical",
@@ -158,7 +158,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "plank",
     name: "Планка",
-    tabLabel: "Планка",
+    tabLabel: "планка",
     icon: "plank",
     mode: "hold",
     bodyCheck: "horizontal",
@@ -184,7 +184,7 @@ export function getExerciseConfig(slug: string): ExerciseConfig | undefined {
 export function getExerciseTabMeta(slug: string | undefined): Pick<ExerciseConfig, "tabLabel" | "icon"> {
   const config = slug ? getExerciseConfig(slug) : undefined
   return {
-    tabLabel: config?.tabLabel ?? "Тренировка",
+    tabLabel: config?.tabLabel ?? "тренировка",
     icon: config?.icon ?? "fitness_center",
   }
 }
