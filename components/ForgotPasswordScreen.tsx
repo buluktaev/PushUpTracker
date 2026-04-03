@@ -107,7 +107,7 @@ export default function ForgotPasswordScreen({
               <form onSubmit={handleSubmit} className="contents">
                 <RevealSection delay={200} className="pt-[16px]">
                   <Input
-                    label="Электронная почта"
+                    label="электронная почта"
                     type="email"
                     value={email}
                     placeholder="введите почту"

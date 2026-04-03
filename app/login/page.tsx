@@ -122,7 +122,7 @@ function LoginContent() {
 
               <div className="pt-4">
                 <Input
-                  label="Пароль"
+                  label="пароль"
                   type="password"
                   value={password}
                   placeholder="введите пароль"

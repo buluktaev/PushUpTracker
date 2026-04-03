@@ -364,7 +364,7 @@ export function CreateRoomNameStep({
 
         <RevealSection delay={200} className="pt-4">
           <Input
-            label="Название комнаты"
+            label="название комнаты"
             value={roomName}
             placeholder="введите название"
             required
@@ -426,7 +426,7 @@ export function JoinRoomCodeStep({
 
           <RevealSection delay={200} className="pt-4">
             <Input
-              label="Код приглашения"
+              label="код приглашения"
               value={joinCode}
               placeholder="введите код"
               textVariant="code"

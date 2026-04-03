@@ -72,7 +72,7 @@ export default function RegisterNamePage() {
 
           <RevealSection delay={200} className="pt-4">
             <Input
-              label="Имя"
+              label="имя"
               type="text"
               value={name}
               placeholder="введите имя"

@@ -126,7 +126,7 @@ export default function ResetPasswordScreen({
               <form onSubmit={handleSubmit} className="contents">
                 <RevealSection delay={200} className="flex flex-col gap-4 pt-[16px]">
                   <Input
-                    label="Новый пароль"
+                    label="новый пароль"
                     type="password"
                     value={password}
                     placeholder="введите пароль"
@@ -141,7 +141,7 @@ export default function ResetPasswordScreen({
                     onChange={event => onPasswordChange?.(event.target.value)}
                   />
                   <Input
-                    label="Повторите пароль"
+                    label="повторите пароль"
                     type="password"
                     value={confirmPassword}
                     placeholder="повторите пароль"

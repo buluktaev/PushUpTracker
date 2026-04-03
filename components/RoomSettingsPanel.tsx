@@ -157,7 +157,7 @@ export default function RoomSettingsPanel({
       >
         <div className="min-w-0 flex-1">
           <Input
-            label="Название комнаты"
+            label="название комнаты"
             value={renameValue}
             required
             onChange={event => onRenameChange?.(event.target.value)}
@@ -238,7 +238,7 @@ export default function RoomSettingsPanel({
             </div>
             <div className="w-full pt-4">
               <Input
-                label="Название комнаты"
+                label="название комнаты"
                 value={deleteRoomName}
                 placeholder="Введите название комнаты"
                 autoComplete="off"
@@ -248,7 +248,7 @@ export default function RoomSettingsPanel({
             </div>
             <div className="w-full pt-4">
               <Input
-                label="Пароль"
+                label="пароль"
                 type="password"
                 value={deletePassword}
                 placeholder="Введите пароль"

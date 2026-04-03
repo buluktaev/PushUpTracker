@@ -102,7 +102,7 @@ export default function RegisterPage() {
 
             <RevealSection delay={200} className="flex flex-col gap-6 pt-4">
               <Input
-                label="Электронная почта"
+                label="электронная почта"
                 type="email"
                 value={email}
                 placeholder="введите почту"
@@ -115,7 +115,7 @@ export default function RegisterPage() {
                 onChange={event => setEmail(event.target.value)}
               />
               <Input
-                label="Пароль"
+                label="пароль"
                 type="password"
                 value={password}
                 placeholder="введите пароль"
