@@ -31,7 +31,7 @@ export default function Button({
 
   // Base styles applied to all variants
   const base =
-    'inline-flex items-center justify-center gap-2 text-[var(--size-16)] leading-[var(--line-height-24)] font-normal select-none transition-colors duration-100'
+    'inline-flex items-center justify-center gap-2 text-[var(--size-16)] leading-[var(--line-height-24)] font-normal lowercase select-none transition-colors duration-100'
 
   const padding = 'px-4'
 

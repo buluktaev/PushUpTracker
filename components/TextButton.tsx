@@ -67,7 +67,7 @@ export default function TextButton({
   }
 
   const heightClass = size === 'compact' ? 'h-6' : 'h-[var(--control-height-40)]'
-  const sharedClassName = `inline-flex ${heightClass} items-center justify-center gap-1 px-0 text-[var(--size-16)] font-normal leading-[var(--line-height-24)] tracking-[var(--letter-spacing-0)] transition-colors duration-100 ${className}`
+  const sharedClassName = `inline-flex ${heightClass} items-center justify-center gap-1 px-0 text-[var(--size-16)] font-normal lowercase leading-[var(--line-height-24)] tracking-[var(--letter-spacing-0)] transition-colors duration-100 ${className}`
   const sharedStyle = {
     color,
     boxSizing: 'border-box' as const,
@@ -91,7 +91,35 @@ export default function TextButton({
 
   if (as === 'span') {
     return (
-      <span className={sharedClassName} style={sharedStyle}>
+      <span
+        className={sharedClassName}
+        style={sharedStyle}
+        onMouseEnter={() => {
+          if (!isInactive && state === undefined) {
+            setInteractionState('hovered')
+          }
+        }}
+        onMouseLeave={() => {
+          if (!isInactive && state === undefined) {
+            setInteractionState('default')
+          }
+        }}
+        onPointerDown={() => {
+          if (!isInactive && state === undefined) {
+            setInteractionState('pressed')
+          }
+        }}
+        onPointerUp={() => {
+          if (!isInactive && state === undefined) {
+            setInteractionState('hovered')
+          }
+        }}
+        onPointerCancel={() => {
+          if (!isInactive && state === undefined) {
+            setInteractionState('default')
+          }
+        }}
+      >
         {content}
       </span>
     )

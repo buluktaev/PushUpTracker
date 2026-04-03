@@ -280,6 +280,10 @@
   --muted: var(--text-secondary);
 }
 
+html {
+  scrollbar-gutter: stable both-edges;
+}
+
 body {
   background: var(--bg-surface);
   color: var(--text);
