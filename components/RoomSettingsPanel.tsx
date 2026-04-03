@@ -141,7 +141,7 @@ export default function RoomSettingsPanel({
   }, [showDeleteConfirm])
 
   return (
-    <div className="mx-auto flex w-full flex-1 flex-col pb-4 app-web:max-w-[720px] app-web:pb-8">
+    <div className="mx-auto flex w-full flex-1 flex-col app-web:max-w-[720px] app-web:pb-8">
       {settingsError ? (
         <div
           className="mb-4 px-4 py-3 text-sm text-[var(--status-danger-default)]"
@@ -212,7 +212,7 @@ export default function RoomSettingsPanel({
       </div>
 
       <div
-        className="mt-auto shrink-0 flex flex-col items-start p-4"
+        className="mt-auto mb-4 shrink-0 flex flex-col items-start p-4 app-web:mb-0"
         style={{ border: '1px solid var(--status-danger-default)', background: 'var(--surface)' }}
       >
         <div className="py-[3px] text-[12px] font-normal leading-[18px] text-[var(--text-secondary)]">

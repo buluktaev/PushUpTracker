@@ -70,7 +70,7 @@ export default function RoomProfilePanel({
         </div>
       ) : null}
 
-      <div className="mt-auto flex flex-col gap-4">
+      <div className="mt-auto flex flex-col gap-4 pb-4 app-web:pb-0">
         <div
           className="flex flex-col items-start p-4"
           style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}
