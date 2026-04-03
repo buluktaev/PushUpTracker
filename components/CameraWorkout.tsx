@@ -263,10 +263,6 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     const sorted = [...filtered].sort((a, b) => a - b)
     const angle = sorted[Math.floor(sorted.length / 2)] ?? rawAngle
 
-    const movementHint = posePhaseRef.current === 'up'
-      ? (config?.moveToDownHint ?? `↓ угол меньше ${config?.downAngle ?? 0}°`)
-      : (config?.moveToUpHint ?? `↑ угол больше ${config?.upAngle ?? 0}°`)
-
     if (requiresHipVisibility && !hipVisible) {
       setStatus({ text: 'покажите себя полностью', color: 'var(--status-warning-default)' })
     } else if (!poseReady) {
@@ -277,7 +273,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     } else if (isHoldMode) {
       setStatus({ text: 'держите позицию', color: 'var(--status-success-default)' })
     } else if (sessionActiveRef.current) {
-      setStatus({ text: movementHint, color: 'var(--status-success-default)' })
+      setStatus({ text: 'держите позицию', color: 'var(--status-success-default)' })
     } else {
       setStatus({ text: `угол: ${Math.round(angle)}°`, color: 'var(--accent-default)' })
     }
@@ -493,7 +489,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     fontWeight: 500,
     fontSize: 72,
     lineHeight: '80px',
-    textShadow: '0 4px 8px rgba(180,180,180,0.8)',
+    textShadow: '0 4px 8px rgba(38,38,38,0.32)',
   } as const
   const elapsedTextStyle = {
     fontFamily: 'var(--font-family-secondary)',
@@ -501,7 +497,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     fontSize: 16,
     lineHeight: '24px',
     color: 'var(--text-on-accent)',
-    textShadow: '0 4px 8px rgba(180,180,180,0.8)',
+    textShadow: '0 1px 3px #262626',
   } as const
   const controlButtonLabel = countdown !== null
     ? 'Отмена'
@@ -527,6 +523,14 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
         text: status.text,
         color: statusBadgeTone.color,
       }
+  const showGuidanceOverlay = cameraOn && !sessionActive && !saving
+  const showMovementArrow =
+    cameraOn &&
+    sessionActive &&
+    !isHoldMode &&
+    !saving &&
+    status.text === cameraStatusText.ready
+  const movementArrowName = posePhaseRef.current === 'up' ? 'arrow_down' : 'arrow_up'
 
   return (
     <div
@@ -575,7 +579,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
           </span>
         </div>
 
-        {cameraOn && countdown !== null ? (
+        {showGuidanceOverlay ? (
           <div
             className="absolute left-4 right-4 top-1/2 -translate-y-1/2 bg-[var(--accent-default)] px-6 py-4 text-center app-web:left-[112px] app-web:right-[112px] app-web:top-auto app-web:bottom-[112px] app-web:translate-y-0"
             aria-live="polite"
@@ -587,6 +591,15 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
             <span className="hidden text-[18px] font-medium leading-[26px] tracking-[0] text-[var(--text-on-accent)] app-web:inline">
               {cameraGuidance}
             </span>
+          </div>
+        ) : null}
+
+        {showMovementArrow ? (
+          <div
+            className="absolute left-1/2 top-[230px] flex h-10 w-10 -translate-x-1/2 items-center justify-center bg-[var(--surface)] app-web:top-[364px]"
+            aria-hidden="true"
+          >
+            <Icon name={movementArrowName} size={24} style={{ color: 'var(--status-success-default)' }} />
           </div>
         ) : null}
 
