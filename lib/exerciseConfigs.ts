@@ -1,5 +1,13 @@
 export type ExerciseMode = "reps" | "hold"
 export type BodyCheck = "horizontal" | "vertical" | "none"
+export type PoseCheck =
+  | "pushups"
+  | "squats"
+  | "crunches"
+  | "armVisibility"
+  | "lateralRaise"
+  | "plank"
+export type AngleStrategy = "average" | "bestVisibleSide"
 
 export interface ExerciseConfig {
   slug: string
@@ -8,6 +16,14 @@ export interface ExerciseConfig {
   icon: string
   mode: ExerciseMode
   bodyCheck: BodyCheck
+  poseCheck: PoseCheck
+  angleStrategy: AngleStrategy
+  positionHint: string
+  positionHintMobile?: string
+  cameraGuidance: string
+  cameraGuidanceMobile?: string
+  moveToDownHint?: string
+  moveToUpHint?: string
   keypointsLeft: [number, number, number]
   keypointsRight: [number, number, number]
   downAngle: number
@@ -21,9 +37,17 @@ export const exerciseConfigs: ExerciseConfig[] = [
     slug: "pushups",
     name: "Отжимания",
     tabLabel: "Отжимания",
-    icon: "fitness_center",
+    icon: "push_up",
     mode: "reps",
     bodyCheck: "horizontal",
+    poseCheck: "pushups",
+    angleStrategy: "bestVisibleSide",
+    positionHint: "займите упор лёжа",
+    positionHintMobile: "примите упор лёжа",
+    cameraGuidance: "Для детекции примите упор лёжа и держите корпус целиком в кадре. Можно стоять лицом к камере или боком к камере.",
+    cameraGuidanceMobile: "Упор лёжа. Можно лицом или боком к камере.",
+    moveToDownHint: "↓ опуститесь ниже",
+    moveToUpHint: "↑ поднимитесь выше",
     keypointsLeft: [11, 13, 15],
     keypointsRight: [12, 14, 16],
     downAngle: 100,
@@ -33,33 +57,37 @@ export const exerciseConfigs: ExerciseConfig[] = [
     slug: "squats",
     name: "Приседания",
     tabLabel: "Присед",
-    icon: "sports_martial_arts",
+    icon: "squad",
     mode: "reps",
     bodyCheck: "vertical",
+    poseCheck: "squats",
+    angleStrategy: "bestVisibleSide",
+    positionHint: "встаньте в полный рост",
+    positionHintMobile: "встаньте прямо",
+    cameraGuidance: "Для детекции встаньте в полный рост и держите в кадре плечи, таз, колени и стопы.",
+    cameraGuidanceMobile: "Встаньте прямо, ноги и корпус должны быть в кадре.",
+    moveToDownHint: "↓ присядьте ниже",
+    moveToUpHint: "↑ выпрямитесь",
     keypointsLeft: [23, 25, 27],
     keypointsRight: [24, 26, 28],
     downAngle: 110,
     upAngle: 160,
   },
   {
-    slug: "situps",
-    name: "Подъём корпуса",
-    tabLabel: "Корпус",
-    icon: "airline_seat_flat",
-    mode: "reps",
-    bodyCheck: "horizontal",
-    keypointsLeft: [11, 23, 27],
-    keypointsRight: [12, 24, 28],
-    downAngle: 145,
-    upAngle: 160,
-  },
-  {
     slug: "crunches",
     name: "Скручивания",
     tabLabel: "Скручивания",
-    icon: "airline_seat_flat",
+    icon: "crunches",
     mode: "reps",
     bodyCheck: "horizontal",
+    poseCheck: "crunches",
+    angleStrategy: "bestVisibleSide",
+    positionHint: "лягте на спину",
+    positionHintMobile: "лягте на спину",
+    cameraGuidance: "Для детекции лягте на спину и держите корпус с ногами в кадре. Лучше расположиться боком к камере.",
+    cameraGuidanceMobile: "Лягте на спину, лучше боком к камере.",
+    moveToDownHint: "↑ поднимите корпус",
+    moveToUpHint: "↓ опуститесь обратно",
     keypointsLeft: [11, 23, 27],
     keypointsRight: [12, 24, 28],
     downAngle: 120,
@@ -69,9 +97,17 @@ export const exerciseConfigs: ExerciseConfig[] = [
     slug: "bicep_curl",
     name: "Сгибание на бицепс",
     tabLabel: "Бицепс",
-    icon: "exercise",
+    icon: "biceps",
     mode: "reps",
     bodyCheck: "vertical",
+    poseCheck: "armVisibility",
+    angleStrategy: "bestVisibleSide",
+    positionHint: "встаньте прямо и покажите руку",
+    positionHintMobile: "встаньте прямо",
+    cameraGuidance: "Для детекции встаньте прямо и держите рабочую руку полностью в кадре. Локоть и кисть не должны выходить за край экрана.",
+    cameraGuidanceMobile: "Встаньте прямо и покажите руку целиком.",
+    moveToDownHint: "↓ опустите руку",
+    moveToUpHint: "↑ согните руку выше",
     keypointsLeft: [11, 13, 15],
     keypointsRight: [12, 14, 16],
     downAngle: 160,
@@ -82,9 +118,17 @@ export const exerciseConfigs: ExerciseConfig[] = [
     slug: "pullups",
     name: "Подтягивания",
     tabLabel: "Подтягивания",
-    icon: "iron",
+    icon: "pull_up",
     mode: "reps",
     bodyCheck: "vertical",
+    poseCheck: "armVisibility",
+    angleStrategy: "bestVisibleSide",
+    positionHint: "встаньте в полный рост",
+    positionHintMobile: "встаньте прямо",
+    cameraGuidance: "Для детекции держите в кадре плечо, локоть и кисть. Лучше расположиться так, чтобы руки были видны полностью.",
+    cameraGuidanceMobile: "Руки должны быть полностью в кадре.",
+    moveToDownHint: "↓ опуститесь ниже",
+    moveToUpHint: "↑ подтянитесь выше",
     keypointsLeft: [11, 13, 15],
     keypointsRight: [12, 14, 16],
     downAngle: 140,
@@ -95,63 +139,43 @@ export const exerciseConfigs: ExerciseConfig[] = [
     slug: "lateral_raise",
     name: "Махи в стороны",
     tabLabel: "Махи",
-    icon: "pan_tool_alt",
+    icon: "swing",
     mode: "reps",
     bodyCheck: "vertical",
+    poseCheck: "lateralRaise",
+    angleStrategy: "average",
+    positionHint: "встаньте прямо и покажите руки",
+    positionHintMobile: "встаньте прямо",
+    cameraGuidance: "Для детекции встаньте лицом к камере и держите обе руки полностью в кадре от плеча до локтя.",
+    cameraGuidanceMobile: "Встаньте лицом к камере и покажите обе руки.",
+    moveToDownHint: "↑ поднимите руки выше",
+    moveToUpHint: "↓ опустите руки",
     keypointsLeft: [23, 11, 13],
     keypointsRight: [24, 12, 14],
     downAngle: 30,
     upAngle: 80,
   },
   {
-    slug: "overhead_press",
-    name: "Жим над головой",
-    tabLabel: "Жим",
-    icon: "keyboard_double_arrow_up",
-    mode: "reps",
-    bodyCheck: "vertical",
-    keypointsLeft: [23, 11, 13],
-    keypointsRight: [24, 12, 14],
-    downAngle: 100,
-    upAngle: 150,
-  },
-  {
-    slug: "leg_raise",
-    name: "Подъём ног",
-    tabLabel: "Ноги",
-    icon: "directions_walk",
-    mode: "reps",
-    bodyCheck: "horizontal",
-    keypointsLeft: [11, 23, 27],
-    keypointsRight: [12, 24, 28],
-    downAngle: 130,
-    upAngle: 160,
-  },
-  {
-    slug: "knee_raise",
-    name: "Подъём колен",
-    tabLabel: "Колени",
-    icon: "directions_run",
-    mode: "reps",
-    bodyCheck: "vertical",
-    keypointsLeft: [23, 25, 27],
-    keypointsRight: [24, 26, 28],
-    downAngle: 110,
-    upAngle: 160,
-  },
-  {
     slug: "plank",
     name: "Планка",
     tabLabel: "Планка",
-    icon: "horizontal_rule",
+    icon: "plank",
     mode: "hold",
     bodyCheck: "horizontal",
+    poseCheck: "plank",
+    angleStrategy: "bestVisibleSide",
+    positionHint: "займите положение планки",
+    positionHintMobile: "примите планку",
+    cameraGuidance: "Для детекции примите планку и держите корпус в кадре от плеч до стоп. Лучше расположиться боком к камере.",
+    cameraGuidanceMobile: "Примите планку, лучше боком к камере.",
     keypointsLeft: [11, 23, 27],
     keypointsRight: [12, 24, 28],
     downAngle: 0,
     upAngle: 0,
   },
 ]
+
+export const visibleDisciplineSlugs = exerciseConfigs.map(config => config.slug)
 
 export function getExerciseConfig(slug: string): ExerciseConfig | undefined {
   return exerciseConfigs.find(c => c.slug === slug)

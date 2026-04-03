@@ -6,7 +6,7 @@ import IconButton from '@/components/IconButton'
 import Input from '@/components/Input'
 import RevealSection from '@/components/RevealSection'
 import SelectCard from '@/components/SelectCard'
-import { getExerciseConfig } from '@/lib/exerciseConfigs'
+import { exerciseConfigs, getExerciseConfig } from '@/lib/exerciseConfigs'
 import { ROOM_CODE_LENGTH } from '@/lib/roomCode'
 
 export type CreateRoomAction = 'create' | 'join'
@@ -37,15 +37,11 @@ export type CreateRoomScreenMode =
   | 'join-filled'
   | 'join-loading'
 
-export const CREATE_ROOM_DISCIPLINES = [
-  { slug: 'pushups', title: 'Отжимания', icon: 'fitness_center' },
-  { slug: 'squats', title: 'Приседания', icon: 'sports_martial_arts' },
-  { slug: 'crunches', title: 'Скручивания', icon: 'airline_seat_flat' },
-  { slug: 'bicep_curl', title: 'Сгибания на бицепс', icon: 'exercise' },
-  { slug: 'pullups', title: 'Подтягивания', icon: 'iron' },
-  { slug: 'lateral_raise', title: 'Махи в стороны', icon: 'pan_tool_alt' },
-  { slug: 'plank', title: 'Планка', icon: 'horizontal_rule' },
-] as const
+export const CREATE_ROOM_DISCIPLINES = exerciseConfigs.map(config => ({
+  slug: config.slug,
+  title: config.name === 'Сгибание на бицепс' ? 'Сгибания на бицепс' : config.name,
+  icon: config.icon,
+}))
 
 const ACTION_OPTIONS = [
   { value: 'create' as const, title: 'создать комнату', icon: 'plus' },

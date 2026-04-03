@@ -44,8 +44,7 @@ export default function Tab({
         <Icon name={icon} size={16} />
       </span>
       <span
-        className={isMobile ? 'px-1 py-[3px] text-[12px] leading-[18px]' : 'text-[12px] leading-[18px]'}
-        style={{ letterSpacing: 'var(--letter-spacing-0)' }}
+        className={isMobile ? 'px-1 py-[3px] text-[14px] font-normal leading-[22px] tracking-[0]' : 'text-[14px] font-normal leading-[22px] tracking-[0]'}
       >
         {label}
       </span>

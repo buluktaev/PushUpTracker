@@ -179,13 +179,13 @@ export default function RoomSettingsPanel({
         </div>
       </div>
 
-      <div className="mt-4 flex min-h-0 flex-1 flex-col pb-14">
+      <div className="mt-4 flex flex-col pb-14">
         <div className="py-[3px] text-[12px] font-normal leading-[18px] text-[var(--text-secondary)]">участники</div>
         <div
-          className="min-h-0 flex-1 overflow-hidden"
+          className="overflow-hidden app-web:max-h-[360px]"
           style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}
         >
-          <div className="h-full overflow-y-auto">
+          <div className="max-h-[inherit] overflow-y-auto">
             {participants.map((participant, index) => (
               <SettingsRow
                 key={participant.id}
@@ -212,7 +212,7 @@ export default function RoomSettingsPanel({
       </div>
 
       <div
-        className="shrink-0 flex flex-col items-start p-4"
+        className="mt-auto shrink-0 flex flex-col items-start p-4"
         style={{ border: '1px solid var(--status-danger-default)', background: 'var(--surface)' }}
       >
         <div className="py-[3px] text-[12px] font-normal leading-[18px] text-[var(--text-secondary)]">

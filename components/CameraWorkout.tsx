@@ -14,9 +14,6 @@ interface Props {
 
 type AnyObj = any
 
-const HORIZONTAL_POSITION_LABEL = 'займите горизонтальное положение'
-const HORIZONTAL_POSITION_LABEL_MOBILE = 'займите гор. положение'
-
 export default function CameraWorkout({ participantId, discipline, onSessionSaved }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -24,6 +21,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
   const rafRef = useRef<number | null>(null)
   const landmarkerRef = useRef<AnyObj>(null)
   const drawingRef = useRef<AnyObj>(null)
+  const smoothedLandmarksRef = useRef<AnyObj[] | null>(null)
   const lastVideoTimeRef = useRef(-1)
   const posePhaseRef = useRef<'up' | 'down'>('up')
   const sessionStartRef = useRef<number | null>(null)
@@ -37,6 +35,10 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
 
   const config = getExerciseConfig(discipline)
   const isHoldMode = config?.mode === 'hold'
+  const positionHint = config?.positionHint ?? 'займите нужное положение'
+  const positionHintMobile = config?.positionHintMobile ?? positionHint
+  const cameraGuidance = config?.cameraGuidance ?? 'Расположитесь перед камерой так, чтобы нужные части тела были в кадре.'
+  const cameraGuidanceMobile = config?.cameraGuidanceMobile ?? cameraGuidance
   const cameraStatusText: Record<'off' | 'searching' | 'ready', string> = {
     off: 'камера выключена',
     searching: 'поиск позы',
@@ -97,6 +99,31 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     return Math.abs((Math.atan2(cross, dot) * 180) / Math.PI)
   }
 
+  function smoothLandmarks(current: AnyObj[]) {
+    const previous = smoothedLandmarksRef.current
+    if (!previous || previous.length !== current.length) {
+      const seeded = current.map(point => ({ ...point }))
+      smoothedLandmarksRef.current = seeded
+      return seeded
+    }
+
+    const alpha = 0.32
+    const smoothed = current.map((point, index) => {
+      const prevPoint = previous[index]
+      return {
+        ...point,
+        x: prevPoint.x + (point.x - prevPoint.x) * alpha,
+        y: prevPoint.y + (point.y - prevPoint.y) * alpha,
+        z: typeof point.z === 'number' && typeof prevPoint.z === 'number'
+          ? prevPoint.z + (point.z - prevPoint.z) * alpha
+          : point.z,
+      }
+    })
+
+    smoothedLandmarksRef.current = smoothed
+    return smoothed
+  }
+
   const processResult = useCallback((result: AnyObj) => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -108,8 +135,20 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
       return
     }
 
-    const lm = result.landmarks[0]          // image coords — for drawing
+    const lm = result.landmarks[0]          // image coords — for logic
+    const drawLm = smoothLandmarks(lm)      // smoothed image coords — for drawing
     const wlm = result.worldLandmarks?.[0]  // 3D world coords — for angle
+    const hasLandmark = (index: number, minVisibility = 0.35) => {
+      const point = lm[index]
+      if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return false
+      return typeof point.visibility !== 'number' || point.visibility >= minVisibility
+    }
+    const hasLeftArm = hasLandmark(11) && hasLandmark(13) && hasLandmark(15)
+    const hasRightArm = hasLandmark(12) && hasLandmark(14) && hasLandmark(16)
+    const hasAnyArm = hasLeftArm || hasRightArm
+    const hasBothArms = hasLeftArm && hasRightArm
+    const hasLegs = hasLandmark(23) && hasLandmark(24) && hasLandmark(25) && hasLandmark(26) && hasLandmark(27) && hasLandmark(28)
+    const hasCoreLine = (hasLandmark(11) && hasLandmark(23) && hasLandmark(27)) || (hasLandmark(12) && hasLandmark(24) && hasLandmark(28))
 
     // Anti-cheat: determine body tilt (horizontal = valid push-up position)
     const hipVisible = lm[23]?.x != null && lm[24]?.x != null
@@ -138,28 +177,56 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     } else if (config!.bodyCheck === 'vertical') {
       bodyCheckPassed = !isHorizontal
     }
+    let poseCheckPassed = true
+    switch (config!.poseCheck) {
+      case 'pushups':
+        poseCheckPassed = hipVisible && hasAnyArm
+        break
+      case 'squats':
+        poseCheckPassed = hasLegs
+        break
+      case 'crunches':
+        poseCheckPassed = hipVisible && hasCoreLine && hasLandmark(27) && hasLandmark(28)
+        break
+      case 'armVisibility':
+        poseCheckPassed = hasAnyArm
+        break
+      case 'lateralRaise':
+        poseCheckPassed = hasBothArms
+        break
+      case 'plank':
+        poseCheckPassed = hipVisible && hasCoreLine
+        break
+    }
+    const requiresHipVisibility = config!.poseCheck !== 'armVisibility' && config!.poseCheck !== 'lateralRaise'
+    const poseReady = bodyCheckPassed && poseCheckPassed
 
     if (drawingRef.current) {
       try {
+        const successColor =
+          getComputedStyle(document.documentElement).getPropertyValue('--status-success-default').trim() || '#22c55e'
         const connections = [
           [11,13],[13,15],[12,14],[14,16],[11,12],[23,24],
           [11,23],[12,24],[23,25],[24,26],[25,27],[26,28]
         ]
+        const pointIndexes = Array.from(new Set(connections.flat()))
         const ctx2 = canvas.getContext('2d')!
-        ctx2.strokeStyle = bodyCheckPassed ? 'rgba(74,222,128,0.85)' : 'rgba(255,255,255,0.4)'
-        ctx2.lineWidth = 1.5
+        ctx2.strokeStyle = successColor
+        ctx2.lineWidth = 2.75
         for (const [a, b] of connections) {
           if (lm[a] && lm[b]) {
             ctx2.beginPath()
-            ctx2.moveTo(lm[a].x * canvas.width, lm[a].y * canvas.height)
-            ctx2.lineTo(lm[b].x * canvas.width, lm[b].y * canvas.height)
+            ctx2.moveTo(drawLm[a].x * canvas.width, drawLm[a].y * canvas.height)
+            ctx2.lineTo(drawLm[b].x * canvas.width, drawLm[b].y * canvas.height)
             ctx2.stroke()
           }
         }
-        ctx2.fillStyle = bodyCheckPassed ? '#22c55e' : '#c22302'
-        for (const point of lm) {
+        ctx2.fillStyle = '#ffffff'
+        for (const pointIndex of pointIndexes) {
+          const point = drawLm[pointIndex]
+          if (!point) continue
           ctx2.beginPath()
-          ctx2.arc(point.x * canvas.width, point.y * canvas.height, 3, 0, 2 * Math.PI)
+          ctx2.arc(point.x * canvas.width, point.y * canvas.height, 4.5, 0, 2 * Math.PI)
           ctx2.fill()
         }
       } catch {}
@@ -170,7 +237,21 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     const [rA, rB, rC] = config!.keypointsRight
     const leftAngle = angleBetween(src[lA], src[lB], src[lC])
     const rightAngle = angleBetween(src[rA], src[rB], src[rC])
-    const rawAngle = (leftAngle + rightAngle) / 2
+    const leftChainVisibility = [lA, lB, lC].reduce((sum, index) => {
+      const point = lm[index]
+      if (!point || typeof point.visibility !== 'number') return sum + 1
+      return sum + Math.max(point.visibility, 0)
+    }, 0)
+    const rightChainVisibility = [rA, rB, rC].reduce((sum, index) => {
+      const point = lm[index]
+      if (!point || typeof point.visibility !== 'number') return sum + 1
+      return sum + Math.max(point.visibility, 0)
+    }, 0)
+    const rawAngle = config!.angleStrategy === 'bestVisibleSide'
+      ? leftChainVisibility >= rightChainVisibility
+        ? leftAngle
+        : rightAngle
+      : (leftAngle + rightAngle) / 2
 
     // Median filter: buffer last 5 angles, remove ±2σ outliers, take median
     const buf = angleBufferRef.current
@@ -182,37 +263,48 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     const sorted = [...filtered].sort((a, b) => a - b)
     const angle = sorted[Math.floor(sorted.length / 2)] ?? rawAngle
 
-    if (!hipVisible) {
+    const movementHint = posePhaseRef.current === 'up'
+      ? (config?.moveToDownHint ?? `↓ угол меньше ${config?.downAngle ?? 0}°`)
+      : (config?.moveToUpHint ?? `↑ угол больше ${config?.upAngle ?? 0}°`)
+
+    if (requiresHipVisibility && !hipVisible) {
       setStatus({ text: 'покажите себя полностью', color: 'var(--status-warning-default)' })
-    } else if (!bodyCheckPassed) {
+    } else if (!poseReady) {
       setStatus({
-        text: config!.bodyCheck === 'horizontal' ? HORIZONTAL_POSITION_LABEL : 'займите вертикаль',
+        text: positionHint,
         color: 'var(--status-danger-default)',
       })
     } else if (isHoldMode) {
       setStatus({ text: 'держите позицию', color: 'var(--status-success-default)' })
+    } else if (sessionActiveRef.current) {
+      setStatus({ text: movementHint, color: 'var(--status-success-default)' })
     } else {
       setStatus({ text: `угол: ${Math.round(angle)}°`, color: 'var(--accent-default)' })
     }
 
     if (!isHoldMode) {
-      // Reps mode: generic angle-based counting
-      const isDown = config!.isInverted ? angle > config!.downAngle : angle < config!.downAngle
-      const isUp = config!.isInverted ? angle < config!.upAngle : angle > config!.upAngle
-      if (isDown && posePhaseRef.current === 'up') {
-        posePhaseRef.current = 'down'
-      } else if (isUp && posePhaseRef.current === 'down') {
-        posePhaseRef.current = 'up'
-        const now = Date.now()
-        if (sessionActiveRef.current && bodyCheckPassed && now - lastRepTimeRef.current >= 500) {
-          lastRepTimeRef.current = now
-          countRef.current += 1
-          setCount(countRef.current)
+      const maybeCountRep = (angleValue: number) => {
+        const isDown = config!.isInverted ? angleValue > config!.downAngle : angleValue < config!.downAngle
+        const isUp = config!.isInverted ? angleValue < config!.upAngle : angleValue > config!.upAngle
+
+        if (isDown && posePhaseRef.current === 'up') {
+          posePhaseRef.current = 'down'
+        } else if (isUp && posePhaseRef.current === 'down') {
+          posePhaseRef.current = 'up'
+          const now = Date.now()
+          if (sessionActiveRef.current && poseReady && now - lastRepTimeRef.current >= 500) {
+            lastRepTimeRef.current = now
+            countRef.current += 1
+            setCount(countRef.current)
+          }
         }
       }
+
+      // Reps mode: generic angle-based counting
+      maybeCountRep(angle)
     } else if (sessionActiveRef.current) {
       // Hold mode: count seconds while pose is held
-      if (bodyCheckPassed) {
+      if (poseReady) {
         const now = Date.now()
         if (lastHoldTickRef.current !== null) {
           holdTimeRef.current += (now - lastHoldTickRef.current) / 1000
@@ -225,7 +317,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
         lastHoldTickRef.current = null
       }
     }
-  }, [cameraStatusText.searching, isHoldMode])
+  }, [cameraStatusText.searching, config, isHoldMode, positionHint])
 
   const runFrame = useCallback((ts: number) => {
     const video = videoRef.current
@@ -285,6 +377,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     if (videoRef.current) videoRef.current.srcObject = null
     setCameraOn(false)
     setStatus({ text: cameraStatusText.off, color: 'var(--status-warning-default)' })
+    smoothedLandmarksRef.current = null
     const canvas = canvasRef.current
     if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
   }
@@ -292,9 +385,11 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
   function startSession() {
     countRef.current = 0
     angleBufferRef.current = []
+    smoothedLandmarksRef.current = null
     lastRepTimeRef.current = 0
     holdTimeRef.current = 0
     lastHoldTickRef.current = null
+    posePhaseRef.current = 'up'
     setCount(0)
     setElapsed(0)
     setCountdown(5)
@@ -425,7 +520,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
   const isIdleCameraState = cameraOn && countdown === null && !sessionActive && !saving
   const displayStatus = isIdleCameraState
     ? {
-        text: HORIZONTAL_POSITION_LABEL,
+        text: positionHint,
         color: 'var(--status-warning-default)',
       }
     : {
@@ -469,10 +564,10 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
             <span className="h-1.5 w-1.5 shrink-0" style={{ background: displayStatus.color }} />
           </span>
           <span className="py-[3px] text-[12px] leading-[18px]" style={{ color: displayStatus.color }}>
-            {displayStatus.text === HORIZONTAL_POSITION_LABEL ? (
+            {displayStatus.text === positionHint && positionHintMobile !== positionHint ? (
               <>
-                <span className="app-mobile:inline app-web:hidden">{HORIZONTAL_POSITION_LABEL_MOBILE}</span>
-                <span className="hidden app-web:inline">{HORIZONTAL_POSITION_LABEL}</span>
+                <span className="app-mobile:inline app-web:hidden">{positionHintMobile}</span>
+                <span className="hidden app-web:inline">{positionHint}</span>
               </>
             ) : (
               displayStatus.text
@@ -544,6 +639,17 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
       </div>
 
       {/* Session controls stay out of the Figma off-state and appear only after camera activation */}
+      {cameraOn ? (
+        <div className="mt-3 px-4 app-web:px-0">
+          <div
+            className="text-[12px] leading-[18px] text-[var(--text-secondary)] app-web:text-[14px] app-web:leading-[20px]"
+          >
+            <span className="app-mobile:inline app-web:hidden">{cameraGuidanceMobile}</span>
+            <span className="hidden app-web:inline">{cameraGuidance}</span>
+          </div>
+        </div>
+      ) : null}
+
       {showSessionControls ? (
         <div className="mt-4 px-4 app-web:mt-2 app-web:px-0">
           {countdown !== null ? (
