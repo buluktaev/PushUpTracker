@@ -19,6 +19,8 @@ node_modules/
 skills-lock.json
 AGENTS.md
 CLAUDE.md
+MEMORY.md
+memory/
 
 # Build artifacts
 *.tsbuildinfo
