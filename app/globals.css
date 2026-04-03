@@ -280,10 +280,6 @@
   --muted: var(--text-secondary);
 }
 
-html {
-  scrollbar-gutter: stable both-edges;
-}
-
 body {
   background: var(--bg-surface);
   color: var(--text);
@@ -291,6 +287,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+body::-webkit-scrollbar {
+  display: none;
 }
 
 button,
