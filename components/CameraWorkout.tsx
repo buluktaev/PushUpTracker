@@ -575,6 +575,21 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
           </span>
         </div>
 
+        {cameraOn && countdown !== null ? (
+          <div
+            className="absolute left-4 right-4 top-1/2 -translate-y-1/2 bg-[var(--accent-default)] px-6 py-4 text-center app-web:left-[112px] app-web:right-[112px] app-web:top-auto app-web:bottom-[112px] app-web:translate-y-0"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <span className="app-mobile:inline text-[16px] font-normal leading-6 tracking-[0] text-[var(--text-on-accent)] app-web:hidden">
+              {cameraGuidanceMobile}
+            </span>
+            <span className="hidden text-[18px] font-medium leading-[26px] tracking-[0] text-[var(--text-on-accent)] app-web:inline">
+              {cameraGuidance}
+            </span>
+          </div>
+        ) : null}
+
         {/* Counter overlay — bottom center */}
         {cameraOn && (countdown !== null || sessionActive) && (
           <div
@@ -637,18 +652,6 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
           </div>
         )}
       </div>
-
-      {/* Session controls stay out of the Figma off-state and appear only after camera activation */}
-      {cameraOn ? (
-        <div className="mt-3 px-4 app-web:px-0">
-          <div
-            className="text-[12px] leading-[18px] text-[var(--text-secondary)] app-web:text-[14px] app-web:leading-[20px]"
-          >
-            <span className="app-mobile:inline app-web:hidden">{cameraGuidanceMobile}</span>
-            <span className="hidden app-web:inline">{cameraGuidance}</span>
-          </div>
-        </div>
-      ) : null}
 
       {showSessionControls ? (
         <div className="mt-4 px-4 app-web:mt-2 app-web:px-0">
