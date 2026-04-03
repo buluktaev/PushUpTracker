@@ -35,7 +35,7 @@ export interface ExerciseConfig {
 export const exerciseConfigs: ExerciseConfig[] = [
   {
     slug: "pushups",
-    name: "Отжимания",
+    name: "отжимания",
     tabLabel: "отжимания",
     icon: "push_up",
     mode: "reps",
@@ -55,7 +55,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   },
   {
     slug: "squats",
-    name: "Приседания",
+    name: "приседания",
     tabLabel: "присед",
     icon: "squad",
     mode: "reps",
@@ -75,7 +75,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   },
   {
     slug: "crunches",
-    name: "Скручивания",
+    name: "скручивания",
     tabLabel: "скручивания",
     icon: "crunches",
     mode: "reps",
@@ -95,7 +95,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   },
   {
     slug: "bicep_curl",
-    name: "Сгибание на бицепс",
+    name: "сгибание на бицепс",
     tabLabel: "бицепс",
     icon: "biceps",
     mode: "reps",
@@ -116,7 +116,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   },
   {
     slug: "pullups",
-    name: "Подтягивания",
+    name: "подтягивания",
     tabLabel: "подтягивания",
     icon: "pull_up",
     mode: "reps",
@@ -137,7 +137,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   },
   {
     slug: "lateral_raise",
-    name: "Махи в стороны",
+    name: "махи в стороны",
     tabLabel: "махи",
     icon: "swing",
     mode: "reps",
@@ -157,7 +157,7 @@ export const exerciseConfigs: ExerciseConfig[] = [
   },
   {
     slug: "plank",
-    name: "Планка",
+    name: "планка",
     tabLabel: "планка",
     icon: "plank",
     mode: "hold",
