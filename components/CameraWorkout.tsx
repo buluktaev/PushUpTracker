@@ -4,21 +4,24 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { FilesetResolver, PoseLandmarker, DrawingUtils } from '@mediapipe/tasks-vision'
 import NumberFlow from '@number-flow/react'
 import Icon from '@/components/Icon'
+import { getExerciseConfig } from '@/lib/exerciseConfigs'
 
 interface Props {
   participantId: string
+  discipline: string
   onSessionSaved: () => void
 }
 
 type AnyObj = any
 
-export default function CameraWorkout({ participantId, onSessionSaved }: Props) {
+export default function CameraWorkout({ participantId, discipline, onSessionSaved }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const rafRef = useRef<number | null>(null)
   const landmarkerRef = useRef<AnyObj>(null)
   const drawingRef = useRef<AnyObj>(null)
+  const smoothedLandmarksRef = useRef<AnyObj[] | null>(null)
   const lastVideoTimeRef = useRef(-1)
   const posePhaseRef = useRef<'up' | 'down'>('up')
   const sessionStartRef = useRef<number | null>(null)
@@ -27,13 +30,27 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
   const sessionActiveRef = useRef(false)
   const angleBufferRef = useRef<number[]>([])
   const lastRepTimeRef = useRef<number>(0)
+  const holdTimeRef = useRef(0)
+  const lastHoldTickRef = useRef<number | null>(null)
+
+  const config = getExerciseConfig(discipline)
+  const isHoldMode = config?.mode === 'hold'
+  const positionHint = config?.positionHint ?? 'займите нужное положение'
+  const positionHintMobile = config?.positionHintMobile ?? positionHint
+  const cameraGuidance = config?.cameraGuidance ?? 'Расположитесь перед камерой так, чтобы нужные части тела были в кадре.'
+  const cameraGuidanceMobile = config?.cameraGuidanceMobile ?? cameraGuidance
+  const cameraStatusText: Record<'off' | 'searching' | 'ready', string> = {
+    off: 'камера выключена',
+    searching: 'поиск позы',
+    ready: 'камера включена',
+  }
 
   const [mpLoaded, setMpLoaded] = useState(false)
   const [cameraOn, setCameraOn] = useState(false)
   const [count, setCount] = useState(0)
   const [sessionActive, setSessionActive] = useState(false)
   const [elapsed, setElapsed] = useState(0)
-  const [status, setStatus] = useState({ text: 'camera off', color: '#888880' })
+  const [status, setStatus] = useState({ text: cameraStatusText.off, color: 'var(--status-warning-default)' })
   const [saving, setSaving] = useState(false)
   const [holding, setHolding] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
@@ -67,12 +84,12 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
         }
       }
       setMpLoaded(true)
-      setStatus({ text: 'searching...', color: '#f59e0b' })
+      setStatus({ text: cameraStatusText.searching, color: 'var(--status-warning-default)' })
     } catch (e) {
       console.error('MediaPipe load failed:', e)
-      setStatus({ text: 'err: local mediapipe failed', color: '#ef4444' })
+      setStatus({ text: 'ошибка mediapipe', color: 'var(--status-danger-default)' })
     }
-  }, [mediapipeModelPath])
+  }, [cameraStatusText.off, cameraStatusText.searching, mediapipeModelPath])
 
   function angleBetween(a: AnyObj, b: AnyObj, c: AnyObj): number {
     const ab = { x: b.x - a.x, y: b.y - a.y }
@@ -82,6 +99,31 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     return Math.abs((Math.atan2(cross, dot) * 180) / Math.PI)
   }
 
+  function smoothLandmarks(current: AnyObj[]) {
+    const previous = smoothedLandmarksRef.current
+    if (!previous || previous.length !== current.length) {
+      const seeded = current.map(point => ({ ...point }))
+      smoothedLandmarksRef.current = seeded
+      return seeded
+    }
+
+    const alpha = 0.32
+    const smoothed = current.map((point, index) => {
+      const prevPoint = previous[index]
+      return {
+        ...point,
+        x: prevPoint.x + (point.x - prevPoint.x) * alpha,
+        y: prevPoint.y + (point.y - prevPoint.y) * alpha,
+        z: typeof point.z === 'number' && typeof prevPoint.z === 'number'
+          ? prevPoint.z + (point.z - prevPoint.z) * alpha
+          : point.z,
+      }
+    })
+
+    smoothedLandmarksRef.current = smoothed
+    return smoothed
+  }
+
   const processResult = useCallback((result: AnyObj) => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -89,12 +131,24 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     if (!result.landmarks?.length) {
-      setStatus({ text: 'searching...', color: '#f59e0b' })
+      setStatus({ text: cameraStatusText.searching, color: 'var(--status-warning-default)' })
       return
     }
 
-    const lm = result.landmarks[0]          // image coords — for drawing
+    const lm = result.landmarks[0]          // image coords — for logic
+    const drawLm = smoothLandmarks(lm)      // smoothed image coords — for drawing
     const wlm = result.worldLandmarks?.[0]  // 3D world coords — for angle
+    const hasLandmark = (index: number, minVisibility = 0.35) => {
+      const point = lm[index]
+      if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return false
+      return typeof point.visibility !== 'number' || point.visibility >= minVisibility
+    }
+    const hasLeftArm = hasLandmark(11) && hasLandmark(13) && hasLandmark(15)
+    const hasRightArm = hasLandmark(12) && hasLandmark(14) && hasLandmark(16)
+    const hasAnyArm = hasLeftArm || hasRightArm
+    const hasBothArms = hasLeftArm && hasRightArm
+    const hasLegs = hasLandmark(23) && hasLandmark(24) && hasLandmark(25) && hasLandmark(26) && hasLandmark(27) && hasLandmark(28)
+    const hasCoreLine = (hasLandmark(11) && hasLandmark(23) && hasLandmark(27)) || (hasLandmark(12) && hasLandmark(24) && hasLandmark(28))
 
     // Anti-cheat: determine body tilt (horizontal = valid push-up position)
     const hipVisible = lm[23]?.x != null && lm[24]?.x != null
@@ -117,34 +171,87 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
       }
     }
 
+    let bodyCheckPassed = true
+    if (config!.bodyCheck === 'horizontal') {
+      bodyCheckPassed = isHorizontal
+    } else if (config!.bodyCheck === 'vertical') {
+      bodyCheckPassed = !isHorizontal
+    }
+    let poseCheckPassed = true
+    switch (config!.poseCheck) {
+      case 'pushups':
+        poseCheckPassed = hipVisible && hasAnyArm
+        break
+      case 'squats':
+        poseCheckPassed = hasLegs
+        break
+      case 'crunches':
+        poseCheckPassed = hipVisible && hasCoreLine && hasLandmark(27) && hasLandmark(28)
+        break
+      case 'armVisibility':
+        poseCheckPassed = hasAnyArm
+        break
+      case 'lateralRaise':
+        poseCheckPassed = hasBothArms
+        break
+      case 'plank':
+        poseCheckPassed = hipVisible && hasCoreLine
+        break
+    }
+    const requiresHipVisibility = config!.poseCheck !== 'armVisibility' && config!.poseCheck !== 'lateralRaise'
+    const poseReady = bodyCheckPassed && poseCheckPassed
+
     if (drawingRef.current) {
       try {
+        const successColor =
+          getComputedStyle(document.documentElement).getPropertyValue('--status-success-default').trim() || '#22c55e'
         const connections = [
           [11,13],[13,15],[12,14],[14,16],[11,12],[23,24],
           [11,23],[12,24],[23,25],[24,26],[25,27],[26,28]
         ]
+        const pointIndexes = Array.from(new Set(connections.flat()))
         const ctx2 = canvas.getContext('2d')!
-        ctx2.strokeStyle = isHorizontal ? 'rgba(74,222,128,0.85)' : 'rgba(255,255,255,0.4)'
-        ctx2.lineWidth = 1.5
+        ctx2.strokeStyle = successColor
+        ctx2.lineWidth = 2.75
         for (const [a, b] of connections) {
           if (lm[a] && lm[b]) {
             ctx2.beginPath()
-            ctx2.moveTo(lm[a].x * canvas.width, lm[a].y * canvas.height)
-            ctx2.lineTo(lm[b].x * canvas.width, lm[b].y * canvas.height)
+            ctx2.moveTo(drawLm[a].x * canvas.width, drawLm[a].y * canvas.height)
+            ctx2.lineTo(drawLm[b].x * canvas.width, drawLm[b].y * canvas.height)
             ctx2.stroke()
           }
         }
-        ctx2.fillStyle = isHorizontal ? '#4ade80' : '#ff6b35'
-        for (const point of lm) {
+        ctx2.fillStyle = '#ffffff'
+        for (const pointIndex of pointIndexes) {
+          const point = drawLm[pointIndex]
+          if (!point) continue
           ctx2.beginPath()
-          ctx2.arc(point.x * canvas.width, point.y * canvas.height, 3, 0, 2 * Math.PI)
+          ctx2.arc(point.x * canvas.width, point.y * canvas.height, 4.5, 0, 2 * Math.PI)
           ctx2.fill()
         }
       } catch {}
     }
 
     const src = wlm ?? lm
-    const rawAngle = angleBetween(src[11], src[13], src[15])
+    const [lA, lB, lC] = config!.keypointsLeft
+    const [rA, rB, rC] = config!.keypointsRight
+    const leftAngle = angleBetween(src[lA], src[lB], src[lC])
+    const rightAngle = angleBetween(src[rA], src[rB], src[rC])
+    const leftChainVisibility = [lA, lB, lC].reduce((sum, index) => {
+      const point = lm[index]
+      if (!point || typeof point.visibility !== 'number') return sum + 1
+      return sum + Math.max(point.visibility, 0)
+    }, 0)
+    const rightChainVisibility = [rA, rB, rC].reduce((sum, index) => {
+      const point = lm[index]
+      if (!point || typeof point.visibility !== 'number') return sum + 1
+      return sum + Math.max(point.visibility, 0)
+    }, 0)
+    const rawAngle = config!.angleStrategy === 'bestVisibleSide'
+      ? leftChainVisibility >= rightChainVisibility
+        ? leftAngle
+        : rightAngle
+      : (leftAngle + rightAngle) / 2
 
     // Median filter: buffer last 5 angles, remove ±2σ outliers, take median
     const buf = angleBufferRef.current
@@ -156,26 +263,57 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     const sorted = [...filtered].sort((a, b) => a - b)
     const angle = sorted[Math.floor(sorted.length / 2)] ?? rawAngle
 
-    if (!hipVisible) {
-      setStatus({ text: 'show full body', color: '#f59e0b' })
-    } else if (!isHorizontal) {
-      setStatus({ text: 'get horizontal!', color: '#ef4444' })
+    if (requiresHipVisibility && !hipVisible) {
+      setStatus({ text: 'покажите себя полностью', color: 'var(--status-warning-default)' })
+    } else if (!poseReady) {
+      setStatus({
+        text: positionHint,
+        color: 'var(--status-danger-default)',
+      })
+    } else if (isHoldMode) {
+      setStatus({ text: 'держите позицию', color: 'var(--status-success-default)' })
+    } else if (sessionActiveRef.current) {
+      setStatus({ text: 'держите позицию', color: 'var(--status-success-default)' })
     } else {
-      setStatus({ text: `elbow: ${Math.round(angle)}°`, color: '#ff6b35' })
+      setStatus({ text: `угол: ${Math.round(angle)}°`, color: 'var(--accent-default)' })
     }
 
-    if (angle < 100 && posePhaseRef.current === 'up') {
-      posePhaseRef.current = 'down'
-    } else if (angle > 140 && posePhaseRef.current === 'down') {
-      posePhaseRef.current = 'up'
-      const now = Date.now()
-      if (sessionActiveRef.current && isHorizontal && now - lastRepTimeRef.current >= 500) {
-        lastRepTimeRef.current = now
-        countRef.current += 1
+    if (!isHoldMode) {
+      const maybeCountRep = (angleValue: number) => {
+        const isDown = config!.isInverted ? angleValue > config!.downAngle : angleValue < config!.downAngle
+        const isUp = config!.isInverted ? angleValue < config!.upAngle : angleValue > config!.upAngle
+
+        if (isDown && posePhaseRef.current === 'up') {
+          posePhaseRef.current = 'down'
+        } else if (isUp && posePhaseRef.current === 'down') {
+          posePhaseRef.current = 'up'
+          const now = Date.now()
+          if (sessionActiveRef.current && poseReady && now - lastRepTimeRef.current >= 500) {
+            lastRepTimeRef.current = now
+            countRef.current += 1
+            setCount(countRef.current)
+          }
+        }
+      }
+
+      // Reps mode: generic angle-based counting
+      maybeCountRep(angle)
+    } else if (sessionActiveRef.current) {
+      // Hold mode: count seconds while pose is held
+      if (poseReady) {
+        const now = Date.now()
+        if (lastHoldTickRef.current !== null) {
+          holdTimeRef.current += (now - lastHoldTickRef.current) / 1000
+        }
+        lastHoldTickRef.current = now
+        countRef.current = Math.floor(holdTimeRef.current)
         setCount(countRef.current)
+      } else {
+        // Pose lost — pause timer
+        lastHoldTickRef.current = null
       }
     }
-  }, [])
+  }, [cameraStatusText.searching, config, isHoldMode, positionHint])
 
   const runFrame = useCallback((ts: number) => {
     const video = videoRef.current
@@ -209,7 +347,7 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
 
   async function startCamera() {
     try {
-      setStatus({ text: 'init...', color: '#f59e0b' })
+      setStatus({ text: 'включение камеры', color: 'var(--status-warning-default)' })
       const s = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: 640, height: 480 },
         audio: false,
@@ -220,10 +358,11 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
         await videoRef.current.play()
       }
       setCameraOn(true)
+      setStatus({ text: cameraStatusText.ready, color: 'var(--status-success-default)' })
       await loadMP()
     } catch (e) {
       console.error(e)
-      setStatus({ text: 'err: no camera access', color: '#ef4444' })
+      setStatus({ text: 'нет доступа к камере', color: 'var(--status-danger-default)' })
     }
   }
 
@@ -233,7 +372,8 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
     if (videoRef.current) videoRef.current.srcObject = null
     setCameraOn(false)
-    setStatus({ text: 'camera off', color: '#888880' })
+    setStatus({ text: cameraStatusText.off, color: 'var(--status-warning-default)' })
+    smoothedLandmarksRef.current = null
     const canvas = canvasRef.current
     if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
   }
@@ -241,7 +381,11 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
   function startSession() {
     countRef.current = 0
     angleBufferRef.current = []
+    smoothedLandmarksRef.current = null
     lastRepTimeRef.current = 0
+    holdTimeRef.current = 0
+    lastHoldTickRef.current = null
+    posePhaseRef.current = 'up'
     setCount(0)
     setElapsed(0)
     setCountdown(5)
@@ -309,13 +453,13 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
     startDisabledTimerRef.current = setTimeout(() => setStartDisabled(false), 800)
     const finalCount = countRef.current
     const duration = Math.floor((Date.now() - (sessionStartRef.current ?? Date.now())) / 1000)
-    if (finalCount === 0) return
+    if (finalCount < (isHoldMode ? 5 : 1)) return
     setSaving(true)
     try {
       const res = await fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participantId, count: finalCount, duration }),
+        body: JSON.stringify({ participantId, value: finalCount, duration }),
       })
       if (res.ok) {
         onSessionSaved()
@@ -339,27 +483,71 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
   }, [])
 
   const fmt = (s: number) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
-  const activeArrow = posePhaseRef.current === 'up' ? 'arrow_downward' : 'arrow_upward'
+  const showSessionControls = cameraOn
+  const counterTextStyle = {
+    fontFamily: 'var(--font-family-secondary)',
+    fontWeight: 500,
+    fontSize: 72,
+    lineHeight: '80px',
+    textShadow: '0 4px 8px rgba(38,38,38,0.32)',
+  } as const
+  const elapsedTextStyle = {
+    fontFamily: 'var(--font-family-secondary)',
+    fontWeight: 400,
+    fontSize: 16,
+    lineHeight: '24px',
+    color: 'var(--text-on-accent)',
+    textShadow: '0 1px 3px #262626',
+  } as const
+  const controlButtonLabel = countdown !== null
+    ? 'Отмена'
+    : !sessionActive
+      ? 'Начать сессию'
+      : saving
+        ? 'Сохраняем...'
+        : holding
+          ? 'удерживайте...'
+          : 'закончить сессию'
+  const statusBadgeTone = !cameraOn
+    ? { color: 'var(--accent-default)' }
+    : status.color === 'var(--status-success-default)'
+      ? { color: status.color }
+      : { color: 'var(--status-warning-default)' }
+  const isIdleCameraState = cameraOn && countdown === null && !sessionActive && !saving
+  const displayStatus = isIdleCameraState
+    ? {
+        text: positionHint,
+        color: 'var(--status-warning-default)',
+      }
+    : {
+        text: status.text,
+        color: statusBadgeTone.color,
+      }
+  const showGuidanceOverlay = cameraOn && !sessionActive && !saving
+  const showMovementArrow =
+    cameraOn &&
+    sessionActive &&
+    !isHoldMode &&
+    !saving &&
+    status.text === cameraStatusText.ready
+  const movementArrowName = posePhaseRef.current === 'up' ? 'arrow_down' : 'arrow_up'
 
   return (
     <div
-      className="camera-wrapper flex flex-col gap-3 mx-auto w-full"
+      className="camera-wrapper mx-auto w-full max-w-[1024px]"
     >
 
-      {/* Camera container — always dark bg regardless of theme */}
+      {/* Camera container — off-state follows reviewed Figma geometry */}
       <div
-        className="camera-container relative overflow-hidden"
+        className="camera-container relative mx-auto w-full max-w-[1024px] aspect-[3/4] overflow-hidden bg-[#171717] p-4 app-web:aspect-[4/3]"
         style={{
-          background: '#0a0a0a',
-          aspectRatio: '4/3',
-          border: `1px solid ${cameraOn ? status.color : 'var(--border)'}`,
           borderRadius: 0,
-          transition: 'border-color 0.2s',
+          transition: 'none',
         }}
       >
         <video
           ref={videoRef}
-          className="w-full h-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
           style={{ transform: 'scaleX(-1)', display: cameraOn ? 'block' : 'none' }}
           playsInline
           muted
@@ -373,12 +561,47 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
 
         {/* Status badge — top left */}
         <div
-          className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 text-[10px] tracking-wider"
-          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', borderRadius: 0 }}
+          className="absolute left-4 top-4 flex items-center pl-1 pr-2"
+          style={{ background: 'var(--surface)', borderRadius: 0 }}
         >
-          <span className="w-1.5 h-1.5 shrink-0" style={{ background: status.color }} />
-          <span style={{ color: status.color }}>[{status.text}]</span>
+          <span className="flex h-6 items-center justify-center px-1">
+            <span className="h-1.5 w-1.5 shrink-0" style={{ background: displayStatus.color }} />
+          </span>
+          <span className="py-[3px] text-[12px] leading-[18px]" style={{ color: displayStatus.color }}>
+            {displayStatus.text === positionHint && positionHintMobile !== positionHint ? (
+              <>
+                <span className="app-mobile:inline app-web:hidden">{positionHintMobile}</span>
+                <span className="hidden app-web:inline">{positionHint}</span>
+              </>
+            ) : (
+              displayStatus.text
+            )}
+          </span>
         </div>
+
+        {showGuidanceOverlay ? (
+          <div
+            className="absolute left-4 right-4 top-1/2 -translate-y-1/2 bg-[var(--accent-default)] px-6 py-4 text-center app-web:left-[112px] app-web:right-[112px] app-web:top-auto app-web:bottom-[112px] app-web:translate-y-0"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <span className="app-mobile:inline text-[16px] font-normal leading-6 tracking-[0] text-[var(--text-on-accent)] app-web:hidden">
+              {cameraGuidanceMobile}
+            </span>
+            <span className="hidden text-[18px] font-medium leading-[26px] tracking-[0] text-[var(--text-on-accent)] app-web:inline">
+              {cameraGuidance}
+            </span>
+          </div>
+        ) : null}
+
+        {showMovementArrow ? (
+          <div
+            className="absolute left-1/2 top-[230px] flex h-10 w-10 -translate-x-1/2 items-center justify-center bg-[var(--surface)] app-web:top-[364px]"
+            aria-hidden="true"
+          >
+            <Icon name={movementArrowName} size={24} style={{ color: 'var(--status-success-default)' }} />
+          </div>
+        ) : null}
 
         {/* Counter overlay — bottom center */}
         {cameraOn && (countdown !== null || sessionActive) && (
@@ -388,8 +611,8 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
             aria-atomic="true"
           >
             <div
-              className="font-bold text-white tabular-nums"
-              style={{ fontSize: 88, lineHeight: 1, textShadow: '0 2px 16px rgba(0,0,0,0.8)' }}
+              className="text-white tabular-nums"
+              style={counterTextStyle}
             >
               <NumberFlow
                 value={countdown !== null ? countdown : count}
@@ -401,8 +624,8 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
             </div>
             {sessionActive && (
               <div
-                className="text-base tabular-nums"
-                style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: '0.05em' }}
+                className="tabular-nums"
+                style={elapsedTextStyle}
               >
                 {fmt(elapsed)}
               </div>
@@ -410,86 +633,78 @@ export default function CameraWorkout({ participantId, onSessionSaved }: Props) 
           </div>
         )}
 
-        {/* Movement cue — active session */}
-        {cameraOn && sessionActive && (
-          <div className="pointer-events-none absolute left-1/2 top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center bg-[rgba(0,0,0,0.75)]">
-            <Icon
-              name={activeArrow}
-              size={24}
-              style={{ color: '#ffffff', fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' -25, 'opsz' 24" }}
-            />
-          </div>
-        )}
-
         {/* Disable camera — top right */}
-        {cameraOn && (
+        {cameraOn && !sessionActive && !saving && (
           <button
             onClick={stopCamera}
-            className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 text-[10px] tracking-wider text-white"
-            style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)', borderRadius: 0 }}
+            className="absolute right-4 top-4 flex items-center pl-1 pr-2 text-[var(--text-secondary)] transition-opacity hover:opacity-80"
+            style={{ background: 'var(--surface)', borderRadius: 0 }}
           >
-            <Icon name="photo_camera" size={13} />
-            off
+            <span className="flex h-6 items-center justify-center pr-1">
+              <Icon name="photo_camera" size={16} />
+            </span>
+            <span className="py-[3px] text-[12px] leading-[18px]">отключить камеру</span>
           </button>
         )}
 
         {/* Enable camera — center */}
         {!cameraOn && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center">
             <button
               onClick={startCamera}
-              className="flex flex-col items-center gap-2.5 px-8 py-5 text-white transition-opacity hover:opacity-80"
-              style={{ background: 'rgba(255,107,53,0.9)', backdropFilter: 'blur(6px)', borderRadius: 0 }}
+              className="flex h-[72px] w-[140px] flex-col items-center justify-center bg-[var(--accent-default)] p-3 text-white transition-opacity hover:opacity-80"
+              style={{ borderRadius: 0 }}
             >
-              <Icon name="photo_camera" size={28} />
-              <span className="text-[11px] tracking-widest">enable_camera()</span>
+              <div className="relative shrink-0 p-1">
+                <Icon name="photo_camera" size={16} />
+              </div>
+              <div className="flex items-center justify-center px-[10px] py-[3px]">
+                <span className="text-[12px] leading-[18px]">включить камеру</span>
+              </div>
             </button>
           </div>
         )}
       </div>
 
-      {/* Session controls — placeholder сохраняет высоту когда камера выключена */}
-      {cameraOn ? (
-        countdown !== null ? (
-          <button
-            onClick={cancelCountdown}
-            className="w-full py-3 text-sm font-normal text-[#888880] ring-1 ring-inset ring-[#888880] hover:opacity-60 transition-opacity"
-          >
-            cancel()
-          </button>
-        ) : !sessionActive ? (
-          <button
-            onClick={startSession}
-            disabled={startDisabled}
-            className="w-full py-3 text-sm font-normal text-white bg-[#22c55e] disabled:opacity-40 hover:opacity-85 transition-opacity"
-          >
-            start_session()
-          </button>
-        ) : (
-          <button
-            data-hold
-            onPointerDown={startHold}
-            onPointerUp={cancelHold}
-            onPointerLeave={cancelHold}
-            disabled={saving}
-            className="relative w-full py-3 text-sm font-normal text-white bg-[#ef4444] disabled:opacity-40 overflow-hidden select-none"
-            style={{ touchAction: 'none' }}
-          >
-            <span
-              className="absolute inset-0 bg-white/20 origin-left"
-              style={{ transform: `scaleX(${holdProgress})`, transition: 'none' }}
-            />
-            <span className="relative">
-              {saving
-                ? '// сохраняем...'
-                : holding
-                ? '// удерживайте...'
-                : `finish() · ${count} reps`}
-            </span>
-          </button>
-        )
+      {showSessionControls ? (
+        <div className="mt-4 px-4 app-web:mt-2 app-web:px-0">
+          {countdown !== null ? (
+            <button
+              onClick={cancelCountdown}
+              className="h-10 w-full text-[16px] leading-6 font-normal text-[var(--text-primary)] hover:opacity-60 transition-opacity"
+              style={{ background: 'var(--surface)', boxShadow: 'inset 0 0 0 1px var(--border-primary-default)' }}
+            >
+              отмена
+            </button>
+          ) : !sessionActive ? (
+            <button
+              onClick={startSession}
+              disabled={startDisabled}
+              className="h-10 w-full text-[16px] leading-6 font-normal text-white disabled:opacity-40 hover:opacity-85 transition-opacity"
+              style={{ background: 'var(--accent-default)' }}
+            >
+              начать сессию
+            </button>
+          ) : (
+            <button
+              data-hold
+              onPointerDown={startHold}
+              onPointerUp={cancelHold}
+              onPointerLeave={cancelHold}
+              disabled={saving}
+              className="relative h-10 w-full overflow-hidden select-none text-[16px] font-normal leading-6 text-white disabled:opacity-40"
+              style={{ background: 'var(--accent-default)', touchAction: 'none' }}
+            >
+              <span
+                className="absolute inset-0 bg-white/20 origin-left"
+                style={{ transform: `scaleX(${holdProgress})`, transition: 'none' }}
+              />
+              <span className="relative">{controlButtonLabel}</span>
+            </button>
+          )}
+        </div>
       ) : (
-        <div className="w-full py-3 text-sm" aria-hidden="true" style={{ visibility: 'hidden' }}>&nbsp;</div>
+        null
       )}
     </div>
   )
