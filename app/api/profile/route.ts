@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { ensureProfile } from '@/lib/profile'
+import { ensureProfile, syncAuthUserName } from '@/lib/profile'
 
 export async function POST(request: Request) {
   try {
@@ -12,10 +12,16 @@ export async function POST(request: Request) {
 
     const body = await request.json().catch(() => ({}))
     if (typeof body?.name === 'string' && body.name.trim().length > 0) {
-      user.user_metadata = { ...user.user_metadata, name: body.name.trim() }
+      user.user_metadata = {
+        ...user.user_metadata,
+        name: body.name.trim(),
+        display_name: body.name.trim(),
+        full_name: body.name.trim(),
+      }
     }
 
     const profile = await ensureProfile(user)
+    await syncAuthUserName(supabase, user, profile.name)
 
     return NextResponse.json(profile, { status: 201 })
   } catch (err) {
@@ -33,6 +39,7 @@ export async function GET() {
     }
 
     const profile = await ensureProfile(user)
+    await syncAuthUserName(supabase, user, profile.name)
 
     return NextResponse.json(profile)
   } catch (err) {

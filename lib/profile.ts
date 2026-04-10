@@ -1,8 +1,27 @@
 import type { User } from '@supabase/supabase-js'
 import { prisma } from '@/lib/prisma'
 
-function inferName(user: User): string {
+type AuthMetadataClient = {
+  auth: {
+    updateUser(attributes: { data: Record<string, unknown> }): Promise<{ error: Error | null }>
+  }
+}
+
+function getMetadataName(user: User): string {
   const metadataName = typeof user.user_metadata?.name === 'string' ? user.user_metadata.name.trim() : ''
+  if (metadataName) return metadataName
+
+  const displayName = typeof user.user_metadata?.display_name === 'string' ? user.user_metadata.display_name.trim() : ''
+  if (displayName) return displayName
+
+  const fullName = typeof user.user_metadata?.full_name === 'string' ? user.user_metadata.full_name.trim() : ''
+  if (fullName) return fullName
+
+  return ''
+}
+
+function inferName(user: User): string {
+  const metadataName = getMetadataName(user)
   if (metadataName) return metadataName
 
   const email = user.email?.trim() ?? ''
@@ -15,7 +34,7 @@ function inferName(user: User): string {
 }
 
 function resolveProfileName(user: User, existingName?: string): string {
-  const metadataName = typeof user.user_metadata?.name === 'string' ? user.user_metadata.name.trim() : ''
+  const metadataName = getMetadataName(user)
   if (metadataName) return metadataName
 
   const persistedName = existingName?.trim() ?? ''
@@ -67,4 +86,33 @@ export async function ensureProfile(user: User) {
       name,
     },
   })
+}
+
+export async function syncAuthUserName(
+  supabase: AuthMetadataClient,
+  user: User,
+  fallbackName?: string
+) {
+  const resolvedName = (fallbackName ?? '').trim() || resolveProfileName(user)
+  if (!resolvedName) return
+
+  const metadata = user.user_metadata ?? {}
+  const nameMatches = typeof metadata.name === 'string' && metadata.name.trim() === resolvedName
+  const displayNameMatches = typeof metadata.display_name === 'string' && metadata.display_name.trim() === resolvedName
+  const fullNameMatches = typeof metadata.full_name === 'string' && metadata.full_name.trim() === resolvedName
+
+  if (nameMatches && displayNameMatches && fullNameMatches) return
+
+  const { error } = await supabase.auth.updateUser({
+    data: {
+      ...metadata,
+      name: resolvedName,
+      display_name: resolvedName,
+      full_name: resolvedName,
+    },
+  })
+
+  if (error) {
+    throw error
+  }
 }

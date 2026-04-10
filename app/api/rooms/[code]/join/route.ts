@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { createClient } from '@/lib/supabase-server'
-import { ensureProfile } from '@/lib/profile'
+import { ensureProfile, syncAuthUserName } from '@/lib/profile'
 
 function isMissingColumnError(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2022'
@@ -22,6 +22,7 @@ export async function POST(
     }
 
     const profile = await ensureProfile(user)
+    await syncAuthUserName(supabase, user, profile.name)
 
     const room = await prisma.room.findUnique({
       where: { code: code.toUpperCase() },

@@ -1,5 +1,5 @@
 import HomePageClient from '@/components/HomePageClient'
-import { ensureProfile } from '@/lib/profile'
+import { ensureProfile, syncAuthUserName } from '@/lib/profile'
 import { createClient } from '@/lib/supabase-server'
 
 export default async function HomePage() {
@@ -13,6 +13,7 @@ export default async function HomePage() {
 
     if (user) {
       const profile = await ensureProfile(user)
+      await syncAuthUserName(supabase, user, profile.name)
       initialProfileName = profile.name?.trim() ?? ''
     }
   } catch {}
