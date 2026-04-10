@@ -32,6 +32,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
   const lastRepTimeRef = useRef<number>(0)
   const holdTimeRef = useRef(0)
   const lastHoldTickRef = useRef<number | null>(null)
+  const poseReadyForTrackingRef = useRef(false)
 
   const config = getExerciseConfig(discipline)
   const isHoldMode = config?.mode === 'hold'
@@ -60,7 +61,14 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
   const holdStartRef = useRef<number | null>(null)
   const [startDisabled, setStartDisabled] = useState(false)
   const startDisabledTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [poseReadyForTracking, setPoseReadyForTracking] = useState(false)
   const mediapipeModelPath = '/mediapipe/models/pose_landmarker_full.task'
+
+  const updatePoseReadyForTracking = useCallback((nextValue: boolean) => {
+    if (poseReadyForTrackingRef.current === nextValue) return
+    poseReadyForTrackingRef.current = nextValue
+    setPoseReadyForTracking(nextValue)
+  }, [])
 
   const loadMP = useCallback(async () => {
     if (landmarkerRef.current) return
@@ -131,6 +139,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     if (!result.landmarks?.length) {
+      updatePoseReadyForTracking(false)
       setStatus({ text: cameraStatusText.searching, color: 'var(--status-warning-default)' })
       return
     }
@@ -200,6 +209,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     }
     const requiresHipVisibility = config!.poseCheck !== 'armVisibility' && config!.poseCheck !== 'lateralRaise'
     const poseReady = bodyCheckPassed && poseCheckPassed
+    updatePoseReadyForTracking(poseReady)
 
     if (drawingRef.current) {
       try {
@@ -313,7 +323,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
         lastHoldTickRef.current = null
       }
     }
-  }, [cameraStatusText.searching, config, isHoldMode, positionHint])
+  }, [cameraStatusText.searching, config, isHoldMode, positionHint, updatePoseReadyForTracking])
 
   const runFrame = useCallback((ts: number) => {
     const video = videoRef.current
@@ -372,6 +382,8 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
     if (videoRef.current) videoRef.current.srcObject = null
     setCameraOn(false)
+    poseReadyForTrackingRef.current = false
+    setPoseReadyForTracking(false)
     setStatus({ text: cameraStatusText.off, color: 'var(--status-warning-default)' })
     smoothedLandmarksRef.current = null
     const canvas = canvasRef.current
@@ -529,7 +541,7 @@ export default function CameraWorkout({ participantId, discipline, onSessionSave
     sessionActive &&
     !isHoldMode &&
     !saving &&
-    status.text === cameraStatusText.ready
+    poseReadyForTracking
   const movementArrowName = posePhaseRef.current === 'up' ? 'arrow_down' : 'arrow_up'
 
   return (
