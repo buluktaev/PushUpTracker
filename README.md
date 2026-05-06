@@ -1,31 +1,33 @@
-# PushUp Tracker
+# PushUpTracker
 
-Командный фитнес-трекер с комнатами, дисциплинами, рейтингом участников и фиксацией тренировок.
+Team workout tracker for push-ups and other bodyweight exercises. Create a room, invite participants with a code, record workouts, and follow progress on a shared leaderboard.
 
-Приложение позволяет создать комнату, пригласить участников по коду, выбирать дисциплины, фиксировать тренировки и смотреть общий прогресс команды.
+## Features
 
-## Что умеет
+- Email registration and login
+- Password reset flow
+- Room creation and join by invite code
+- Participant profile
+- Room leaderboard
+- Workout session tracking
+- Camera-based exercise flow powered by MediaPipe Pose
+- Mobile-friendly PWA installability
+- Health check endpoint for deployment monitoring
 
-- регистрация и вход по email
-- восстановление пароля через email
-- создание и вход в комнаты по коду
-- фиксация тренировок по дисциплинам
-- рейтинг участников внутри комнаты
-- профиль участника и настройки комнаты
-- работа с упражнениями и прогрессом внутри комнаты
-- PWA-режим для мобильного использования
+## Tech Stack
 
-## Стек
-
-- Next.js 14 + App Router
+- Next.js 14 App Router
+- React 18
 - TypeScript
 - Tailwind CSS
-- PostgreSQL + Prisma
+- Prisma 7
+- PostgreSQL
 - Supabase Auth
-- MediaPipe Pose
-- Render
+- MediaPipe Tasks Vision
+- Playwright
+- Docker
 
-## Быстрый старт
+## Getting Started
 
 ```bash
 git clone https://github.com/buluktaev/PushUpTracker.git
@@ -35,47 +37,93 @@ npm install
 npm run dev
 ```
 
-Открой [http://localhost:3000](http://localhost:3000).
+Open `http://localhost:3000`.
 
-## Переменные окружения
+## Environment Variables
 
-Минимально нужны:
+Create `.env` from `.env.example` and configure:
 
 ```env
 DATABASE_URL=postgresql://...
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+APP_PUBLIC_URL=http://localhost:3000
 ADMIN_API_KEY=change-me
-APP_PUBLIC_URL=https://your-public-app.example.com
 NEXT_PUBLIC_ENABLE_REVIEW_ROUTES=false
 ```
 
-## Основные команды
+`DATABASE_URL` is used by Prisma CLI through `prisma.config.ts`. The runtime Prisma client is configured in `lib/prisma.ts` with `@prisma/adapter-pg`.
+
+## Scripts
 
 ```bash
 npm run dev
+npm run dev:next
 npm run typecheck
 npm run lint
 npm run build
 npm run preprod:static
 npm run smoke:health
 npm run smoke:browser
+npm run smoke:browser:headed
+npm run studio:test
 ```
 
-## Деплой
-
-Проект деплоится на Render через Docker. Конфигурация находится в [render.yaml](render.yaml).
-
-Перед production rollout стоит проверить:
-
-- `APP_PUBLIC_URL`
-- Supabase redirect URLs
-- `GET /api/health`
-
-## Healthcheck
+Recommended checks before deployment:
 
 ```bash
-curl -I https://your-app-host/api/health
+npm run preprod:static
+npm run smoke:health
 ```
 
-Сервис должен отвечать `200 OK`.
+## Routes
+
+| Route | Description |
+| --- | --- |
+| `/` | Home and room entry |
+| `/login` | Login |
+| `/register` | Registration |
+| `/forgot-password` | Password reset request |
+| `/reset-password` | Set a new password |
+| `/verify-email` | Email verification |
+| `/room/[code]` | Room leaderboard and workout flow |
+| `/api/health` | Health check |
+
+Optional review routes can be enabled with `NEXT_PUBLIC_ENABLE_REVIEW_ROUTES=true`:
+
+| Route | Description |
+| --- | --- |
+| `/components` | Component review surface |
+| `/screens` | Screen review surface |
+| `/design-preview` | Extended design preview |
+
+Disable review routes in production unless they are intentionally exposed.
+
+## Deployment
+
+The app is configured for Docker-based deployment. Render service configuration is stored in `render.yaml`.
+
+Health check:
+
+```bash
+curl -I "$APP_PUBLIC_URL/api/health"
+```
+
+Expected result: HTTP `200`.
+
+## Project Structure
+
+| Path | Purpose |
+| --- | --- |
+| `app/` | Next.js App Router pages and API routes |
+| `components/` | UI and workout components |
+| `hooks/` | Client hooks |
+| `lib/` | Server/client utilities |
+| `prisma/` | Prisma schema and migrations |
+| `public/` | Static assets and MediaPipe files |
+| `scripts/` | Local and deployment helper scripts |
+| `tests/smoke/` | Playwright smoke tests |
+
+## License
+
+Private project. No license is currently provided.
